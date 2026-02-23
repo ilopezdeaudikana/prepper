@@ -16,6 +16,9 @@ export const FeedbackSchema = z.object({
   improvedCode: z.string().optional(),
 })
 
+export type Question = z.infer<typeof QuestionSchema>
+export type Feedback = z.infer<typeof FeedbackSchema>
+
 export const interviewAgent = new Agent({
   id: 'interview-agent',
   name: 'Interview Agent',
@@ -47,7 +50,8 @@ export const interviewAgent = new Agent({
     Always return strictly formatted JSON following the requested schema. No conversational filler outside the JSON.
 
     `,
-  model: 'google/gemini-2.5-flash',
+  // google/gemini-2.5-flash
+  model: 'google/gemini-2.5-flash-lite',
   // tools: { weatherTool },
 
   memory: new Memory(),

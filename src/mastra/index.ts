@@ -6,6 +6,8 @@ import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } fr
 import { weatherWorkflow } from './workflows/weather-workflow'
 import { interviewAgent } from './agents/interview-agent'
 import { chatRoute } from "@mastra/ai-sdk"
+import { registerApiRoute } from '@mastra/core/server'
+import { getChallenge, submitAnswer } from './agents/interview-agent.service'
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -35,9 +37,22 @@ export const mastra = new Mastra({
   }),
   server: {
     apiRoutes: [
-      chatRoute({
-        path: '/chat/:agentId'
-      })
-    ]
+      registerApiRoute("/interview/challenge", {
+        method: "POST",
+        handler: async (c) => {
+          const { topic, level } = await c.req.json();
+          const result = await getChallenge(topic, level);
+          return c.json(result);
+        },
+      }),
+      registerApiRoute("/interview/evaluate", {
+        method: "POST",
+        handler: async (c) => {
+          const body = await c.req.json();
+          const result = await submitAnswer(body.question, body.answer, body.level);
+          return c.json(result);
+        },
+      }),
+    ],
   }
 })

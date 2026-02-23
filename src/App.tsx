@@ -1,6 +1,7 @@
-import * as React from 'react'
-import { DefaultChatTransport, type ToolUIPart } from 'ai'
-import { useChat } from '@ai-sdk/react'
+import { useState } from 'react'
+import {
+  useQuery
+} from '@tanstack/react-query'
 
 import {
   PromptInput,
@@ -21,83 +22,106 @@ import {
 } from '@/components/ai-elements/message'
 
 import {
-  Tool,
-  ToolHeader,
-  ToolContent,
-  ToolInput,
-  ToolOutput,
-} from '@/components/ai-elements/tool'
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockCopyButton,
+  CodeBlockHeader
+} from "@/components/ai-elements/code-block"
+
+import { ChallengeService } from '@/services/challenge.service'
+
+import * as sample from './sample.json'
+import type { Feedback, } from './mastra/agents/interview-agent'
+import { Badge } from 'lucide-react'
 
 export default function App() {
-  const [input, setInput] = React.useState<string>('')
+  const [input, setInput] = useState<string>('')
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: 'http://localhost:4111/chat/interview-agent',
-    }),
-  })
+  // Queries
+  const query = useQuery({ queryKey: ['question'], queryFn: () => ChallengeService.getChallenge('senior', 'react') })
+
+  const data = !query.data || query.data.error ? sample : query.data
+
+  const handleCopy = () => {
+    console.log("Copied code to clipboard")
+  }
+
+  const handleCopyError = () => {
+    console.error("Failed to copy code to clipboard")
+  }
 
   const handleSubmit = async () => {
     if (!input.trim()) return
 
-    sendMessage({ text: input })
+    const result: Feedback = await ChallengeService.submitAnswer(data.question, input, 'senior')
+    console.log(result)
+    setFeedback(result)
     setInput('')
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
-      <div className="flex flex-col h-full">
-        <Conversation className="h-full">
+    <div className="max-w-12xl flex flex-col mx-auto p-4 relative h-screen justify-between">
+      <div className="h-full max-h-9/10 overflow-y-auto">
+        {data?.type === 'theoretical' && (
+          <Message
+            from="system">
+            <MessageContent>
+              <MessageResponse>{data.question}</MessageResponse>
+            </MessageContent>
+          </Message>
+        )}
+        {data?.type === 'coding' && (
+          <Message
+            from="system">
+            <MessageContent>
+              <MessageResponse
+                className='mb-4'
+              >{data.question}</MessageResponse>
+              <CodeBlock code={data.initialCode} language="javascript">
+                <CodeBlockHeader>
+                  <CodeBlockActions>
+                    <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
+                  </CodeBlockActions>
+                </CodeBlockHeader>
+              </CodeBlock>
+            </MessageContent>
+          </Message>
+        )}
+      </div>
+      <div className="flex flex-col flex-1">
+        <Conversation>
           <ConversationContent>
-            {messages.map((message) => (
-              <div key={message.id}>
-                {message.parts?.map((part, i) => {
-                  if (part.type === 'text') {
-                    return (
-                      <Message
-                        key={`${message.id}-${i}`}
-                        from={message.role}>
-                          <MessageContent>
-                            <MessageResponse>{part.text}</MessageResponse>
-                          </MessageContent>
-                      </Message>
-                    )
-                  }
-
-                  if (part.type?.startsWith('tool-')) {
-                    return (
-                      <Tool key={`${message.id}-${i}`}>
-                        <ToolHeader
-                          type={(part as ToolUIPart).type}
-                          state={(part as ToolUIPart).state || 'output-available'}
-                          className="cursor-pointer"
-                        />
-                        <ToolContent>
-                          <ToolInput input={(part as ToolUIPart).input || {}} />
-                          <ToolOutput
-                            output={(part as ToolUIPart).output}
-                            errorText={(part as ToolUIPart).errorText}
-                          />
-                        </ToolContent>
-                      </Tool>
-                    )
-                  }
-
-                  return null
-                })}
+            {feedback && (
+              <div className="mt-6">
+                {feedback.score && (
+                  <Badge className="mr-2"> {feedback.score} </Badge>
+                )}
+                {feedback.critique && (
+                  <p>{feedback.critique}</p>
+                )}
+                {feedback.improvedCode && (
+                  <CodeBlock code={feedback.improvedCode} language="javascript">
+                    <CodeBlockHeader>Improved Code</CodeBlockHeader>
+                    <CodeBlockActions>
+                      <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
+                    </CodeBlockActions>
+                  </CodeBlock>
+                )}
+                {feedback.missedPoints && feedback.missedPoints.map((point, i) => (
+                  <p key={`missed-point-${i}`}>{point}</p>
+                ))}
               </div>
-            ))}
+            )}        
             <ConversationScrollButton />
           </ConversationContent>
         </Conversation>
-        <PromptInput onSubmit={handleSubmit} className="mt-20">
+        <PromptInput onSubmit={handleSubmit} className="mb-10 mt-10">
           <PromptInputBody>
             <PromptInputTextarea
               onChange={(e) => setInput(e.target.value)}
               className="md:leading-10"
               value={input}
-              placeholder="Ask about the weather..."
-              disabled={status !== 'ready'}
             />
           </PromptInputBody>
         </PromptInput>
