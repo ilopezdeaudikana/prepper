@@ -33,7 +33,7 @@ export default function App() {
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: 'http://localhost:4111/chat/weather-agent',
+      api: 'http://localhost:4111/chat/interview-agent',
     }),
   })
 

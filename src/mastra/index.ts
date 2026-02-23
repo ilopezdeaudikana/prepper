@@ -4,12 +4,12 @@ import { PinoLogger } from '@mastra/loggers'
 import { LibSQLStore } from '@mastra/libsql'
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability'
 import { weatherWorkflow } from './workflows/weather-workflow'
-import { weatherAgent } from './agents/weather-agent'
+import { interviewAgent } from './agents/interview-agent'
 import { chatRoute } from "@mastra/ai-sdk"
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
-  agents: { weatherAgent },
+  agents: { interviewAgent },
   storage: new LibSQLStore({
     id: "mastra-storage",
     // stores observability, scores, ... into persistent file storage
