@@ -5,9 +5,9 @@ import { LibSQLStore } from '@mastra/libsql'
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability'
 import { weatherWorkflow } from './workflows/weather-workflow'
 import { interviewAgent } from './agents/interview-agent'
-import { chatRoute } from "@mastra/ai-sdk"
 import { registerApiRoute } from '@mastra/core/server'
 import { getChallenge, submitAnswer } from './agents/interview-agent.service'
+import { VercelDeployer } from '@mastra/deployer-vercel'
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -54,5 +54,6 @@ export const mastra = new Mastra({
         },
       }),
     ],
-  }
+  },
+  deployer: new VercelDeployer()
 })

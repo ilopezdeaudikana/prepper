@@ -4,12 +4,6 @@ import {
 } from '@tanstack/react-query'
 
 import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputTextarea,
-} from '@/components/ai-elements/prompt-input'
-
-import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
@@ -30,18 +24,22 @@ import {
 
 import { ChallengeService } from '@/services/challenge.service'
 
-import * as sample from './sample.json'
-import type { Feedback, } from './mastra/agents/interview-agent'
-import { Badge } from 'lucide-react'
+import type { Feedback, Question, } from './mastra/agents/interview-agent'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 export default function App() {
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
 
-  // Queries
   const query = useQuery({ queryKey: ['question'], queryFn: () => ChallengeService.getChallenge('senior', 'react') })
 
-  const data = !query.data || query.data.error ? sample : query.data
+  if (!query.data || query.data?.error) {
+    return <div><p>Error loading data</p><pre>{JSON.stringify(query.data, null, 2)}</pre></div>
+  }
+
+  const data = query.data
 
   const handleCopy = () => {
     console.log("Copied code to clipboard")
@@ -54,14 +52,14 @@ export default function App() {
   const handleSubmit = async () => {
     if (!input.trim()) return
 
-    const result: Feedback = await ChallengeService.submitAnswer(data.question, input, 'senior')
+    const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, 'senior')
     console.log(result)
     setFeedback(result)
     setInput('')
   }
 
   return (
-    <div className="max-w-12xl flex flex-col mx-auto p-4 relative h-screen justify-between">
+    <div className="max-w-9/10 flex flex-col mx-auto p-4 relative h-screen justify-between align-self-center">
       <div className="h-full max-h-9/10 overflow-y-auto">
         {data?.type === 'theoretical' && (
           <Message
@@ -95,7 +93,7 @@ export default function App() {
             {feedback && (
               <div className="mt-6">
                 {feedback.score && (
-                  <Badge className="mr-2"> {feedback.score} </Badge>
+                  <p><Badge className="mr-2" color={feedback.score > 7.5 ? 'green' : 'red'}>{feedback.score}</Badge></p>
                 )}
                 {feedback.critique && (
                   <p>{feedback.critique}</p>
@@ -112,19 +110,20 @@ export default function App() {
                   <p key={`missed-point-${i}`}>{point}</p>
                 ))}
               </div>
-            )}        
+            )}
             <ConversationScrollButton />
           </ConversationContent>
         </Conversation>
-        <PromptInput onSubmit={handleSubmit} className="mb-10 mt-10">
-          <PromptInputBody>
-            <PromptInputTextarea
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+          <div className="flex flex-col mb-2 gap-2">
+            <Textarea
               onChange={(e) => setInput(e.target.value)}
-              className="md:leading-10"
+              className="min-h-25 mb-2 mt-4"
               value={input}
             />
-          </PromptInputBody>
-        </PromptInput>
+            <Button type="submit">Submit</Button>
+          </div>
+        </form>
       </div>
     </div>
   )
