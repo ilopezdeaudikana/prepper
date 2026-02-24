@@ -12,6 +12,7 @@ Prepper is a React + TypeScript interview-practice app backed by a Mastra agent.
 
 ```bash
 npm install
+cp .env.example .env
 ```
 
 ## Run locally

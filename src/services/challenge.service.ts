@@ -1,8 +1,15 @@
 import type { Question } from "@/mastra/agents/interview-agent"
 
+const MASTRA_API_PROTOCOL = import.meta.env.VITE_MASTRA_API_PROTOCOL
+const MASTRA_API_HOST = import.meta.env.VITE_MASTRA_API_HOST 
+const MASTRA_API_PORT = import.meta.env.VITE_MASTRA_API_PORT 
+const MASTRA_API_BASE_URL = `${MASTRA_API_PROTOCOL}://${MASTRA_API_HOST}:${MASTRA_API_PORT}`
+
+const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_BASE_URL}/`).toString()
+
 export const ChallengeService = {
   async getChallenge(topic: string, level: string) {
-    const response = await fetch('http://localhost:4111/interview/challenge', {
+    const response = await fetch(getApiUrl('/interview/challenge'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -13,7 +20,7 @@ export const ChallengeService = {
   },
 
   async submitAnswer(question: Question, answer: string, level: string) {
-    const response = await fetch('http://localhost:4111/interview/evaluate', {
+    const response = await fetch(getApiUrl('/interview/evaluate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
