@@ -35,6 +35,10 @@ export default function App() {
     queryKey: ['question', configuration.topic, configuration.level],
     queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level),
     enabled: Boolean(configuration.topic && configuration.level),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   })
 
   if (!queryData || queryData?.error) {

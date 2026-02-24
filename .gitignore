@@ -33,3 +33,5 @@ dist-ssr
 src/mastra/public/*.db
 src/mastra/public/*.db-shm
 src/mastra/public/*.db-wal
+
+src/temp.tsx
