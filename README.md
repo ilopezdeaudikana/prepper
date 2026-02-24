@@ -1,6 +1,6 @@
 # Prepper
 
-Prepper is a React + TypeScript interview-practice app backed by a Mastra agent.
+Prepper is a React + TypeScript interview-practice app backed by a Mastra agent. The stack also includes: "tanstack react query", "ai elements", "radix ui", "tailwind" and "zustand"
 
 ## Requirements
 
