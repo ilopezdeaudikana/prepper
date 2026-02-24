@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
-  useQuery,
-  useQueryClient
+  useQuery
 } from '@tanstack/react-query'
 
 import {
@@ -26,14 +25,17 @@ import { Button } from '@/components/ui/button'
 import { useConfiguration } from '@/store/configuration.store'
 
 export default function App() {
-  const queryClient = useQueryClient()
-  
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [canContinue, setCanContinue] = useState(false)
 
   const configuration = useConfiguration(state => state.configuration)
 
-  const { data: queryData } = useQuery({ queryKey: ['question'], queryFn: () => ChallengeService.getChallenge(configuration.level, configuration.topic) })
+  const { data: queryData, refetch, isFetching } = useQuery({
+    queryKey: ['question', configuration.topic, configuration.level],
+    queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level),
+    enabled: Boolean(configuration.topic && configuration.level),
+  })
 
   if (!queryData || queryData?.error) {
     return <div><p>Error loading data</p><pre>{JSON.stringify(queryData, null, 2)}</pre></div>
@@ -55,13 +57,15 @@ export default function App() {
     const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, 'senior')
     setFeedback(result)
     setInput('')
-    if (result.score > 7.5) {
-      // refetch
-      queryClient.invalidateQueries({ queryKey: ['question'] })
-      setFeedback(null)
-    }
+    setCanContinue(result.score > 7.5)
   }
 
+  const loadNextQuestion = async () => {
+    await refetch()
+    setFeedback(null)
+    setCanContinue(false)
+    setInput('')
+  }
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -121,6 +125,9 @@ export default function App() {
               value={input}
             />
             <Button type="submit">Submit</Button>
+            <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue}>
+              {isFetching ? 'Loading...' : 'Next question'}
+            </Button>
           </div>
         </form>
       </div>
