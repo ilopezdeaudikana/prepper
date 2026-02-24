@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query'
 
 import {
@@ -25,18 +26,20 @@ import { Button } from '@/components/ui/button'
 import { useConfiguration } from '@/store/configuration.store'
 
 export default function App() {
+  const queryClient = useQueryClient()
+  
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
 
   const configuration = useConfiguration(state => state.configuration)
 
-  const query = useQuery({ queryKey: ['question'], queryFn: () => ChallengeService.getChallenge(configuration.level, configuration.topic) })
+  const { data: queryData } = useQuery({ queryKey: ['question'], queryFn: () => ChallengeService.getChallenge(configuration.level, configuration.topic) })
 
-  if (!query.data || query.data?.error) {
-    return <div><p>Error loading data</p><pre>{JSON.stringify(query.data, null, 2)}</pre></div>
+  if (!queryData || queryData?.error) {
+    return <div><p>Error loading data</p><pre>{JSON.stringify(queryData, null, 2)}</pre></div>
   }
 
-  const data = query.data
+  const data = queryData
 
   const handleCopy = () => {
     console.log('Copied code to clipboard')
@@ -53,7 +56,9 @@ export default function App() {
     setFeedback(result)
     setInput('')
     if (result.score > 7.5) {
-      console.log(`Score: ${result.score}`)
+      // refetch
+      queryClient.invalidateQueries({ queryKey: ['question'] })
+      setFeedback(null)
     }
   }
 
