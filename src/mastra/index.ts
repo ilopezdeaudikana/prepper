@@ -40,8 +40,8 @@ export const mastra = new Mastra({
       registerApiRoute("/interview/challenge", {
         method: "POST",
         handler: async (c) => {
-          const { topic, level } = await c.req.json();
-          const result = await getChallenge(topic, level);
+          const { topic, level, previousQuestions } = await c.req.json();
+          const result = await getChallenge(topic, level, previousQuestions ?? []);
           return c.json(result);
         },
       }),

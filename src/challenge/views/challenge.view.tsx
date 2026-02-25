@@ -33,6 +33,7 @@ export default function Challenge() {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
+  const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
 
   const configuration = useConfiguration(state => state.configuration)
@@ -41,8 +42,8 @@ export default function Challenge() {
   const setProgress = useProgress(state => state.setProgress)
 
   const { data, refetch, isFetching } = useQuery({
-    queryKey: ['question'],
-    queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level),
+    queryKey: ['question', configuration.topic, configuration.level, previousQuestions.length],
+    queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level, previousQuestions),
     enabled: Boolean(configuration.topic && configuration.level),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -86,6 +87,12 @@ export default function Challenge() {
   }
   
   useEffect(() => setLocalData(data ?? null), [data])
+  useEffect(() => {
+    if (!data?.question) return
+    setPreviousQuestions((current) =>
+      current.includes(data.question) ? current : [...current, data.question]
+    )
+  }, [data])
 
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">

@@ -10,7 +10,7 @@ const MASTRA_API_BASE_URL = `${MASTRA_API_PROTOCOL}://${MASTRA_API_HOST}:${MASTR
 const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_BASE_URL}/`).toString()
 
 export const ChallengeService = {
-  async getChallenge(topic: string, level: string) {
+  async getChallenge(topic: string, level: string, previousQuestions: string[] = []) {
     if (process.env.NODE_ENV === 'development') {
       return Promise.resolve(sample)
     }
@@ -19,7 +19,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level }),
+      body: JSON.stringify({ topic, level, previousQuestions }),
     })
     return response.json()
   },
