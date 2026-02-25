@@ -60,11 +60,10 @@ export default function Challenge() {
 
   const handleSubmit = async () => {
     if (!input) return
-
+    setInput('')
     setLoadingEvaluation(true)
     const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, configuration.level)
     setFeedback(result)
-    setInput('')
     setLoadingEvaluation(false)
 
     if (result.score > 7.5) {
