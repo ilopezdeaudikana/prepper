@@ -90,7 +90,7 @@ export default function Challenge() {
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {!localData ||isFetching && (
+        {(!localData || isFetching) && (
           <div><p>Loading...</p></div>
         )}
         {localData?.error ? (
