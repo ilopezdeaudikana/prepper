@@ -18,7 +18,6 @@ export default function Configuration() {
 
   const handleSubmit = async () => {
     const { topic, level } = configuration
-    if (!topic || !level) return
     setConfiguration({
       topic: topic.trim(),
       level: level.trim()
@@ -29,7 +28,11 @@ export default function Configuration() {
   return (
     <div className="max-w-1/2 flex flex-col mx-auto p-4 relative h-screen justify-between align-self-center">
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
-        <div className="flex flex-col mb-2 gap-2">
+        <div className="flex flex-col mb-2 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Configure your challenge</h1>
+            <p>Choose a topic and a difficulty level to start the challenge</p>
+          </div>
           <div>
             <label htmlFor="topic">Topic</label>
             <Input
@@ -48,7 +51,7 @@ export default function Configuration() {
               value={configuration.level}
             />
           </div>
-          <Button type="submit">Submit</Button>
+          <Button type="submit" disabled={!configuration.topic || !configuration.level}>Submit</Button>
         </div>
       </form>
     </div>
