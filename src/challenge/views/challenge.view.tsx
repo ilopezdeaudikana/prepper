@@ -42,7 +42,7 @@ export default function Challenge() {
   const setProgress = useProgress(state => state.setProgress)
 
   const { data, refetch, isFetching } = useQuery({
-    queryKey: ['question', configuration.topic, configuration.level, previousQuestions.length],
+    queryKey: ['question', configuration.topic, configuration.level],
     queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level, previousQuestions),
     enabled: Boolean(configuration.topic && configuration.level),
     staleTime: Infinity,
