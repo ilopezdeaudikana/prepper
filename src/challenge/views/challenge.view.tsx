@@ -23,13 +23,20 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useConfiguration } from '@/store/configuration.store'
+import { useProgress } from '@/store/progress.store'
+import { useNavigate } from 'react-router-dom'
 
-export default function App() {
+export default function Challenge() {
+  const navigate = useNavigate()
+
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [canContinue, setCanContinue] = useState(false)
 
   const configuration = useConfiguration(state => state.configuration)
+
+  const { score, stage } = useProgress(state => state.progress)
+  const setProgress = useProgress(state => state.setProgress)
 
   const { data: queryData, refetch, isFetching } = useQuery({
     queryKey: ['question', configuration.topic, configuration.level],
@@ -40,6 +47,10 @@ export default function App() {
     refetchOnReconnect: false,
     refetchOnMount: false,
   })
+
+  if (isFetching) {
+    return <div><p>Loading...</p></div>
+  }
 
   if (!queryData || queryData?.error) {
     return <div><p>Error loading data</p><pre>{JSON.stringify(queryData, null, 2)}</pre></div>
@@ -58,10 +69,19 @@ export default function App() {
   const handleSubmit = async () => {
     if (!input) return
 
-    const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, 'senior')
+    const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, configuration.level)
     setFeedback(result)
-    setInput('')
-    setCanContinue(result.score > 7.5)
+
+    if (result.score > 7.5) {
+      if (stage === 5) {
+        setProgress({ score: score + result.score, stage: 5 })
+        navigate('/finale')
+        return
+      } else {
+        setProgress({ score: score + result.score, stage: stage + 1 })
+        setCanContinue(true)
+      }
+    }
   }
 
   const loadNextQuestion = async () => {

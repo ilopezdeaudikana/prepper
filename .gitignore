@@ -35,3 +35,4 @@ src/mastra/public/*.db-shm
 src/mastra/public/*.db-wal
 
 src/temp.tsx
+src/temp.ts
