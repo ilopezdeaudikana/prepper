@@ -1,7 +1,6 @@
 
 import { Mastra } from '@mastra/core/mastra'
 import { PinoLogger } from '@mastra/loggers'
-import { LibSQLStore } from '@mastra/libsql'
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
@@ -10,11 +9,6 @@ import { VercelDeployer } from '@mastra/deployer-vercel'
 
 export const mastra = new Mastra({
   agents: { interviewAgent },
-  storage: new LibSQLStore({
-    id: "mastra-storage",
-    // stores observability, scores, ... into persistent file storage
-    url: "file:./mastra.db",
-  }),
   logger: new PinoLogger({
     name: 'Mastra',
     level: 'info',
