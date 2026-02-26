@@ -52,7 +52,5 @@ export const interviewAgent = new Agent({
     `,
   // google/gemini-2.5-flash
   model: 'google/gemini-2.5-flash-lite',
-  // tools: { weatherTool },
-
   memory: new Memory(),
 })

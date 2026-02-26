@@ -1,4 +1,3 @@
-// src/mastra/agents/interview-service.ts
 import { interviewAgent, QuestionSchema, type Question, FeedbackSchema } from "./interview-agent"
 
 const normalize = (text: string) =>
