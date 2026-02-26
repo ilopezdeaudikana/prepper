@@ -7,7 +7,7 @@ const MASTRA_API_HOST = import.meta.env.VITE_MASTRA_API_HOST
 const MASTRA_API_PORT = import.meta.env.VITE_MASTRA_API_PORT 
 const MASTRA_API_BASE_URL = `${MASTRA_API_PROTOCOL}://${MASTRA_API_HOST}:${MASTRA_API_PORT}`
 
-const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_BASE_URL}/`).toString()
+const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_BASE_URL}/api/`).toString()
 
 export const ChallengeService = {
   async getChallenge(topic: string, level: string, previousQuestions: string[] = []) {
