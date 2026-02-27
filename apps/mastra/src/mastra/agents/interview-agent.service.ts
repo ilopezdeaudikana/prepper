@@ -1,5 +1,5 @@
 import { interviewAgent } from "./interview-agent"
-import { QuestionSchema, type Question, FeedbackSchema } from "@repo/shared-types/schemas"
+import { type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
 
 const normalize = (text: string) =>
   text

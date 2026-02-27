@@ -1,4 +1,4 @@
-import type { Question } from "@repo/shared-types/schemas"
+import type { Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
 
