@@ -1,4 +1,4 @@
-import type { Question } from "@/mastra/agents/interview-agent"
+import type { Question } from "@repo/shared-types/schemas"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
 

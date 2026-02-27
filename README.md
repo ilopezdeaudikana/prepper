@@ -1,41 +1,32 @@
-# Prepper
+# `Turborepo` Vite starter
 
-Prepper is a React + TypeScript interview-practice app backed by a Mastra agent. The stack also includes: "tanstack react query", "ai elements", "radix ui", "tailwind" and "zustand"
+This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
 
-## Requirements
+## Using this example
 
-- Node.js 20+
-- npm
-- A model provider key in `.env` (for the Mastra agent)
+Run the following command:
 
-## Setup
-
-```bash
-npm install
-cp .env.example .env
+```sh
+npx create-turbo@latest -e with-vite-react
 ```
 
-## Run locally
+## What's inside?
 
-Start Mastra API server (port `4111`):
+This Turborepo includes the following packages and apps:
 
-```bash
-npx mastra dev
-```
+### Apps and Packages
 
-In another terminal, start the frontend (Vite):
+- `web`: react [vite](https://vitejs.dev) ts app
+- `@repo/ui`: a stub component library shared by `web` application
+- `@repo/eslint-config`: shared `eslint` configurations
+- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
 
-```bash
-npm run dev
-```
+Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
 
-Frontend default URL: `http://localhost:5173`
+### Utilities
 
-## Scripts
+This Turborepo has some additional tools already setup for you:
 
-```bash
-npm run dev      # frontend
-npm run build    # typecheck + production build
-npm run preview  # preview production build
-npm run lint     # lint
-```
+- [TypeScript](https://www.typescriptlang.org/) for static type checking
+- [ESLint](https://eslint.org/) for code linting
+- [Prettier](https://prettier.io) for code formatting

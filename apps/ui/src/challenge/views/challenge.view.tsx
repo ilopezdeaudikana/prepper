@@ -18,7 +18,7 @@ import {
 
 import { ChallengeService } from '@/services/challenge.service'
 
-import type { Feedback, Question, } from '@/mastra/agents/interview-agent'
+import type { Feedback, Question, } from '@repo/shared-types/schemas'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
