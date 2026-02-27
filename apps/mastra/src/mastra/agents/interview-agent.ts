@@ -1,5 +1,4 @@
 import { Agent } from '@mastra/core/agent'
-import { Memory } from '@mastra/memory'
 
 export const interviewAgent = new Agent({
   id: 'interview-agent',
@@ -34,5 +33,4 @@ export const interviewAgent = new Agent({
     `,
   // google/gemini-2.5-flash-lite
   model: 'google/gemini-2.5-flash',
-  memory: new Memory(),
 })
