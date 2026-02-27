@@ -4,7 +4,7 @@ import * as responseSample from '../sample-response.json'
 
 const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
-const getApiUrl = (path: string) => new URL(`api/${path}`, `${MASTRA_API_URL}`).toString()
+const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString()
 
 export const ChallengeService = {
   async getChallenge(topic: string, level: string, previousQuestions: string[] = []) {
