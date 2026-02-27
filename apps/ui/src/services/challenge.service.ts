@@ -2,12 +2,9 @@ import type { Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
 
-const MASTRA_API_PROTOCOL = import.meta.env.VITE_MASTRA_API_PROTOCOL
-const MASTRA_API_HOST = import.meta.env.VITE_MASTRA_API_HOST 
-const MASTRA_API_PORT = import.meta.env.VITE_MASTRA_API_PORT 
-const MASTRA_API_BASE_URL = process.env.NODE_ENV === 'development'? `${MASTRA_API_PROTOCOL}://${MASTRA_API_HOST}:${MASTRA_API_PORT}`: '/'
+const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
-const getApiUrl = (path: string) => new URL(`api/${path}`, `${MASTRA_API_BASE_URL}`).toString()
+const getApiUrl = (path: string) => new URL(`api/${path}`, `${MASTRA_API_URL}`).toString()
 
 export const ChallengeService = {
   async getChallenge(topic: string, level: string, previousQuestions: string[] = []) {
