@@ -4,13 +4,17 @@ import { PinoLogger } from '@mastra/loggers'
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
-import { getChallenge, submitAnswer } from './agents/interview-agent.service'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluateAnswerRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
+import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 
 export const mastra = new Mastra({
   agents: { interviewAgent },
+  workflows: {
+    generateChallengeWorkflow,
+    evaluateAnswerWorkflow,
+  },
   logger: new PinoLogger({
     name: 'Mastra',
     level: 'info',
@@ -36,13 +40,22 @@ export const mastra = new Mastra({
         handler: async (c) => {
           try {
             const payload = ChallengeRequestSchema.parse(await c.req.json())
-            const result = await getChallenge(
-              payload.topic,
-              payload.level,
-              payload.previousQuestions,
-              payload.sessionId
-            )
-            return c.json(result)
+            const mastra = c.get('mastra')
+            const workflow = mastra.getWorkflow('generateChallengeWorkflow')
+            const run = await workflow.createRun()
+            const result = await run.start({ inputData: payload })
+
+            if (result.status !== 'success') {
+              const errorMessage =
+                result.status === 'failed'
+                  ? result.error.message
+                  : result.status === 'tripwire'
+                    ? result.tripwire.reason
+                    : 'Challenge workflow did not complete successfully'
+              return c.json({ error: errorMessage }, 500)
+            }
+
+            return c.json(result.result)
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Invalid challenge request'
             const status = error instanceof ZodError ? 400 : 500
@@ -54,14 +67,23 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
-            const payload = EvaluateAnswerRequestSchema.parse(await c.req.json())
-            const result = await submitAnswer(
-              payload.question,
-              payload.answer,
-              payload.level,
-              payload.sessionId
-            )
-            return c.json(result)
+            const payload = EvaluationRequestSchema.parse(await c.req.json())
+            const mastra = c.get('mastra')
+            const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
+            const run = await workflow.createRun()
+            const result = await run.start({ inputData: payload })
+
+            if (result.status !== 'success') {
+              const errorMessage =
+                result.status === 'failed'
+                  ? result.error.message
+                  : result.status === 'tripwire'
+                    ? result.tripwire.reason
+                    : 'Evaluation workflow did not complete successfully'
+              return c.json({ error: errorMessage }, 500)
+            }
+
+            return c.json(result.result)
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Invalid evaluation request'
             const status = error instanceof ZodError ? 400 : 500

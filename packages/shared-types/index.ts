@@ -24,14 +24,14 @@ export const ChallengeResponseSchema = QuestionSchema.extend({
   sessionId: z.string().uuid(),
 })
 
-export const EvaluateAnswerRequestSchema = z.object({
+export const EvaluationRequestSchema = z.object({
   question: QuestionSchema,
   answer: z.string().min(1),
   level: z.string().min(1),
   sessionId: z.string().uuid().optional(),
 })
 
-export const EvaluateAnswerResponseSchema = FeedbackSchema.extend({
+export const EvaluationResponseSchema = FeedbackSchema.extend({
   sessionId: z.string().uuid().optional(),
 })
 
@@ -39,5 +39,5 @@ export type Question = z.infer<typeof QuestionSchema>
 export type Feedback = z.infer<typeof FeedbackSchema>
 export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
 export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
-export type EvaluateAnswerRequest = z.infer<typeof EvaluateAnswerRequestSchema>
-export type EvaluateAnswerResponse = z.infer<typeof EvaluateAnswerResponseSchema>
+export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
+export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>

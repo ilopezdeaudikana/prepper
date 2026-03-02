@@ -1,4 +1,4 @@
-import type { EvaluateAnswerResponse, Question } from "@repo/shared-types"
+import type { EvaluationResponse, Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
 
@@ -25,7 +25,7 @@ export const ChallengeService = {
 
   async submitAnswer(question: Question, answer: string, level: string, sessionId?: string) {
     if (process.env.NODE_ENV === 'development') {
-      return Promise.resolve(responseSample as EvaluateAnswerResponse)
+      return Promise.resolve(responseSample as EvaluationResponse)
     }
     const response = await fetch(getApiUrl('interview/evaluate'), {
       method: 'POST',
@@ -34,6 +34,6 @@ export const ChallengeService = {
       },
       body: JSON.stringify({ question, answer, level, sessionId }),
     })
-    return response.json() as Promise<EvaluateAnswerResponse>
+    return response.json() as Promise<EvaluationResponse>
   }
 }
