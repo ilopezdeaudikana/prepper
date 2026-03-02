@@ -1,41 +1,48 @@
-# Prepper
+# Prepper UI
 
-Prepper is a React + TypeScript interview-practice app backed by a Mastra agent. The stack also includes: "tanstack react query", "ai elements", "radix ui", "tailwind" and "zustand"
+React + TypeScript frontend for Prepper, built with Vite.
 
-## Requirements
+## Prerequisites
 
-- Node.js 20+
+- Node.js `22.13.0+`
 - npm
-- A model provider key in `.env` (for the Mastra agent)
+- Running Mastra backend (`apps/mastra`) for live API responses
 
-## Setup
+## Environment
+
+Create a local env file:
 
 ```bash
-npm install
 cp .env.example .env
 ```
 
-## Run locally
+The frontend service reads `VITE_MASTRA_API_URL`. Set it explicitly in `.env`:
 
-Start Mastra API server (port `4111`):
-
-```bash
-npx mastra dev
+```env
+VITE_MASTRA_API_URL=http://localhost:4111/
 ```
 
-In another terminal, start the frontend (Vite):
+## Run Locally
+
+From this folder:
 
 ```bash
 npm run dev
 ```
 
-Frontend default URL: `http://localhost:5173`
+From repo root:
+
+```bash
+npm run dev -- --filter=prepper-ui
+```
+
+Default URL: `http://localhost:5173`
 
 ## Scripts
 
 ```bash
-npm run dev      # frontend
-npm run build    # typecheck + production build
+npm run dev      # start Vite dev server
+npm run build    # type-check + production build
 npm run preview  # preview production build
-npm run lint     # lint
+npm run lint     # run ESLint
 ```

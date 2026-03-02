@@ -1,30 +1,74 @@
-# `Turborepo` Vite starter
+# Prepper Monorepo
 
-This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
+Prepper is an interview-practice app built as a Turborepo with:
 
-## Using this example
+- `apps/ui`: React + Vite frontend
+- `apps/mastra`: Mastra agent/API backend
+- `packages/shared-types`: shared TypeScript types
 
-Run the following command:
+## Requirements
 
-```sh
-npx create-turbo@latest -e with-vite-react
+- Node.js `22.13.0+` (required by `apps/mastra`)
+- npm `10+`
+
+## Quick Start
+
+1. Install dependencies from the repo root:
+
+```bash
+npm install
 ```
 
-## What's inside?
+2. Create local environment files:
 
-This Turborepo includes the following packages and apps:
+```bash
+cp apps/mastra/.env.example apps/mastra/.env
+cp apps/ui/.env.example apps/ui/.env
+```
 
-### Apps and Packages
+3. Start all dev servers from the repo root:
 
-- `web`: react [vite](https://vitejs.dev) ts app
-- `@repo/shared-types`: shared nod schemas
+```bash
+npm run dev
+```
 
-Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
+Default local URLs:
 
-### Utilities
+- UI: `http://localhost:5173`
+- Mastra Studio / API host: `http://localhost:4111`
 
-This Turborepo has some additional tools already setup for you:
+## Environment Variables
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### `apps/mastra/.env`
+
+- `OPENAI_API_KEY`: model provider key used by the Mastra backend.
+
+### `apps/ui/.env`
+
+The UI currently reads `VITE_MASTRA_API_URL` in code. Set it to the Mastra base URL, for example:
+
+```env
+VITE_MASTRA_API_URL=http://localhost:4111/
+```
+
+## Useful Commands
+
+Run from repository root:
+
+```bash
+npm run dev                       # run all workspace dev tasks via Turbo
+npm run build                     # build all workspaces
+npm run lint                      # lint all workspaces
+npm run dev -- --filter=prepper-ui
+npm run dev -- --filter=prepper-mastra
+```
+
+## Project Structure
+
+```text
+apps/
+  ui/         # frontend application
+  mastra/     # agent + API service
+packages/
+  shared-types/
+```
