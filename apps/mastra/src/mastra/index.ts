@@ -6,6 +6,8 @@ import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { getChallenge, submitAnswer } from './agents/interview-agent.service'
 import { VercelDeployer } from '@mastra/deployer-vercel'
+import { ChallengeRequestSchema, EvaluateAnswerRequestSchema } from '@repo/shared-types'
+import { ZodError } from 'zod'
 
 export const mastra = new Mastra({
   agents: { interviewAgent },
@@ -32,17 +34,39 @@ export const mastra = new Mastra({
       registerApiRoute("/interview/challenge", {
         method: "POST",
         handler: async (c) => {
-          const { topic, level, previousQuestions } = await c.req.json();
-          const result = await getChallenge(topic, level, previousQuestions ?? []);
-          return c.json(result);
+          try {
+            const payload = ChallengeRequestSchema.parse(await c.req.json())
+            const result = await getChallenge(
+              payload.topic,
+              payload.level,
+              payload.previousQuestions,
+              payload.sessionId
+            )
+            return c.json(result)
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Invalid challenge request'
+            const status = error instanceof ZodError ? 400 : 500
+            return c.json({ error: message }, status)
+          }
         },
       }),
       registerApiRoute("/interview/evaluate", {
         method: "POST",
         handler: async (c) => {
-          const body = await c.req.json();
-          const result = await submitAnswer(body.question, body.answer, body.level);
-          return c.json(result);
+          try {
+            const payload = EvaluateAnswerRequestSchema.parse(await c.req.json())
+            const result = await submitAnswer(
+              payload.question,
+              payload.answer,
+              payload.level,
+              payload.sessionId
+            )
+            return c.json(result)
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Invalid evaluation request'
+            const status = error instanceof ZodError ? 400 : 500
+            return c.json({ error: message }, status)
+          }
         },
       }),
     ],

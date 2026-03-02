@@ -7,6 +7,7 @@ Mastra-based backend for Prepper. It powers challenge generation and answer eval
 - Node.js `22.13.0+`
 - npm
 - `OPENAI_API_KEY` (or compatible provider key configured in this service)
+- Supabase project (Postgres)
 
 ## Environment
 
@@ -20,7 +21,13 @@ Required variable:
 
 ```env
 OPENAI_API_KEY=your-api-key
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+Initialize database tables in Supabase SQL editor:
+
+- Run the SQL from `supabase/schema.sql`.
 
 ## Run Locally
 

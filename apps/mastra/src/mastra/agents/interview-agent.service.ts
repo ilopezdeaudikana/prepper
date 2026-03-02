@@ -1,5 +1,6 @@
 import { interviewAgent } from "./interview-agent"
-import { type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
+import { type Feedback, type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
+import { interviewSessionRepository } from "../storage/interview-session.repository"
 
 const normalize = (text: string) =>
   text
@@ -28,11 +29,30 @@ const jaccardSimilarity = (a: string, b: string) => {
 const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
   previousQuestions.some((prev) => jaccardSimilarity(candidate, prev) >= 0.55)
 
-export const getChallenge = async (topic: string, level: string, previousQuestions: string[] = []) => {
+const dedupeQuestions = (questions: string[]) => Array.from(new Set(questions))
+
+export const getChallenge = async (
+  topic: string,
+  level: string,
+  previousQuestions: string[] = [],
+  sessionId?: string
+) => {
+  const existingSession = sessionId
+    ? await interviewSessionRepository.getSession(sessionId)
+    : null
+
+  if (sessionId && !existingSession) {
+    throw new Error(`Interview session not found: ${sessionId}`)
+  }
+
+  const session = existingSession ?? await interviewSessionRepository.createSession(topic, level)
+  const persistedQuestions = await interviewSessionRepository.listQuestionTexts(session.id)
+  const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
+
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
-  const exclusions = previousQuestions.length
-    ? previousQuestions.map((question, index) => `${index + 1}. ${question}`).join("\n")
+  const exclusions = allPreviousQuestions.length
+    ? allPreviousQuestions.map((question, index) => `${index + 1}. ${question}`).join("\n")
     : "None"
 
   let lastGenerated: Question | null = null
@@ -53,15 +73,32 @@ ${exclusions}`,
     )
 
     lastGenerated = object
-    if (!isTooSimilar(object.question, previousQuestions)) {
-      return object
+    if (!isTooSimilar(object.question, allPreviousQuestions)) {
+      await interviewSessionRepository.upsertQuestion(session.id, object)
+      return {
+        ...object,
+        sessionId: session.id,
+      }
     }
   }
 
-  return lastGenerated
+  if (!lastGenerated) {
+    throw new Error("Failed to generate challenge")
+  }
+
+  await interviewSessionRepository.upsertQuestion(session.id, lastGenerated)
+  return {
+    ...lastGenerated,
+    sessionId: session.id,
+  }
 }
 
-export const submitAnswer = async (question: Question, userAnswer: string, level: string) => {
+export const submitAnswer = async (
+  question: Question,
+  userAnswer: string,
+  level: string,
+  sessionId?: string
+) => {
   const { object } = await interviewAgent.generate(
     `Level: ${level}
      Question: ${JSON.stringify(question)}
@@ -70,5 +107,27 @@ export const submitAnswer = async (question: Question, userAnswer: string, level
      Evaluate based on the rubric.`,
     { structuredOutput: { schema: FeedbackSchema } }
   )
-  return object
+
+  if (!sessionId) {
+    return object
+  }
+
+  const session = await interviewSessionRepository.getSession(sessionId)
+  if (!session) {
+    throw new Error(`Interview session not found: ${sessionId}`)
+  }
+
+  const questionId = await interviewSessionRepository.upsertQuestion(sessionId, question)
+  await interviewSessionRepository.createFeedback({
+    sessionId,
+    questionId,
+    answer: userAnswer,
+    level,
+    feedback: object as Feedback,
+  })
+
+  return {
+    ...object,
+    sessionId,
+  }
 }

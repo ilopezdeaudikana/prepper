@@ -42,6 +42,10 @@ Default local URLs:
 ### `apps/mastra/.env`
 
 - `OPENAI_API_KEY`: model provider key used by the Mastra backend.
+- `SUPABASE_URL`: Supabase project URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-side key used by the Mastra API.
+
+Run `apps/mastra/supabase/schema.sql` in your Supabase SQL editor before starting the backend.
 
 ### `apps/ui/.env`
 

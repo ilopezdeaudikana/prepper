@@ -13,5 +13,31 @@ export const FeedbackSchema = z.object({
   improvedCode: z.string().optional(),
 })
 
+export const ChallengeRequestSchema = z.object({
+  topic: z.string().min(1),
+  level: z.string().min(1),
+  previousQuestions: z.array(z.string()).default([]),
+  sessionId: z.string().uuid().optional(),
+})
+
+export const ChallengeResponseSchema = QuestionSchema.extend({
+  sessionId: z.string().uuid(),
+})
+
+export const EvaluateAnswerRequestSchema = z.object({
+  question: QuestionSchema,
+  answer: z.string().min(1),
+  level: z.string().min(1),
+  sessionId: z.string().uuid().optional(),
+})
+
+export const EvaluateAnswerResponseSchema = FeedbackSchema.extend({
+  sessionId: z.string().uuid().optional(),
+})
+
 export type Question = z.infer<typeof QuestionSchema>
 export type Feedback = z.infer<typeof FeedbackSchema>
+export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
+export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
+export type EvaluateAnswerRequest = z.infer<typeof EvaluateAnswerRequestSchema>
+export type EvaluateAnswerResponse = z.infer<typeof EvaluateAnswerResponseSchema>

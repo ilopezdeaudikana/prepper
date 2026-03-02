@@ -18,7 +18,7 @@ import {
 
 import { ChallengeService } from '@/services/challenge.service'
 
-import type { Feedback, Question, } from '@repo/shared-types'
+import type { Feedback, Question } from '@repo/shared-types'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,7 @@ export default function Challenge() {
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
 
   const configuration = useConfiguration(state => state.configuration)
@@ -42,8 +43,13 @@ export default function Challenge() {
   const setProgress = useProgress(state => state.setProgress)
 
   const { data, refetch, isFetching } = useQuery({
-    queryKey: ['question', configuration.topic, configuration.level],
-    queryFn: () => ChallengeService.getChallenge(configuration.topic, configuration.level, previousQuestions),
+    queryKey: ['question', configuration.topic, configuration.level, sessionId],
+    queryFn: () => ChallengeService.getChallenge(
+      configuration.topic,
+      configuration.level,
+      previousQuestions,
+      sessionId ?? undefined
+    ),
     enabled: Boolean(configuration.topic && configuration.level),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -63,7 +69,12 @@ export default function Challenge() {
     if (!input) return
     setInput('')
     setLoadingEvaluation(true)
-    const result: Feedback = await ChallengeService.submitAnswer(data as Question, input, configuration.level)
+    const result: Feedback = await ChallengeService.submitAnswer(
+      data as Question,
+      input,
+      configuration.level,
+      sessionId ?? undefined
+    )
     setFeedback(result)
     setLoadingEvaluation(false)
 
@@ -88,11 +99,22 @@ export default function Challenge() {
   
   useEffect(() => setLocalData(data ?? null), [data])
   useEffect(() => {
+    if (data?.sessionId) {
+      setSessionId(data.sessionId)
+    }
+  }, [data])
+  useEffect(() => {
     if (!data?.question) return
     setPreviousQuestions((current) =>
       current.includes(data.question) ? current : [...current, data.question]
     )
   }, [data])
+  useEffect(() => {
+    setSessionId(null)
+    setPreviousQuestions([])
+    setFeedback(null)
+    setLocalData(null)
+  }, [configuration.topic, configuration.level])
 
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
