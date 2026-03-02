@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function Configuration() {
 
@@ -30,7 +31,7 @@ export default function Configuration() {
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
         <div className="flex flex-col mb-2 gap-4">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Configure your challenge</h1>
+            <h1 className="text-2xl font-bold mb-2">Configure your FE challenge</h1>
             <p>Choose a topic and a difficulty level to start the challenge</p>
           </div>
           <div>
@@ -42,14 +43,28 @@ export default function Configuration() {
               value={configuration.topic}
             />
           </div>
-          <div>
-            <label htmlFor="level">Level</label>
-            <Input
-              name='level'
-              onChange={(e) => handleChange('level', e.target.value)}
-              className="mb-2 mt-4"
+          <div
+          >
+            <label 
+              htmlFor="level"
+              className="block mb-4 mt-2"
+            >
+              Level
+            </label>
+            <Select
+              name="level"
               value={configuration.level}
-            />
+              onValueChange={(e) => handleChange('level', e)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pick an option"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="junior">Junior</SelectItem>
+                <SelectItem value="mid">Mid</SelectItem>
+                <SelectItem value="senior">Senior</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" disabled={!configuration.topic || !configuration.level}>Submit</Button>
         </div>

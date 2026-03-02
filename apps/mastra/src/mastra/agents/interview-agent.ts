@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import { challengePlanningTool, rubricGuidanceTool, sessionQuestionHistoryTool } from '../tools/interview.tools'
 
 export const interviewAgent = new Agent({
   id: 'interview-agent',
@@ -26,6 +27,7 @@ export const interviewAgent = new Agent({
     ### GENERATION RULES:
     - Theoretical: Focus on architectural "Why" (e.g., "Why use Composition over Inheritance?").
     - Coding: Focus on "How" with a small code snippet to start.
+    - Use the available planning/history tools to avoid repetition and diversify prompt format.
 
     ### OUTPUT:
     Always return strictly formatted JSON following the requested schema. No conversational filler outside the JSON.
@@ -33,4 +35,9 @@ export const interviewAgent = new Agent({
     `,
   // google/gemini-2.5-flash-lite
   model: 'google/gemini-2.5-flash',
+  tools: {
+    sessionQuestionHistoryTool,
+    challengePlanningTool,
+    rubricGuidanceTool,
+  },
 })

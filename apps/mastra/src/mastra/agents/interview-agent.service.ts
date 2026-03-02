@@ -65,11 +65,19 @@ Requirements:
 - The challenge must be meaningfully different from previous ones.
 - Avoid repeating the same underlying task (e.g., counters, toggles, CRUD list variants).
 - Vary both the subtopic and the format (debugging, refactor, feature extension, architecture decision).
+- Use challenge-planning-tool to diversify subtopic/format before finalizing.
+- If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
 - Variation token: ${variationToken}-attempt-${attempt}.
+${sessionId ? `- Current sessionId: ${sessionId}.` : ''}
 
 Previously asked questions to avoid (do not paraphrase these):
 ${exclusions}`,
-      { structuredOutput: { schema: QuestionSchema } }
+      {
+        structuredOutput: {
+          schema: QuestionSchema,
+          jsonPromptInjection: true,
+        },
+      }
     )
 
     lastGenerated = object
@@ -104,8 +112,14 @@ export const submitAnswer = async (
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer}
 
-     Evaluate based on the rubric.`,
-    { structuredOutput: { schema: FeedbackSchema } }
+     Evaluate based on the rubric.
+     Use rubric-guidance-tool to build deterministic must-check criteria before scoring.`,
+    {
+      structuredOutput: {
+        schema: FeedbackSchema,
+        jsonPromptInjection: true,
+      },
+    }
   )
 
   if (!sessionId) {
