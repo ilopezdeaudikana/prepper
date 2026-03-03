@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useProgress, type ProgressStore } from '@/store/progress.store'
 
 export default function Configuration() {
 
   const [configuration, setLocalConfiguration] = useState<Configuration>({ topic: '', level: '' })
 
   const setConfiguration = useConfiguration((state: ConfigurationStore) => state.setConfiguration)
+
+  const setProgress = useProgress((state: ProgressStore) => state.setProgress)
+
 
   const navigate = useNavigate()
 
@@ -23,6 +27,7 @@ export default function Configuration() {
       topic: topic.trim(),
       level: level.trim()
     })
+    setProgress({ score: 0, stage: 1 })
     navigate('/challenge')
   }
 
