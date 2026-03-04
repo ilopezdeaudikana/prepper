@@ -1,25 +1,21 @@
 import { Finale } from '../components/finale'
-import { Navigate } from 'react-router-dom'
 import { useConfiguration } from '@/store/configuration.store'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
+import { Redirector } from '@/components/ui/redirector'
 
-export default function FInaleView() {
+export default function FinaleView() {
 
   const { level, topic } = useConfiguration(state => state.configuration)
 
   const { stage } = useProgress(state => state.progress)
 
-  if (!level || !topic || stage !== FINAL_STAGE ) {
-    return (
-      <div>
-        <Navigate to='/' />
-      </div>
-    )
-  } else {
-    return (
-      <div>
-        <Finale level={level} topic={topic} />
-      </div>
-    )
-  }
+  const canContinueToTarget = () => !level || !topic || stage !== FINAL_STAGE
+
+  return (
+    <div>
+      <Redirector condition={canContinueToTarget}>
+        <Finale topic={topic} level={level} />
+      </Redirector>
+    </div>
+  )
 }

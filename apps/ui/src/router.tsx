@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
+import { Loading } from './components/ui/loading.tsx'
 
 const Challenge = lazy(() => import('./challenge/views/challenge.view.tsx'))
 const Configuration = lazy(() => import('./configuration/views/configuration.view.tsx'))
@@ -9,7 +10,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loading />}>
         <Configuration />
       </Suspense>
     ),
@@ -17,7 +18,7 @@ export const router = createBrowserRouter([
   {
     path: '/challenge',
     element: (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loading />}>
         <Challenge />
       </Suspense>
     ),
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
   {
     path: '/finale',
     element: (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loading />}>
         <Finale />
       </Suspense>
     ),

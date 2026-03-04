@@ -1,7 +1,7 @@
 import { Challenge } from '../components/challenge'
-import { Navigate } from 'react-router-dom'
 import { useConfiguration } from '@/store/configuration.store'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
+import { Redirector } from '@/components/ui/redirector'
 
 export default function ChallengeView() {
 
@@ -9,17 +9,13 @@ export default function ChallengeView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  if (!level || !topic || stage === 0 || stage === FINAL_STAGE) {
-    return (
-      <div>
-        <Navigate to='/' />
-      </div>
-    )
-  } else {
-    return (
-      <div>
-        <Challenge level={level} topic={topic} />
-      </div>
-    )
-  }
+  const canContinueToTarget = () => !level || !topic || stage === 0 || stage === FINAL_STAGE
+  
+  return (
+    <div>
+      <Redirector condition={canContinueToTarget}>
+        <Challenge topic={topic} level={level} />
+      </Redirector>
+    </div>
+  )
 }
