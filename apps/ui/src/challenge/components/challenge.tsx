@@ -181,9 +181,11 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
         )}
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
           <div className="flex flex-col mb-2 gap-2">
+            <label htmlFor='reply'>Type your reply here</label>
             <Textarea
               onChange={(e) => setInput(e.target.value)}
               className="min-h-25 mb-2 mt-4"
+              name="reply"
               value={input}
             />
             <Button type="submit" disabled={!input}>Submit</Button>
