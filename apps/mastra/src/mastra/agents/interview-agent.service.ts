@@ -60,18 +60,18 @@ export const getChallenge = async (
   for (let attempt = 1; attempt <= 4; attempt += 1) {
     const { object } = await interviewAgent.generate(
       `Generate one ${level}-level frontend interview challenge about ${topic}.
-Requirements:
-- Return exactly one challenge.
-- The challenge must be meaningfully different from previous ones.
-- Avoid repeating the same underlying task (e.g., counters, toggles, CRUD list variants).
-- Vary both the subtopic and the format (debugging, refactor, feature extension, architecture decision).
-- Use challenge-planning-tool to diversify subtopic/format before finalizing.
-- If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
-- Variation token: ${variationToken}-attempt-${attempt}.
-${sessionId ? `- Current sessionId: ${sessionId}.` : ''}
+      Requirements:
+      - Return exactly one challenge.
+      - The challenge must be meaningfully different from previous ones.
+      - Avoid repeating the same underlying task (e.g., counters, toggles, CRUD list variants).
+      - Vary both the subtopic and the format (debugging, refactor, feature extension, architecture decision).
+      - Use challenge-planning-tool to diversify subtopic/format before finalizing.
+      - If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
+      - Variation token: ${variationToken}-attempt-${attempt}.
+      ${sessionId ? `- Current sessionId: ${sessionId}.` : ''}
 
-Previously asked questions to avoid (do not paraphrase these):
-${exclusions}`,
+      Previously asked questions to avoid (do not paraphrase these):
+      ${exclusions}`,
       {
         structuredOutput: {
           schema: QuestionSchema,
@@ -80,11 +80,17 @@ ${exclusions}`,
       }
     )
 
-    lastGenerated = object
-    if (!isTooSimilar(object.question, allPreviousQuestions)) {
-      await interviewSessionRepository.upsertQuestion(session.id, object)
+    const parsed = QuestionSchema.safeParse(object)
+    if (!parsed.success) {
+      continue
+    }
+
+    lastGenerated = parsed.data
+    console.log(lastGenerated)
+    if (!isTooSimilar(parsed.data?.question, allPreviousQuestions)) {
+      await interviewSessionRepository.upsertQuestion(session.id, parsed.data)
       return {
-        ...object,
+        ...parsed.data,
         sessionId: session.id,
       }
     }
