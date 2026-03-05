@@ -58,6 +58,39 @@ export const interviewSessionRepository = {
     return (data ?? []).map((row: any) => row.question as string)
   },
 
+  async listReusableQuestions(params: {
+    topic: string
+    level: string
+    excludeSessionId?: string
+    limit?: number
+  }) {
+    const supabase = getSupabaseClient()
+    const { topic, level, excludeSessionId, limit = 20 } = params
+
+    let query = supabase
+      .from(TABLES.questions)
+      .select('session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
+      .eq('interview_sessions.topic', topic)
+      .eq('interview_sessions.level', level)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (excludeSessionId) {
+      query = query.neq('session_id', excludeSessionId)
+    }
+
+    const { data, error } = await query
+    if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
+
+    return (data ?? []).map((row: any) => ({
+      sessionId: row.session_id as string,
+      question: row.question as string,
+      initialCode: (row.initial_code as string | null) ?? undefined,
+      type: row.type as Question['type'],
+      createdAt: row.created_at as string,
+    }))
+  },
+
   async upsertQuestion(sessionId: string, question: Question) {
     const supabase = getSupabaseClient()
 

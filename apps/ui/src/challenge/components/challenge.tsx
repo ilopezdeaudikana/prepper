@@ -39,6 +39,7 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
+  const [generationStage, setGenerationStage] = useState<string | null>(null)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -119,11 +120,34 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     setLocalData(null)
   }, [topic, level])
 
+  useEffect(() => {
+    if (!isFetching) {
+      setGenerationStage(null)
+      return
+    }
+
+    const stages = [
+      'Checking reusable challenge pool...',
+      'Generating a fresh challenge variant...',
+      'Validating uniqueness against your history...',
+    ]
+
+    let stageIndex = 0
+    setGenerationStage(stages[stageIndex])
+
+    const intervalId = window.setInterval(() => {
+      stageIndex = Math.min(stageIndex + 1, stages.length - 1)
+      setGenerationStage(stages[stageIndex])
+    }, 1600)
+
+    return () => window.clearInterval(intervalId)
+  }, [isFetching])
+
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
       <div className="flex-1 min-h-0 overflow-y-auto">
         {(!localData || isFetching) && (
-          <div><p>Loading...</p></div>
+          <div><p>{generationStage ?? 'Loading challenge...'}</p></div>
         )}
         {localData?.error ? (
           <div><p>Error loading data</p><pre>{JSON.stringify(localData, null, 2)}</pre></div>

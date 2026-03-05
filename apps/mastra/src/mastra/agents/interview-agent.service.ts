@@ -31,6 +31,27 @@ const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
 
 const dedupeQuestions = (questions: string[]) => Array.from(new Set(questions))
 
+const findReusableQuestion = async (params: {
+  topic: string
+  level: string
+  sessionId: string
+  previousQuestions: string[]
+}) => {
+  const { topic, level, sessionId, previousQuestions } = params
+  const reusableQuestions = await interviewSessionRepository.listReusableQuestions({
+    topic,
+    level,
+    excludeSessionId: sessionId,
+    limit: 30,
+  })
+
+  return reusableQuestions.find(
+    (question) =>
+      !previousQuestions.includes(question.question) &&
+      !isTooSimilar(question.question, previousQuestions)
+  )
+}
+
 export const getChallenge = async (
   topic: string,
   level: string,
@@ -48,6 +69,23 @@ export const getChallenge = async (
   const session = existingSession ?? await interviewSessionRepository.createSession(topic, level)
   const persistedQuestions = await interviewSessionRepository.listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
+
+  const reusableQuestion = await findReusableQuestion({
+    topic,
+    level,
+    sessionId: session.id,
+    previousQuestions: allPreviousQuestions,
+  })
+
+  if (reusableQuestion) {
+    await interviewSessionRepository.upsertQuestion(session.id, reusableQuestion)
+    return {
+      question: reusableQuestion.question,
+      initialCode: reusableQuestion.initialCode,
+      type: reusableQuestion.type,
+      sessionId: session.id,
+    }
+  }
 
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
