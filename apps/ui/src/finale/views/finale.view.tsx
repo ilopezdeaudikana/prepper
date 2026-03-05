@@ -9,11 +9,11 @@ export default function FinaleView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  const canContinueToTarget = () => !level || !topic || stage !== FINAL_STAGE
+  const shouldRedirect = () => !level || !topic || stage !== FINAL_STAGE
 
   return (
     <div>
-      <Redirector condition={canContinueToTarget}>
+      <Redirector condition={shouldRedirect}>
         <Finale topic={topic} level={level} />
       </Redirector>
     </div>

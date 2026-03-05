@@ -6,8 +6,15 @@ import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
 import { ChallengeRequestSchema, EvaluationRequestSchema } from '@repo/shared-types'
-import { ZodError } from 'zod'
+import { z, ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
+import { prefillChallengePool } from './agents/interview-agent.service'
+
+const PrefillRequestSchema = z.object({
+  topics: z.array(z.string().min(1)).min(1).max(20),
+  levels: z.array(z.string().min(1)).min(1).max(10),
+  countPerPair: z.number().int().min(1).max(10).default(1),
+})
 
 export const mastra = new Mastra({
   agents: { interviewAgent },
@@ -86,6 +93,30 @@ export const mastra = new Mastra({
             return c.json(result.result)
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Invalid evaluation request'
+            const status = error instanceof ZodError ? 400 : 500
+            return c.json({ error: message }, status)
+          }
+        },
+      }),
+      registerApiRoute("/interview/prefill", {
+        method: "POST",
+        handler: async (c) => {
+          try {
+            const configuredSecret = process.env.PREFILL_SECRET
+            if (!configuredSecret) {
+              return c.json({ error: 'Prefill endpoint not configured' }, 500)
+            }
+
+            const authorization = c.req.header('authorization')
+            if (authorization !== `Bearer ${configuredSecret}`) {
+              return c.json({ error: 'Unauthorized' }, 401)
+            }
+
+            const payload = PrefillRequestSchema.parse(await c.req.json())
+            const result = await prefillChallengePool(payload)
+            return c.json(result)
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Invalid prefill request'
             const status = error instanceof ZodError ? 400 : 500
             return c.json({ error: message }, status)
           }

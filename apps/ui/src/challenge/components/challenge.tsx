@@ -22,15 +22,14 @@ import type { Feedback, Question } from '@repo/shared-types'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { useProgress } from '@/store/progress.store'
-import { useNavigate } from 'react-router-dom'
+import { useProgress, FINAL_STAGE } from '@/store/progress.store'
+import { GenerationState } from './generation-state'
 
 interface ChallengeProps {
   level: string
   topic: string
 }
 export const Challenge = ({ level, topic }: ChallengeProps) => {
-  const navigate = useNavigate()
 
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -39,7 +38,6 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
-  const [generationStage, setGenerationStage] = useState<string | null>(null)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -80,9 +78,9 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     setLoadingEvaluation(false)
 
     if (result.score > 7.5) {
-      if (stage === 5) {
-        setProgress({ score: score + result.score, stage: 5 })
-        navigate('/finale')
+      if (stage + 1 === FINAL_STAGE) {
+        // trigger redirection
+        setProgress({ score: score + result.score, stage: FINAL_STAGE })
         return
       } else {
         setProgress({ score: score + result.score, stage: stage + 1 })
@@ -98,6 +96,8 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     setCanContinue(false)
   }
   
+  const showForm = () => (!feedback && !loadingEvaluation) || !feedback
+
   useEffect(() => setLocalData(data ?? null), [data])
 
   useEffect(() => {
@@ -120,34 +120,11 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     setLocalData(null)
   }, [topic, level])
 
-  useEffect(() => {
-    if (!isFetching) {
-      setGenerationStage(null)
-      return
-    }
-
-    const stages = [
-      'Checking reusable challenge pool...',
-      'Generating a fresh challenge variant...',
-      'Validating uniqueness against your history...',
-    ]
-
-    let stageIndex = 0
-    setGenerationStage(stages[stageIndex])
-
-    const intervalId = window.setInterval(() => {
-      stageIndex = Math.min(stageIndex + 1, stages.length - 1)
-      setGenerationStage(stages[stageIndex])
-    }, 1600)
-
-    return () => window.clearInterval(intervalId)
-  }, [isFetching])
-
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
       <div className="flex-1 min-h-0 overflow-y-auto">
         {(!localData || isFetching) && (
-          <div><p>{generationStage ?? 'Loading challenge...'}</p></div>
+          <GenerationState isFetching={isFetching} />
         )}
         {localData?.error ? (
           <div><p>Error loading data</p><pre>{JSON.stringify(localData, null, 2)}</pre></div>
@@ -203,7 +180,7 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
             ))}
           </div>
         )}
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+        { showForm() && <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
           <div className="flex flex-col mb-2 gap-2">
             <label htmlFor='reply'>Type your reply here</label>
             <Textarea
@@ -213,11 +190,11 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
               value={input}
             />
             <Button type="submit" disabled={!input}>Submit</Button>
-            <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue}>
-              {isFetching ? 'Loading...' : 'Next question'}
-            </Button>
           </div>
-        </form>
+        </form>}
+        <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue}>
+          {isFetching ? 'Loading...' : 'Next question'}
+        </Button>
       </div>
     </div>
   )

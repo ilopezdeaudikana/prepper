@@ -56,7 +56,8 @@ export const getChallenge = async (
   topic: string,
   level: string,
   previousQuestions: string[] = [],
-  sessionId?: string
+  sessionId?: string,
+  options: { skipReuse?: boolean } = {}
 ) => {
   const existingSession = sessionId
     ? await interviewSessionRepository.getSession(sessionId)
@@ -70,20 +71,22 @@ export const getChallenge = async (
   const persistedQuestions = await interviewSessionRepository.listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
 
-  const reusableQuestion = await findReusableQuestion({
-    topic,
-    level,
-    sessionId: session.id,
-    previousQuestions: allPreviousQuestions,
-  })
-
-  if (reusableQuestion) {
-    await interviewSessionRepository.upsertQuestion(session.id, reusableQuestion)
-    return {
-      question: reusableQuestion.question,
-      initialCode: reusableQuestion.initialCode,
-      type: reusableQuestion.type,
+  if (!options.skipReuse) {
+    const reusableQuestion = await findReusableQuestion({
+      topic,
+      level,
       sessionId: session.id,
+      previousQuestions: allPreviousQuestions,
+    })
+
+    if (reusableQuestion) {
+      await interviewSessionRepository.upsertQuestion(session.id, reusableQuestion)
+      return {
+        question: reusableQuestion.question,
+        initialCode: reusableQuestion.initialCode,
+        type: reusableQuestion.type,
+        sessionId: session.id,
+      }
     }
   }
 
@@ -145,6 +148,41 @@ export const getChallenge = async (
   }
 }
 
+export const prefillChallengePool = async (params: {
+  topics: string[]
+  levels: string[]
+  countPerPair: number
+}) => {
+  const { topics, levels, countPerPair } = params
+  const jobs = topics.flatMap((topic) => levels.map((level) => ({ topic, level })))
+
+  let generated = 0
+  const failures: { topic: string; level: string; message: string }[] = []
+
+  for (const job of jobs) {
+    for (let index = 0; index < countPerPair; index += 1) {
+      try {
+        await getChallenge(job.topic, job.level, [], undefined, { skipReuse: true })
+        generated += 1
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown prefill error'
+        failures.push({
+          topic: job.topic,
+          level: job.level,
+          message,
+        })
+      }
+    }
+  }
+
+  return {
+    requested: jobs.length * countPerPair,
+    generated,
+    failed: failures.length,
+    failures,
+  }
+}
+
 export const submitAnswer = async (
   question: Question,
   userAnswer: string,
@@ -186,6 +224,6 @@ export const submitAnswer = async (
 
   return {
     ...object,
-    sessionId,
-  }
+        sessionId,
+      }
 }

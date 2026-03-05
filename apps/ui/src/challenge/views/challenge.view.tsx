@@ -9,11 +9,13 @@ export default function ChallengeView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  const canContinueToTarget = () => !level || !topic || stage === 0 || stage === FINAL_STAGE
+  const shouldRedirect = () => !level || !topic || stage === 0 || stage === FINAL_STAGE
+  
+  const to =  stage === FINAL_STAGE ? '/finale' : '/'
   
   return (
     <div>
-      <Redirector condition={canContinueToTarget}>
+      <Redirector condition={shouldRedirect} to={to}>
         <Challenge topic={topic} level={level} />
       </Redirector>
     </div>
