@@ -9,13 +9,6 @@ import {
   MessageResponse
 } from '@/components/ai-elements/message'
 
-import {
-  CodeBlock,
-  CodeBlockActions,
-  CodeBlockCopyButton,
-  CodeBlockHeader
-} from "@/components/ai-elements/code-block"
-
 import { ChallengeService } from '@/services/challenge.service'
 
 import type { Feedback, Question } from '@repo/shared-types'
@@ -24,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
+import { CodeArea } from './code-area'
 
 interface ChallengeProps {
   level: string
@@ -55,14 +49,6 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     refetchOnReconnect: false,
     refetchOnMount: false,
   })
-
-  const handleCopy = () => {
-    console.log('Copied code to clipboard')
-  }
-
-  const handleCopyError = () => {
-    console.error('Failed to copy code to clipboard')
-  }
 
   const handleSubmit = async () => {
     if (!input) return
@@ -143,14 +129,10 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
             <MessageContent>
               <MessageResponse
                 className='mb-4'
-              >{localData.question}</MessageResponse>
-              <CodeBlock code={localData.initialCode ?? ''} language="javascript">
-                <CodeBlockHeader>
-                  <CodeBlockActions>
-                    <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
-                  </CodeBlockActions>
-                </CodeBlockHeader>
-              </CodeBlock>
+              >
+                {localData.question}
+              </MessageResponse>
+              <CodeArea code={localData.initialCode ?? ''}/>
             </MessageContent>
           </Message>
         )}
@@ -168,12 +150,7 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
               <p>{feedback.critique}</p>
             )}
             {feedback.improvedCode && (
-              <CodeBlock code={feedback.improvedCode} language="javascript">
-                <CodeBlockHeader>Improved Code</CodeBlockHeader>
-                <CodeBlockActions>
-                  <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
-                </CodeBlockActions>
-              </CodeBlock>
+              <CodeArea code={feedback.improvedCode} header='Improved Code'/>
             )}
             {feedback.missedPoints && feedback.missedPoints.map((point, i) => (
               <p key={`missed-point-${i}`}>{point}</p>
