@@ -1,10 +1,11 @@
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
-import { Toast, type ToastPositionKey } from './toast'
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { Toast, type ToastPositionKey, TOAST_DEFAULT_HEIGHT } from './toast'
 
 interface ToastItem {
   id: string
   content: ToastContent
   position?: ToastPositionKey
+  height?: number
 }
 
 export interface ToastRenderContext {
@@ -18,6 +19,7 @@ export interface OpenToastOptions {
   content?: ToastContent
   message?: string
   position?: ToastPositionKey
+  height?: number
 }
 
 interface ToastContextProps {
@@ -49,7 +51,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     const toast: ToastItem = {
       id,
       content,
-      position: options.position
+      position: options.position,
+      height: options.height
     }
 
     setToasts((currentToasts) => [
@@ -69,11 +72,16 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== id))
   }, [])
 
+  const calculateStackOffset = (index: number, height?: number): number => {
+    return TOAST_DEFAULT_HEIGHT + (index * (height ?? TOAST_DEFAULT_HEIGHT))
+  }
+  const contextValue = useMemo(() => ({ openToast, closeToast }), [openToast, closeToast])
+
   return (
-    <ToastContext value={{ openToast, closeToast }}>
+    <ToastContext value={contextValue}>
       {children}
-      {toasts.map((toast) => (
-        <Toast key={toast.id} position={toast.position}>
+      {toasts.map((toast, index) => (
+        <Toast key={toast.id} id={toast.id} position={toast.position} stackOffset={calculateStackOffset(index, toast.height)}>
           {typeof toast.content === 'function'
             ? toast.content({ id: toast.id, close: () => closeToast(toast.id) })
             : (
