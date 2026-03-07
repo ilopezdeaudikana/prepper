@@ -30,6 +30,7 @@ const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
   previousQuestions.some((prev) => jaccardSimilarity(candidate, prev) >= 0.55)
 
 const dedupeQuestions = (questions: string[]) => Array.from(new Set(questions))
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const findReusableQuestion = async (params: {
   topic: string
@@ -154,29 +155,33 @@ export const prefillChallengePool = async (params: {
   countPerPair: number
 }) => {
   const { topics, levels, countPerPair } = params
-  const jobs = topics.flatMap((topic) => levels.map((level) => ({ topic, level })))
+  const jobs = topics
+    .flatMap((topic) => levels.map((level) => ({ topic, level })))
+    .flatMap((job) => Array.from({ length: countPerPair }, () => job))
 
   let generated = 0
   const failures: { topic: string; level: string; message: string }[] = []
 
-  for (const job of jobs) {
-    for (let index = 0; index < countPerPair; index += 1) {
-      try {
-        await getChallenge(job.topic, job.level, [], undefined, { skipReuse: true })
-        generated += 1
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown prefill error'
-        failures.push({
-          topic: job.topic,
-          level: job.level,
-          message,
-        })
-      }
+  for (const [index, job] of jobs.entries()) {
+    try {
+      await getChallenge(job.topic, job.level, [], undefined, { skipReuse: true })
+      generated += 1
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown prefill error'
+      failures.push({
+        topic: job.topic,
+        level: job.level,
+        message,
+      })
+    }
+
+    if (index < jobs.length - 1) {
+      await sleep(13_000)
     }
   }
 
   return {
-    requested: jobs.length * countPerPair,
+    requested: jobs.length,
     generated,
     failed: failures.length,
     failures,

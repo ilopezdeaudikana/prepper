@@ -114,8 +114,10 @@ export const mastra = new Mastra({
 
             const payload = PrefillRequestSchema.parse(await c.req.json())
             const result = await prefillChallengePool(payload)
+            console.log(result)
             return c.json(result)
           } catch (error) {
+            console.log(error)
             const message = error instanceof Error ? error.message : 'Invalid prefill request'
             const status = error instanceof ZodError ? 400 : 500
             return c.json({ error: message }, status)
