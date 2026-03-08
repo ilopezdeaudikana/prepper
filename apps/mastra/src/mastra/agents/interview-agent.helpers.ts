@@ -1,5 +1,5 @@
 import { interviewAgent } from "./interview-agent"
-import { interviewSessionRepository } from "../storage/interview-session.repository"
+import { listReusableQuestions } from "../storage/interview-session.repository"
 
 const MAX_REQUESTS_PER_MINUTE = 5
 const MIN_GENERATE_INTERVAL_MS = Math.ceil(60_000 / MAX_REQUESTS_PER_MINUTE)
@@ -67,7 +67,7 @@ export const findReusableQuestion = async (params: {
   previousQuestions: string[]
 }) => {
   const { topic, level, sessionId, previousQuestions } = params
-  const reusableQuestions = await interviewSessionRepository.listReusableQuestions({
+  const reusableQuestions = await listReusableQuestions({
     topic,
     level,
     excludeSessionId: sessionId,

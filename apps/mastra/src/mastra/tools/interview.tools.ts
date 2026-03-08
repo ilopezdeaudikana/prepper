@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
-import { interviewSessionRepository } from '../storage/interview-session.repository'
+import { listQuestionTexts } from '../storage/interview-session.repository'
 
 const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
   junior: {
@@ -40,7 +40,7 @@ export const sessionQuestionHistoryTool = createTool({
     total: z.number(),
   }),
   execute: async ({ sessionId }) => {
-    const questions = await interviewSessionRepository.listQuestionTexts(sessionId)
+    const questions = await listQuestionTexts(sessionId)
     return {
       questions,
       total: questions.length,

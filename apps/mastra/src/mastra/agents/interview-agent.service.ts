@@ -1,5 +1,11 @@
 import { type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
-import { interviewSessionRepository } from "../storage/interview-session.repository"
+import {
+  createFeedback,
+  createSession,
+  getSession,
+  listQuestionTexts,
+  upsertQuestion,
+} from "../storage/interview-session.repository"
 import {
   dedupeQuestions,
   findReusableQuestion,
@@ -14,16 +20,17 @@ export const getChallenge = async (
   sessionId?: string,
   options: { skipReuse?: boolean } = {}
 ) => {
+
   const existingSession = sessionId
-    ? await interviewSessionRepository.getSession(sessionId)
+    ? await getSession(sessionId)
     : null
 
   if (sessionId && !existingSession) {
     throw new Error(`Interview session not found: ${sessionId}`)
   }
 
-  const session = existingSession ?? await interviewSessionRepository.createSession(topic, level)
-  const persistedQuestions = await interviewSessionRepository.listQuestionTexts(session.id)
+  const session = existingSession ?? await createSession(topic, level)
+  const persistedQuestions = await listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
 
   if (!options.skipReuse) {
@@ -35,7 +42,7 @@ export const getChallenge = async (
     })
 
     if (reusableQuestion) {
-      await interviewSessionRepository.upsertQuestion(session.id, reusableQuestion)
+      await upsertQuestion(session.id, reusableQuestion)
       return {
         question: reusableQuestion.question,
         initialCode: reusableQuestion.initialCode,
@@ -83,9 +90,11 @@ export const getChallenge = async (
     }
 
     lastGenerated = parsed.data
+
     console.log(lastGenerated)
+
     if (!isTooSimilar(parsed.data?.question, allPreviousQuestions)) {
-      await interviewSessionRepository.upsertQuestion(session.id, parsed.data)
+      await upsertQuestion(session.id, parsed.data)
       return {
         ...parsed.data,
         sessionId: session.id,
@@ -97,7 +106,7 @@ export const getChallenge = async (
     throw new Error("Failed to generate challenge")
   }
 
-  await interviewSessionRepository.upsertQuestion(session.id, lastGenerated)
+  await upsertQuestion(session.id, lastGenerated)
   return {
     ...lastGenerated,
     sessionId: session.id,
@@ -169,13 +178,13 @@ export const submitAnswer = async (
     return generatedFeedback
   }
 
-  const session = await interviewSessionRepository.getSession(sessionId)
+  const session = await getSession(sessionId)
   if (!session) {
     throw new Error(`Interview session not found: ${sessionId}`)
   }
 
-  const questionId = await interviewSessionRepository.upsertQuestion(sessionId, question)
-  await interviewSessionRepository.createFeedback({
+  const questionId = await upsertQuestion(sessionId, question)
+  await createFeedback({
     sessionId,
     questionId,
     answer: userAnswer,
