@@ -1,57 +1,11 @@
-import { interviewAgent } from "./interview-agent"
-import { type Feedback, type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
+import { type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
 import { interviewSessionRepository } from "../storage/interview-session.repository"
-
-const normalize = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-
-const tokenSet = (text: string) => new Set(normalize(text).split(" ").filter(Boolean))
-
-const jaccardSimilarity = (a: string, b: string) => {
-  const aTokens = tokenSet(a)
-  const bTokens = tokenSet(b)
-
-  if (aTokens.size === 0 || bTokens.size === 0) return 0
-
-  let intersection = 0
-  for (const token of aTokens) {
-    if (bTokens.has(token)) intersection += 1
-  }
-
-  const union = new Set([...aTokens, ...bTokens]).size
-  return union === 0 ? 0 : intersection / union
-}
-
-const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
-  previousQuestions.some((prev) => jaccardSimilarity(candidate, prev) >= 0.55)
-
-const dedupeQuestions = (questions: string[]) => Array.from(new Set(questions))
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const findReusableQuestion = async (params: {
-  topic: string
-  level: string
-  sessionId: string
-  previousQuestions: string[]
-}) => {
-  const { topic, level, sessionId, previousQuestions } = params
-  const reusableQuestions = await interviewSessionRepository.listReusableQuestions({
-    topic,
-    level,
-    excludeSessionId: sessionId,
-    limit: 30,
-  })
-
-  return reusableQuestions.find(
-    (question) =>
-      !previousQuestions.includes(question.question) &&
-      !isTooSimilar(question.question, previousQuestions)
-  )
-}
+import {
+  dedupeQuestions,
+  findReusableQuestion,
+  generateWithRateLimit,
+  isTooSimilar,
+} from "./interview-agent.helpers"
 
 export const getChallenge = async (
   topic: string,
@@ -100,7 +54,7 @@ export const getChallenge = async (
   let lastGenerated: Question | null = null
 
   for (let attempt = 1; attempt <= 4; attempt += 1) {
-    const { object } = await interviewAgent.generate(
+    const generationResponse = await generateWithRateLimit(
       `Generate one ${level}-level frontend interview challenge about ${topic}.
       Requirements:
       - Return exactly one challenge.
@@ -121,8 +75,9 @@ export const getChallenge = async (
         },
       }
     )
+    const generatedQuestion = generationResponse.object
 
-    const parsed = QuestionSchema.safeParse(object)
+    const parsed = QuestionSchema.safeParse(generatedQuestion)
     if (!parsed.success) {
       continue
     }
@@ -162,7 +117,7 @@ export const prefillChallengePool = async (params: {
   let generated = 0
   const failures: { topic: string; level: string; message: string }[] = []
 
-  for (const [index, job] of jobs.entries()) {
+  for (const job of jobs) {
     try {
       await getChallenge(job.topic, job.level, [], undefined, { skipReuse: true })
       generated += 1
@@ -173,10 +128,6 @@ export const prefillChallengePool = async (params: {
         level: job.level,
         message,
       })
-    }
-
-    if (index < jobs.length - 1) {
-      await sleep(13_000)
     }
   }
 
@@ -194,7 +145,7 @@ export const submitAnswer = async (
   level: string,
   sessionId?: string
 ) => {
-  const { object } = await interviewAgent.generate(
+  const generationResponse = await generateWithRateLimit(
     `Level: ${level}
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer}
@@ -208,9 +159,14 @@ export const submitAnswer = async (
       },
     }
   )
+  const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+  if (!parsedFeedback.success) {
+    throw new Error("Failed to generate feedback")
+  }
+  const generatedFeedback = parsedFeedback.data
 
   if (!sessionId) {
-    return object
+    return generatedFeedback
   }
 
   const session = await interviewSessionRepository.getSession(sessionId)
@@ -224,11 +180,11 @@ export const submitAnswer = async (
     questionId,
     answer: userAnswer,
     level,
-    feedback: object as Feedback,
+    feedback: generatedFeedback,
   })
 
   return {
-    ...object,
-        sessionId,
-      }
+    ...generatedFeedback,
+    sessionId,
+  }
 }
