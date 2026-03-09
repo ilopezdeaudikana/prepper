@@ -13,6 +13,16 @@ import {
   isTooSimilar,
 } from "./interview-agent.helpers"
 
+const formatReusableQuestion = async (sessionId: string, reusableQuestion: Question) => {
+  await upsertQuestion(sessionId, reusableQuestion)
+  return {
+    question: reusableQuestion.question,
+    initialCode: reusableQuestion.initialCode,
+    type: reusableQuestion.type,
+    sessionId,
+  }
+}
+
 export const getChallenge = async (
   topic: string,
   level: string,
@@ -42,22 +52,28 @@ export const getChallenge = async (
     const reusableQuestion = await findReusableQuestion({
       topic,
       level,
-      sessionId: session.id,
+      excludeSessionId: session.id,
       previousQuestions: allPreviousQuestions,
     })
 
     if (reusableQuestion) {
-      await upsertQuestion(session.id, reusableQuestion)
-      return {
-        question: reusableQuestion.question,
-        initialCode: reusableQuestion.initialCode,
-        type: reusableQuestion.type,
-        sessionId: session.id,
-      }
+      return formatReusableQuestion(session.id, reusableQuestion)
     }
   }
 
   if (forceReuse) {
+    // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
+    const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
+    const fallbackReusable = await findReusableQuestion({
+      topic,
+      level,
+      previousQuestions: latestQuestion ? [latestQuestion] : [],
+    })
+
+    if (fallbackReusable) {
+      return formatReusableQuestion(session.id, fallbackReusable)
+    }
+
     throw new Error(`No reusable challenge found for topic "${topic}" at level "${level}"`)
   }
 

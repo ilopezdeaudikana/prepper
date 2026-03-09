@@ -63,14 +63,14 @@ export const generateWithRateLimit = (...args: Parameters<typeof interviewAgent.
 export const findReusableQuestion = async (params: {
   topic: string
   level: string
-  sessionId: string
+  excludeSessionId?: string
   previousQuestions: string[]
 }) => {
-  const { topic, level, sessionId, previousQuestions } = params
+  const { topic, level, excludeSessionId, previousQuestions } = params
   const reusableQuestions = await listReusableQuestions({
     topic,
     level,
-    excludeSessionId: sessionId,
+    excludeSessionId,
     limit: 30,
   })
 
