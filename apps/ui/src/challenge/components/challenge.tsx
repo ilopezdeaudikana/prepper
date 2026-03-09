@@ -98,7 +98,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     setCanContinue(false)
   }
   
-  const showForm = () => (!feedback && !loadingEvaluation) || !feedback
+  const shouldShowForm = feedback === null && !loadingEvaluation
 
   useEffect(() => setLocalData(data ?? null), [data])
 
@@ -174,7 +174,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
             ))}
           </div>
         )}
-        { showForm() && <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+        {shouldShowForm && <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
           <div className="flex flex-col mb-2 gap-2">
             <label htmlFor='reply'>Type your reply here</label>
             <Textarea
