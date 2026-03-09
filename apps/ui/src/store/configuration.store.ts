@@ -4,6 +4,7 @@ export interface Configuration {
   topic: string
   level: string
   randomMode: boolean
+  storageMode?: boolean
 }
 
 export interface ConfigurationStore {

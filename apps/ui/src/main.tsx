@@ -7,7 +7,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import ErrorBoundary from './components/ui/error-boundary'
+import ErrorBoundary from './components/common/error-boundary'
 import { ToastProvider } from '@repo/toast'
 
 const queryClient = new QueryClient()

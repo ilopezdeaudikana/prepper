@@ -1,11 +1,11 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { Switch } from 'radix-ui'
+import { Switch as SwitchPrimitive } from 'radix-ui'
 
-function Toggle({ className, id, ...props }: React.ComponentPropsWithRef<typeof Switch.Root>) {
+export const Switch =({ className, id, ...props }: React.ComponentPropsWithRef<typeof SwitchPrimitive.Root>) => {
   return (
-    <Switch.Root className={cn(
+    <SwitchPrimitive.Root className={cn(
       `relative h-[25px] w-[42px] rounded-full
         bg-[var(--color-foreground)]
         shadow-[0_2px_10px_var(--color-ring)]
@@ -16,15 +16,13 @@ function Toggle({ className, id, ...props }: React.ComponentPropsWithRef<typeof 
     )}
       id={id}
       {...props}>
-      <Switch.Thumb className={
+      <SwitchPrimitive.Thumb className={
         `block h-[21px] w-[21px] rounded-full bg-[var(--color-background)]
         shadow-[0_2px_2px_var(--color-ring)]
         transition-transform duration-100
         translate-x-[2px] will-change-transform
         data-[state=checked]:translate-x-[19px]`}   
       />
-    </Switch.Root>
+    </SwitchPrimitive.Root>
   )
 }
-
-export { Toggle }

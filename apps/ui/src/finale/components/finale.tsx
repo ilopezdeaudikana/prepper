@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/common/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
 
-export const Finale = ({ topic, level, randomMode } : Configuration) => {
+export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'storageMode'>) => {
 
   const resetConfiguration = useConfiguration((state: ConfigurationStore) => state.resetConfiguration)
 

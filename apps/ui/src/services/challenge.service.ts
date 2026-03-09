@@ -1,6 +1,7 @@
 import type { EvaluationResponse, Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
+import { useConfiguration, type ConfigurationStore } from "@/store/configuration.store"
 
 const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
@@ -13,6 +14,9 @@ export const ChallengeService = {
     if (process.env.NODE_ENV === 'development') {
       return Promise.resolve(sample as ChallengeResponse)
     }
+    
+    const { storageMode } = useConfiguration((state: ConfigurationStore) => state.configuration)
+    
     const {topic, level} = options
 
     const response = await fetch(getApiUrl('interview/challenge'), {
@@ -20,7 +24,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level, previousQuestions, sessionId }),
+      body: JSON.stringify({ topic, level, previousQuestions, sessionId, options: { forceReuse: storageMode }}),
     })
     return response.json() as Promise<ChallengeResponse>
   },

@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { Input } from '@/components/common/input'
+import { Button } from '@/components/common/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/select'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
-import { Toggle } from '@/components/ui/switch'
+import { Switch } from '@/components/common/switch'
+import { Checkbox } from '@/components/common/checkbox'
+
 import { Topic } from '@repo/shared-types'
 
 export default function Configuration() {
@@ -87,11 +89,19 @@ export default function Configuration() {
             >
               Random mode
             </label>
-            <Toggle
+            <Switch
               id="random-mode"
               onCheckedChange={(e) => handleChange('randomMode', e)}
               checked={configuration.randomMode}
             />
+          </div>
+          <div className="flex gap-4 items-center mt-2">
+            <label
+              htmlFor="storage-mode"
+            >
+              Use previously stored challenges
+            </label>
+            <Checkbox id="storage-mode" onCheckedChange={(e) => handleChange('storageMode', e)}/>
           </div>
           <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
         </div>

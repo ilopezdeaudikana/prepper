@@ -11,15 +11,15 @@ import {
 
 import { ChallengeService } from '@/services/challenge.service'
 import { type Feedback, type Question, Topic } from '@repo/shared-types'
-import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/common/badge'
+import { Textarea } from '@/components/common/textarea'
+import { Button } from '@/components/common/button'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
 import type { Configuration } from '@/store/configuration.store'
 
-export const Challenge = ({ level, topic, randomMode }: Configuration) => {
+export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'storageMode'>) => {
   const SCORE = 7
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
