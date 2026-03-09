@@ -41,3 +41,13 @@ export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
 export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
 export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
 export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
+
+export const Topic = {
+  react: 'react',
+  nextjs: 'nextjs',
+  typescript: 'typescript',
+  javascript: 'javascript',
+  css: 'css',
+} as const
+
+export type TopicKey = (typeof Topic)[keyof typeof Topic]

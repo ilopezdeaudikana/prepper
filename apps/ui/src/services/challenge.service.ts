@@ -9,10 +9,12 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 export type ChallengeResponse = Question & { sessionId?: string }
 
 export const ChallengeService = {
-  async getChallenge(topic: string, level: string, previousQuestions: string[] = [], sessionId?: string) {
+  async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionId?: string) {
     if (process.env.NODE_ENV === 'development') {
       return Promise.resolve(sample as ChallengeResponse)
     }
+    const {topic, level} = options
+
     const response = await fetch(getApiUrl('interview/challenge'), {
       method: 'POST',
       headers: {

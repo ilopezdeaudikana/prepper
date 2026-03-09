@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
+import type { ComponentPropsWithRef, CSSProperties, HTMLAttributes } from "react";
 import type {
   BundledLanguage,
   BundledTheme,
@@ -442,7 +442,7 @@ export const CodeBlock = ({
   );
 };
 
-export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
+export type CodeBlockCopyButtonProps = ComponentPropsWithRef<typeof Button> & {
   onCopy?: () => void;
   onError?: (error: Error) => void;
   timeout?: number;
@@ -503,13 +503,13 @@ export const CodeBlockCopyButton = ({
   );
 };
 
-export type CodeBlockLanguageSelectorProps = ComponentProps<typeof Select>;
+export type CodeBlockLanguageSelectorProps = ComponentPropsWithRef<typeof Select>;
 
 export const CodeBlockLanguageSelector = (
   props: CodeBlockLanguageSelectorProps
 ) => <Select {...props} />;
 
-export type CodeBlockLanguageSelectorTriggerProps = ComponentProps<
+export type CodeBlockLanguageSelectorTriggerProps = ComponentPropsWithRef<
   typeof SelectTrigger
 >;
 
@@ -527,7 +527,7 @@ export const CodeBlockLanguageSelectorTrigger = ({
   />
 );
 
-export type CodeBlockLanguageSelectorValueProps = ComponentProps<
+export type CodeBlockLanguageSelectorValueProps = ComponentPropsWithRef<
   typeof SelectValue
 >;
 
@@ -535,7 +535,7 @@ export const CodeBlockLanguageSelectorValue = (
   props: CodeBlockLanguageSelectorValueProps
 ) => <SelectValue {...props} />;
 
-export type CodeBlockLanguageSelectorContentProps = ComponentProps<
+export type CodeBlockLanguageSelectorContentProps = ComponentPropsWithRef<
   typeof SelectContent
 >;
 
@@ -546,7 +546,7 @@ export const CodeBlockLanguageSelectorContent = ({
   <SelectContent align={align} {...props} />
 );
 
-export type CodeBlockLanguageSelectorItemProps = ComponentProps<
+export type CodeBlockLanguageSelectorItemProps = ComponentPropsWithRef<
   typeof SelectItem
 >;
 

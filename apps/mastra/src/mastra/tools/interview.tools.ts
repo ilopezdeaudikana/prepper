@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
 import { listQuestionTexts } from '../storage/interview-session.repository'
+import { Topic, TopicKey } from '@repo/shared-types'
 
 const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
   junior: {
@@ -19,12 +20,15 @@ const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
 
 const challengeFormats = ['debugging', 'refactor', 'feature extension', 'architecture decision']
 
-const topicExpansions: Record<string, string[]> = {
-  react: ['state management', 'render performance', 'hooks', 'accessibility'],
-  typescript: ['type narrowing', 'generic APIs', 'utility types', 'runtime validation boundaries'],
-  javascript: ['async control flow', 'closures', 'event loop', 'data transformations'],
-  css: ['layout systems', 'responsive strategy', 'design tokens', 'animation performance'],
+const topicExpansions: Record<TopicKey, readonly string[]> = {
+  [Topic.react]: ['state management', 'render performance', 'hooks', 'accessibility'],
+  [Topic.nextjs]: ['app router', 'server components', 'data fetching and caching', 'rendering strategies'],
+  [Topic.typescript]: ['type narrowing', 'generic APIs', 'utility types', 'runtime validation boundaries'],
+  [Topic.javascript]: ['async control flow', 'closures', 'event loop', 'data transformations'],
+  [Topic.css]: ['layout systems', 'responsive strategy', 'design tokens', 'animation performance'],
 }
+
+const isTopicExpansionKey = (value: string): value is TopicKey => value in topicExpansions
 
 const normalizeLevel = (level: string) => level.trim().toLowerCase()
 const normalizeTopic = (topic: string) => topic.trim().toLowerCase()
@@ -33,7 +37,7 @@ export const sessionQuestionHistoryTool = createTool({
   id: 'session-question-history-tool',
   description: 'Fetches previously asked interview questions for a session to avoid repetitions.',
   inputSchema: z.object({
-    sessionId: z.string().uuid(),
+    sessionId: z.uuid(),
   }),
   outputSchema: z.object({
     questions: z.array(z.string()),
@@ -65,11 +69,13 @@ export const challengePlanningTool = createTool({
     const normalizedLevel = normalizeLevel(level)
 
     const suggestedSubtopics =
-      topicExpansions[normalizedTopic] ?? [
-        `${topic} fundamentals`,
-        `${topic} performance`,
-        `${topic} maintainability`,
-      ]
+      isTopicExpansionKey(normalizedTopic)
+        ? [...topicExpansions[normalizedTopic]]
+        : [
+          `${topic} fundamentals`,
+          `${topic} performance`,
+          `${topic} maintainability`,
+        ]
 
     const levelFocus = levelGuide[normalizedLevel]?.focus ?? ['Clarity', 'Correctness', 'Pragmatism']
 

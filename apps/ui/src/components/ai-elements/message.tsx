@@ -1,7 +1,7 @@
 "use client";
 
 import type { UIMessage } from "ai";
-import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
+import type { ComponentPropsWithRef, HTMLAttributes, ReactElement } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -66,7 +66,7 @@ export const MessageContent = ({
   </div>
 );
 
-export type MessageActionsProps = ComponentProps<"div">;
+export type MessageActionsProps = ComponentPropsWithRef<"div">;
 
 export const MessageActions = ({
   className,
@@ -78,7 +78,7 @@ export const MessageActions = ({
   </div>
 );
 
-export type MessageActionProps = ComponentProps<typeof Button> & {
+export type MessageActionProps = ComponentPropsWithRef<typeof Button> & {
   tooltip?: string;
   label?: string;
 };
@@ -228,7 +228,7 @@ export const MessageBranchContent = ({
   ));
 };
 
-export type MessageBranchSelectorProps = ComponentProps<typeof ButtonGroup>;
+export type MessageBranchSelectorProps = ComponentPropsWithRef<typeof ButtonGroup>;
 
 export const MessageBranchSelector = ({
   className,
@@ -253,7 +253,7 @@ export const MessageBranchSelector = ({
   );
 };
 
-export type MessageBranchPreviousProps = ComponentProps<typeof Button>;
+export type MessageBranchPreviousProps = ComponentPropsWithRef<typeof Button>;
 
 export const MessageBranchPrevious = ({
   children,
@@ -276,7 +276,7 @@ export const MessageBranchPrevious = ({
   );
 };
 
-export type MessageBranchNextProps = ComponentProps<typeof Button>;
+export type MessageBranchNextProps = ComponentPropsWithRef<typeof Button>;
 
 export const MessageBranchNext = ({
   children,
@@ -320,7 +320,7 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+export type MessageResponseProps = ComponentPropsWithRef<typeof Streamdown>;
 
 const streamdownPlugins = { cjk, code, math, mermaid };
 
@@ -340,7 +340,7 @@ export const MessageResponse = memo(
 
 MessageResponse.displayName = "MessageResponse";
 
-export type MessageToolbarProps = ComponentProps<"div">;
+export type MessageToolbarProps = ComponentPropsWithRef<"div">;
 
 export const MessageToolbar = ({
   className,

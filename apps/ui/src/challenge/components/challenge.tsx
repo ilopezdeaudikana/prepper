@@ -10,21 +10,17 @@ import {
 } from '@/components/ai-elements/message'
 
 import { ChallengeService } from '@/services/challenge.service'
-
-import type { Feedback, Question } from '@repo/shared-types'
+import { type Feedback, type Question, Topic } from '@repo/shared-types'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
+import type { Configuration } from '@/store/configuration.store'
 
-interface ChallengeProps {
-  level: string
-  topic: string
-}
-export const Challenge = ({ level, topic }: ChallengeProps) => {
-
+export const Challenge = ({ level, topic, randomMode }: Configuration) => {
+  const SCORE = 7
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [canContinue, setCanContinue] = useState(false)
@@ -36,11 +32,27 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
 
+  const levels = ['junior', 'mid', 'senior'] as const
+
+  const getRandomValue = <T,>(arr: readonly T[]): T => {
+    if (arr.length === 0) throw new Error('Cannot pick from an empty array')
+    const index = Math.floor(Math.random() * arr.length)
+    return arr[index]
+  }
+
+  const getRandomTopicAndLevel = () => ({
+    topic: getRandomValue(Object.values(Topic)),
+    level: getRandomValue(levels),
+  })
+
+  const [topicAndLevel, setTopicAndLevel] = useState(() =>
+    randomMode ? getRandomTopicAndLevel() : { topic, level }
+  )
+
   const { data, refetch, isFetching } = useQuery({
-    queryKey: ['question', topic, level, sessionId],
+    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, sessionId],
     queryFn: () => ChallengeService.getChallenge(
-      topic,
-      level,
+      topicAndLevel,
       previousQuestions,
       sessionId ?? undefined
     ),
@@ -57,13 +69,13 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     const result: Feedback = await ChallengeService.submitAnswer(
       data as Question,
       input,
-      level,
+      topicAndLevel.level,
       sessionId ?? undefined
     )
     setFeedback(result)
     setLoadingEvaluation(false)
 
-    if (result.score > 7.5) {
+    if (result.score > SCORE) {
       if (stage + 1 === FINAL_STAGE) {
         // trigger redirection
         setProgress({ score: score + result.score, stage: FINAL_STAGE })
@@ -78,7 +90,11 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
   const loadNextQuestion = async () => {
     setLocalData(null)
     setFeedback(null)
-    await refetch()
+    if (randomMode) {
+      setTopicAndLevel(getRandomTopicAndLevel())
+    } else {
+      await refetch()
+    }
     setCanContinue(false)
   }
   
@@ -104,7 +120,8 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
     setPreviousQuestions([])
     setFeedback(null)
     setLocalData(null)
-  }, [topic, level])
+    setTopicAndLevel(randomMode ? getRandomTopicAndLevel() : { topic, level })
+  }, [topic, level, randomMode])
 
   return (
     <div className="max-w-9/10 flex h-screen flex-col mx-auto p-4 relative align-self-center gap-4">
@@ -144,7 +161,7 @@ export const Challenge = ({ level, topic }: ChallengeProps) => {
         {feedback && (
           <div className="mt-2 max-h-[40vh] overflow-y-auto pr-1">
             {feedback.score && (
-              <p><Badge className="mr-2" color={feedback.score > 7.5 ? 'green' : 'red'}>{feedback.score}</Badge></p>
+              <p><Badge className="mr-2" color={feedback.score > SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
             )}
             {feedback.critique && (
               <p>{feedback.critique}</p>
