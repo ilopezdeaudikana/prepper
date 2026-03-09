@@ -1,7 +1,7 @@
 import type { EvaluationResponse, Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
-import { useConfiguration, type ConfigurationStore } from "@/store/configuration.store"
+import { useConfiguration } from "@/store/configuration.store"
 
 const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
@@ -15,7 +15,7 @@ export const ChallengeService = {
       return Promise.resolve(sample as ChallengeResponse)
     }
     
-    const { storageMode } = useConfiguration((state: ConfigurationStore) => state.configuration)
+    const { storageMode } = useConfiguration.getState().configuration
     
     const {topic, level} = options
 
