@@ -25,11 +25,12 @@ export default function Configuration() {
   }
 
   const handleSubmit = async () => {
-    const { topic, level, randomMode } = configuration
+    const { topic, level, randomMode, storageMode } = configuration
     setConfiguration({
       topic: topic.trim(),
       level: level.trim(),
-      randomMode
+      randomMode,
+      storageMode
     })
     setProgress({ score: 0, stage: 1 })
     navigate('/challenge')

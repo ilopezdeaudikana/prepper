@@ -20,7 +20,9 @@ export const getChallenge = async (
   sessionId?: string,
   options?: { skipReuse?: boolean, forceReuse?: boolean }
 ) => {
-  if (options && options.forceReuse && options.skipReuse) {
+  const {forceReuse, skipReuse } = options ?? {}
+
+  if (forceReuse && skipReuse) {
     throw new Error("Invalid options: forceReuse cannot be combined with skipReuse")
   }
 
@@ -36,7 +38,7 @@ export const getChallenge = async (
   const persistedQuestions = await listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
 
-  if (options && !options.skipReuse) {
+  if (!skipReuse) {
     const reusableQuestion = await findReusableQuestion({
       topic,
       level,
@@ -55,7 +57,7 @@ export const getChallenge = async (
     }
   }
 
-  if (options && options.forceReuse) {
+  if (forceReuse) {
     throw new Error(`No reusable challenge found for topic "${topic}" at level "${level}"`)
   }
 

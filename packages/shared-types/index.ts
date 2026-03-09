@@ -18,6 +18,10 @@ export const ChallengeRequestSchema = z.object({
   level: z.string().min(1),
   previousQuestions: z.array(z.string()).default([]),
   sessionId: z.string().uuid().optional(),
+  options: z.object({
+    skipReuse: z.boolean().optional(),
+    forceReuse: z.boolean().optional(),
+  }).optional(),
 })
 
 export const ChallengeResponseSchema = QuestionSchema.extend({
