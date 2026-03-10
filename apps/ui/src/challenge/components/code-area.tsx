@@ -1,6 +1,7 @@
 import { CodeBlock, CodeBlockActions, CodeBlockCopyButton, CodeBlockHeader } from '@/components/ai-elements/code-block'
 import { type JSX } from 'react'
 import { useToast } from '@repo/toast'
+import { cn } from '@/lib/utils'
 
 interface CodeAreaProps {
   code: string, 
@@ -8,9 +9,17 @@ interface CodeAreaProps {
   editable?: boolean
   onEdit?: (code: string) => void
   inputAriaLabelledBy?: string
+  className?: string
 }
 
-export const CodeArea = ({ code, header, editable, onEdit, inputAriaLabelledBy }: CodeAreaProps): JSX.Element => {
+export const CodeArea = ({
+  code,
+  header,
+  editable,
+  onEdit,
+  inputAriaLabelledBy,
+  className,
+}: CodeAreaProps): JSX.Element => {
 
   const { openToast } = useToast()
 
@@ -24,7 +33,7 @@ export const CodeArea = ({ code, header, editable, onEdit, inputAriaLabelledBy }
 
   return (
     <CodeBlock
-      className='dark flex flex-col overflow-auto h-full'
+      className={cn('dark', className)}
       code={code ?? ''}
       language="javascript"
       editable={editable}

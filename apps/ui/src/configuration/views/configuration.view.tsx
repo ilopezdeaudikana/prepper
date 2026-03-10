@@ -9,6 +9,7 @@ import { Switch } from '@/components/common/switch'
 import { Checkbox } from '@/components/common/checkbox'
 
 import { Topic } from '@repo/shared-types'
+import { Card } from '@/components/common/card'
 
 export default function Configuration() {
 
@@ -42,77 +43,79 @@ export default function Configuration() {
 
   return (
     <div className="max-w-1/2 flex flex-col mx-auto p-4 relative h-screen justify-between align-self-center">
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
-        <div className="flex flex-col mb-2 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold mb-2">Configure your FE challenge</h1>
-            <p>Choose a topic and a difficulty level to start the challenge.</p>
-          </div>
-          <div>
-            <label htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
-            <Input
-              id="topic"
-              name="topic"
-              onChange={(e) => handleChange('topic', e.target.value)}
-              className="mb-2 mt-4"
-              value={configuration.topic}
-              disabled={configuration.randomMode}
-            />
-          </div>
-          <div
-          >
-            <label
-              htmlFor="level"
-              className="block mb-4 mt-2"
+      <Card>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+          <div className="flex flex-col mb-2 gap-4">
+            <div>
+              <h1 className="text-2xl font-bold mb-2">Configure your FE challenge</h1>
+              <p>Choose a topic and a difficulty level to start the challenge.</p>
+            </div>
+            <div>
+              <label htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
+              <Input
+                id="topic"
+                name="topic"
+                onChange={(e) => handleChange('topic', e.target.value)}
+                className="mb-2 mt-4"
+                value={configuration.topic}
+                disabled={configuration.randomMode}
+              />
+            </div>
+            <div
             >
-              Level
-            </label>
-            <Select
-              name="level"
-              value={configuration.level}
-              onValueChange={(e) => handleChange('level', e)}
-              disabled={configuration.randomMode}
-            >
-              <SelectTrigger id="level">
-                <SelectValue placeholder="Pick an option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="junior">Junior</SelectItem>
-                <SelectItem value="mid">Mid</SelectItem>
-                <SelectItem value="senior">Senior</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="mt-4">Or maybe you prefer random level and topics:</p>
+              <label
+                htmlFor="level"
+                className="block mb-4 mt-2"
+              >
+                Level
+              </label>
+              <Select
+                name="level"
+                value={configuration.level}
+                onValueChange={(e) => handleChange('level', e)}
+                disabled={configuration.randomMode}
+              >
+                <SelectTrigger id="level">
+                  <SelectValue placeholder="Pick an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="junior">Junior</SelectItem>
+                  <SelectItem value="mid">Mid</SelectItem>
+                  <SelectItem value="senior">Senior</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="mt-4">Or maybe you prefer random level and topics:</p>
 
-          <div className="flex gap-4 align-center mt-2">
-            <label
-              htmlFor="random-mode"
-            >
-              Random mode
-            </label>
-            <Switch
-              id="random-mode"
-              name="random-mode"
-              onCheckedChange={(e) => handleChange('randomMode', e)}
-              checked={configuration.randomMode}
-            />
+            <div className="flex gap-4 align-center mt-2">
+              <label
+                htmlFor="random-mode"
+              >
+                Random mode
+              </label>
+              <Switch
+                id="random-mode"
+                name="random-mode"
+                onCheckedChange={(e) => handleChange('randomMode', e)}
+                checked={configuration.randomMode}
+              />
+            </div>
+            <div className="flex gap-4 items-center mt-2">
+              <label
+                htmlFor="storage-mode"
+              >
+                Use previously stored challenges
+              </label>
+              <Checkbox
+                id="storage-mode"
+                name="storage-mode"
+                onCheckedChange={(e) => handleChange('storageMode', e)}
+              />
+            </div>
+            <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
           </div>
-          <div className="flex gap-4 items-center mt-2">
-            <label
-              htmlFor="storage-mode"
-            >
-              Use previously stored challenges
-            </label>
-            <Checkbox
-              id="storage-mode"
-              name="storage-mode"
-              onCheckedChange={(e) => handleChange('storageMode', e)}
-            />
-          </div>
-          <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
-        </div>
-      </form>
+        </form>
+      </Card>
     </div>
   )
 }

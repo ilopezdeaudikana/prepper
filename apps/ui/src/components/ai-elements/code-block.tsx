@@ -272,6 +272,7 @@ const CodeBlockBody = memo(
     code: string
     inputAriaLabelledBy?: string
   }) => {
+    const preRef = useRef<HTMLPreElement | null>(null)
     const preStyle = useMemo(
       () => ({
         backgroundColor: tokenized.bg,
@@ -286,10 +287,11 @@ const CodeBlockBody = memo(
     );
 
     return (
-      <div className="relative">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <pre
+          ref={preRef}
           className={cn(
-            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
+            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm flex-1 min-h-0 overflow-auto",
             className
           )}
           style={preStyle}
@@ -315,12 +317,19 @@ const CodeBlockBody = memo(
             name='code-input'
             aria-labelledby={inputAriaLabelledBy}
             className={cn(
-              "absolute inset-0 h-full w-full resize-none bg-transparent font-mono text-sm text-transparent caret-foreground outline-none",
+              "absolute inset-0 h-full w-full resize-none bg-transparent font-mono text-sm text-transparent caret-foreground outline-none overflow-auto",
               "selection:bg-foreground/20 selection:text-transparent",
               showLineNumbers ? "pl-14 pr-4 py-4" : "p-4"
             )}
             value={code}
             onChange={(event) => onEdit?.(event.target.value)}
+            onScroll={(event) => {
+              const target = event.currentTarget
+              if (preRef.current) {
+                preRef.current.scrollTop = target.scrollTop
+                preRef.current.scrollLeft = target.scrollLeft
+              }
+            }}
             spellCheck={false}
           />
         ) : null}
@@ -346,7 +355,7 @@ export const CodeBlockContainer = ({
 }: HTMLAttributes<HTMLDivElement> & { language: string }) => (
   <div
     className={cn(
-      "group relative w-full overflow-hidden rounded-md border bg-background text-foreground",
+      "group relative w-full h-full min-h-0 overflow-hidden rounded-md border bg-background text-foreground flex flex-col",
       className
     )}
     data-language={language}
@@ -450,7 +459,7 @@ export const CodeBlockContent = ({
   }, [code, language, rawTokens]);
 
   return (
-    <div className="relative overflow-auto">
+    <div className="flex-1 min-h-0">
       <CodeBlockBody
         showLineNumbers={showLineNumbers}
         tokenized={tokenized}
