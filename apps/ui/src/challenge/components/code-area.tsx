@@ -2,7 +2,15 @@ import { CodeBlock, CodeBlockActions, CodeBlockCopyButton, CodeBlockHeader } fro
 import { type JSX } from 'react'
 import { useToast } from '@repo/toast'
 
-export const CodeArea = ({ code, header }: { code: string, header?: string }): JSX.Element => {
+interface CodeAreaProps {
+  code: string, 
+  header?: string, 
+  editable?: boolean
+  onEdit?: (code: string) => void
+  inputAriaLabelledBy?: string
+}
+
+export const CodeArea = ({ code, header, editable, onEdit, inputAriaLabelledBy }: CodeAreaProps): JSX.Element => {
 
   const { openToast } = useToast()
 
@@ -15,7 +23,14 @@ export const CodeArea = ({ code, header }: { code: string, header?: string }): J
   }
 
   return (
-    <CodeBlock code={code ?? ''} language="javascript">
+    <CodeBlock
+      className='dark flex flex-col overflow-auto h-full'
+      code={code ?? ''}
+      language="javascript"
+      editable={editable}
+      onEdit={onEdit}
+      inputAriaLabelledBy={inputAriaLabelledBy}
+    >
       <CodeBlockHeader>
         {header && (<p>{header}</p>)}
         <CodeBlockActions>

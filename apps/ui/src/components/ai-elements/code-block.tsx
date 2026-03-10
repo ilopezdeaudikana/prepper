@@ -100,9 +100,13 @@ const LineSpan = ({
 
 // Types
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
+  id?: string
   code: string;
   language: BundledLanguage;
   showLineNumbers?: boolean;
+  editable?: boolean;
+  onEdit?: (code: string) => void;
+  inputAriaLabelledBy?: string;
 };
 
 interface TokenizedCode {
@@ -255,10 +259,18 @@ const CodeBlockBody = memo(
     tokenized,
     showLineNumbers,
     className,
+    editable,
+    onEdit,
+    code,
+    inputAriaLabelledBy,
   }: {
-    tokenized: TokenizedCode;
-    showLineNumbers: boolean;
-    className?: string;
+    tokenized: TokenizedCode
+    showLineNumbers: boolean
+    className?: string
+    editable?: boolean
+    onEdit?: (code: string) => void
+    code: string
+    inputAriaLabelledBy?: string
   }) => {
     const preStyle = useMemo(
       () => ({
@@ -274,34 +286,54 @@ const CodeBlockBody = memo(
     );
 
     return (
-      <pre
-        className={cn(
-          "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
-          className
-        )}
-        style={preStyle}
-      >
-        <code
+      <div className="relative">
+        <pre
           className={cn(
-            "font-mono text-sm",
-            showLineNumbers && "[counter-increment:line_0] [counter-reset:line]"
+            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
+            className
           )}
+          style={preStyle}
         >
-          {keyedLines.map((keyedLine) => (
-            <LineSpan
-              key={keyedLine.key}
-              keyedLine={keyedLine}
-              showLineNumbers={showLineNumbers}
-            />
-          ))}
-        </code>
-      </pre>
+          <code
+            className={cn(
+              "font-mono text-sm",
+              showLineNumbers &&
+                "[counter-increment:line_0] [counter-reset:line]"
+            )}
+          >
+            {keyedLines.map((keyedLine) => (
+              <LineSpan
+                key={keyedLine.key}
+                keyedLine={keyedLine}
+                showLineNumbers={showLineNumbers}
+              />
+            ))}
+          </code>
+        </pre>
+        {editable ? (
+          <textarea
+            name='code-input'
+            aria-labelledby={inputAriaLabelledBy}
+            className={cn(
+              "absolute inset-0 h-full w-full resize-none bg-transparent font-mono text-sm text-transparent caret-foreground outline-none",
+              "selection:bg-foreground/20 selection:text-transparent",
+              showLineNumbers ? "pl-14 pr-4 py-4" : "p-4"
+            )}
+            value={code}
+            onChange={(event) => onEdit?.(event.target.value)}
+            spellCheck={false}
+          />
+        ) : null}
+      </div>
     );
   },
   (prevProps, nextProps) =>
     prevProps.tokenized === nextProps.tokenized &&
     prevProps.showLineNumbers === nextProps.showLineNumbers &&
-    prevProps.className === nextProps.className
+    prevProps.className === nextProps.className &&
+    prevProps.code === nextProps.code &&
+    prevProps.editable === nextProps.editable &&
+    prevProps.onEdit === nextProps.onEdit
 );
 
 CodeBlockBody.displayName = "CodeBlockBody";
@@ -380,10 +412,16 @@ export const CodeBlockContent = ({
   code,
   language,
   showLineNumbers = false,
+  editable = false,
+  onEdit,
+  inputAriaLabelledBy,
 }: {
   code: string;
   language: BundledLanguage;
   showLineNumbers?: boolean;
+  editable?: boolean;
+  onEdit?: (code: string) => void;
+  inputAriaLabelledBy?: string;
 }) => {
   // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code]);
@@ -413,17 +451,28 @@ export const CodeBlockContent = ({
 
   return (
     <div className="relative overflow-auto">
-      <CodeBlockBody showLineNumbers={showLineNumbers} tokenized={tokenized} />
+      <CodeBlockBody
+        showLineNumbers={showLineNumbers}
+        tokenized={tokenized}
+        code={code}
+        editable={editable}
+        onEdit={onEdit}
+        inputAriaLabelledBy={inputAriaLabelledBy}
+      />
     </div>
   );
 };
 
 export const CodeBlock = ({
+  id,
   code,
   language,
   showLineNumbers = false,
+  editable = false,
+  onEdit,
   className,
   children,
+  inputAriaLabelledBy,
   ...props
 }: CodeBlockProps) => {
   const contextValue = useMemo(() => ({ code }), [code]);
@@ -436,6 +485,9 @@ export const CodeBlock = ({
           code={code}
           language={language}
           showLineNumbers={showLineNumbers}
+          editable={editable}
+          onEdit={onEdit}
+          inputAriaLabelledBy={inputAriaLabelledBy}
         />
       </CodeBlockContainer>
     </CodeBlockContext.Provider>

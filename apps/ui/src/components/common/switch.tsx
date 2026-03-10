@@ -3,7 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Switch as SwitchPrimitive } from 'radix-ui'
 
-export const Switch =({ className, id, ...props }: React.ComponentPropsWithRef<typeof SwitchPrimitive.Root>) => {
+export const Switch =({ className, name, ...props }: React.ComponentPropsWithRef<typeof SwitchPrimitive.Root>) => {
   return (
     <SwitchPrimitive.Root className={cn(
       `relative h-[25px] w-[42px] rounded-full
@@ -14,7 +14,7 @@ export const Switch =({ className, id, ...props }: React.ComponentPropsWithRef<t
         data-[state=checked]:bg-foreground`,
       className
     )}
-      id={id}
+      name={name}
       {...props}>
       <SwitchPrimitive.Thumb className={
         `block h-[21px] w-[21px] rounded-full bg-[var(--color-background)]

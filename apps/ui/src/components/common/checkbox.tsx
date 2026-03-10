@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import { Check } from "lucide-react"
 
-export const  Checkbox = ({ className, id, ...props }: React.ComponentPropsWithRef<typeof CheckboxPrimitive.Root>) => {
+export const  Checkbox = ({ className, name, ...props }: React.ComponentPropsWithRef<typeof CheckboxPrimitive.Root>) => {
   return (
     <CheckboxPrimitive.Root className={cn(
       `flex items-center justify-center h-[20px] w-[20px] rounded-sm
@@ -15,7 +15,7 @@ export const  Checkbox = ({ className, id, ...props }: React.ComponentPropsWithR
         hover:shadow-[0_0_0_2px_var(--color-ring)]`,
       className
     )}
-      id={id}
+      name={name}
       {...props}>
       <CheckboxPrimitive.Indicator
         className='flex h-[14px] w-[14px] items-center justify-center'

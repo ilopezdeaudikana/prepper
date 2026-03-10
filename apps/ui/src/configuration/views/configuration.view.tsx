@@ -51,6 +51,7 @@ export default function Configuration() {
           <div>
             <label htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
             <Input
+              id="topic"
               name="topic"
               onChange={(e) => handleChange('topic', e.target.value)}
               className="mb-2 mt-4"
@@ -72,7 +73,7 @@ export default function Configuration() {
               onValueChange={(e) => handleChange('level', e)}
               disabled={configuration.randomMode}
             >
-              <SelectTrigger>
+              <SelectTrigger id="level">
                 <SelectValue placeholder="Pick an option" />
               </SelectTrigger>
               <SelectContent>
@@ -92,6 +93,7 @@ export default function Configuration() {
             </label>
             <Switch
               id="random-mode"
+              name="random-mode"
               onCheckedChange={(e) => handleChange('randomMode', e)}
               checked={configuration.randomMode}
             />
@@ -102,7 +104,11 @@ export default function Configuration() {
             >
               Use previously stored challenges
             </label>
-            <Checkbox id="storage-mode" onCheckedChange={(e) => handleChange('storageMode', e)}/>
+            <Checkbox
+              id="storage-mode"
+              name="storage-mode"
+              onCheckedChange={(e) => handleChange('storageMode', e)}
+            />
           </div>
           <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
         </div>
