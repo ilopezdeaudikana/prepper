@@ -52,7 +52,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   )
 
   const { data, isFetching } = useQuery({
-    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, sessionId, requestId],
+    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, requestId],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
