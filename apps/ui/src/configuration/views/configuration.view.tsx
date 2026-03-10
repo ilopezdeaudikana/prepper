@@ -99,6 +99,7 @@ export default function Configuration() {
                 name="random-mode"
                 onCheckedChange={(e) => handleChange('randomMode', e)}
                 checked={configuration.randomMode}
+                disabled={!!configuration.topic}
               />
             </div>
             <div className="flex gap-4 items-center mt-2">
