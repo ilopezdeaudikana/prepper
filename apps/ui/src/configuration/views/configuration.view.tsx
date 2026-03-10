@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/common/checkbox'
 
 import { Topic } from '@repo/shared-types'
 import { Card } from '@/components/common/card'
+import { Separator } from '@/components/common/separator'
 
 export default function Configuration() {
 
@@ -42,12 +43,12 @@ export default function Configuration() {
   }
 
   return (
-    <div className="max-w-1/2 flex flex-col mx-auto relative h-screen align-self-center">
-      <Card>
+    <div className="max-w-1/2 flex flex-col mx-auto my-8">
+      <Card className="flex-none">
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-8 m-4">
             <div>
-              <h1 className="text-2xl font-bold mt-4 mb-4">Configure your FE challenge</h1>
+              <h1 className="text-2xl font-bold mb-4">Configure your FE challenge</h1>
               <p>Choose a topic and a difficulty level to start the challenge.</p>
             </div>
             <div>
@@ -112,7 +113,10 @@ export default function Configuration() {
                 onCheckedChange={(e) => handleChange('storageMode', e)}
               />
             </div>
-            <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
+            <Separator />
+            <div className="flex flex-col w-[150px] self-center">
+              <Button type="submit" size="sm" disabled={isSaveDisabled()}>Submit</Button>
+            </div>
           </div>
         </form>
       </Card>

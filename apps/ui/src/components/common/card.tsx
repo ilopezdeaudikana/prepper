@@ -10,6 +10,6 @@ export const Card = ({
   className
 }: CardProps) => {
 
-  return <div className={`flex flex-col flex-1 bg-muted p-4 m-4 rounded-lg ${className}`}>{children}</div>
+  return <div className={`flex flex-col flex-1 bg-muted p-4 rounded-lg ${className}`}>{children}</div>
 }
 

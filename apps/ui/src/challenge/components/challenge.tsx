@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   useQuery,
-  useQueryClient
 } from '@tanstack/react-query'
 
 import {
@@ -30,7 +29,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
-  const queryClient = useQueryClient()
+  const [requestId, setRequestId] = useState(0)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -52,8 +51,8 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     randomMode ? getRandomTopicAndLevel() : { topic, level }
   )
 
-  const { data, refetch, isFetching } = useQuery({
-    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, sessionId],
+  const { data, isFetching } = useQuery({
+    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, sessionId, requestId],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
@@ -96,8 +95,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     if (randomMode) {
       setTopicAndLevel(getRandomTopicAndLevel())
     } else {
-      queryClient.invalidateQueries({ queryKey: ['question'] })
-      await refetch()
+      setRequestId((current) => current + 1)
     }
     setCanContinue(false)
   }
@@ -128,7 +126,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   }, [topic, level, randomMode])
 
   return (
-    <div className="flex flex-col h-screen p-4 align-self-center gap-2 overflow-hidden">
+    <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
       <Card
         className="h-[64px] flex-none"
       >
@@ -142,7 +140,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
 
       <div className="flex align-self-center gap-4 flex-1 min-h-0 overflow-hidden">
         <div className="flex flex-col flex-1 basis-1/2 overflow-hidden min-h-0">
-          <Card>
+          <Card className="min-h-0 overflow-hidden">
             {(!localData || isFetching) && (
               <GenerationState isFetching={isFetching} />
             )}
@@ -158,8 +156,8 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
               </Message>
             )}
             {localData?.type === 'coding' && (
-              <Message className="flex-1" from="assistant">
-                <MessageContent className="flex-1 flex flex-col">
+              <Message className="flex-1 min-h-0 overflow-hidden" from="assistant">
+                <MessageContent className="flex-1 min-h-0 overflow-hidden flex flex-col">
                   <MessageResponse
                     className='mb-4'
                   >
@@ -171,8 +169,8 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
             )}
           </Card>
         </div>
-        <div className="flex flex-col basis-1/2 overflow-hidden">
-          <Card>
+        <div className="flex flex-col basis-1/2 overflow-hidden min-h-0">
+          <Card className="min-h-0 overflow-hidden">
             {loadingEvaluation && (
               <div><p>Loading evaluation...</p></div>
             )}
@@ -208,9 +206,9 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
             {shouldShowForm && <form
               id="reply-form"
               onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
-              className="flex flex-col flex-1 overflow-hidden"
+              className="flex flex-col flex-1 min-h-0 overflow-hidden"
             >
-              <div className="flex flex-col gap-2 flex-1 overflow-hidden">
+              <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
                 <span id="reply-label">Type your reply here:</span>
                 {localData?.type === 'theoretical' && (<Textarea
                   name='reply'
