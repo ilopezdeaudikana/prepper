@@ -105,7 +105,7 @@ export default function Configuration() {
               <label
                 htmlFor="storage-mode"
               >
-                Use previously stored challenges
+                Use previously stored challenges only
               </label>
               <Checkbox
                 id="storage-mode"
