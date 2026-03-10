@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query'
 
 import {
@@ -29,6 +30,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
+  const queryClient = useQueryClient()
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -94,6 +96,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     if (randomMode) {
       setTopicAndLevel(getRandomTopicAndLevel())
     } else {
+      queryClient.invalidateQueries({ queryKey: ['question'] })
       await refetch()
     }
     setCanContinue(false)

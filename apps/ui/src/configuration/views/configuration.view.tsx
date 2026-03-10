@@ -42,12 +42,12 @@ export default function Configuration() {
   }
 
   return (
-    <div className="max-w-1/2 flex flex-col mx-auto p-4 relative h-screen justify-between align-self-center">
+    <div className="max-w-1/2 flex flex-col mx-auto relative h-screen align-self-center">
       <Card>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
-          <div className="flex flex-col mb-2 gap-4">
+          <div className="flex flex-col gap-12">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Configure your FE challenge</h1>
+              <h1 className="text-2xl font-bold mt-4 mb-4">Configure your FE challenge</h1>
               <p>Choose a topic and a difficulty level to start the challenge.</p>
             </div>
             <div>
@@ -75,7 +75,7 @@ export default function Configuration() {
                 onValueChange={(e) => handleChange('level', e)}
                 disabled={configuration.randomMode}
               >
-                <SelectTrigger id="level">
+                <SelectTrigger className='bg-white' id="level">
                   <SelectValue placeholder="Pick an option" />
                 </SelectTrigger>
                 <SelectContent>

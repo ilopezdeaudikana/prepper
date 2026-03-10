@@ -24,8 +24,8 @@ export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'stora
 
   return (
     <div className="max-w-1/2 flex flex-col mx-auto relative h-screen justify-between align-self-center">
-      <Card>
-        <div className="flex flex-col mb-2 gap-2">
+      <Card className="justify-center">
+        <div className="flex flex-col gap-12">
           <h1 className="text-2xl font-bold">
             Congratulations! You've completed the challenge for {topicAndLevel}!
           </h1>
