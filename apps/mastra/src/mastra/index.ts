@@ -47,7 +47,19 @@ export const mastra = new Mastra({
         handler: async (c) => {
           try {
             console.log('DEBUG_CHALLENGE_ROUTE hit', { envHasHash: !!process.env.HASH_SECRET })
-            const payload = ChallengeRequestSchema.parse(await c.req.json())
+            const rawBody = await c.req.text()
+            if (!rawBody.trim()) {
+              return c.json({ error: 'Empty request body. Expected JSON.' }, 400)
+            }
+
+            let parsedBody: unknown
+            try {
+              parsedBody = JSON.parse(rawBody)
+            } catch {
+              return c.json({ error: 'Invalid JSON in request body.' }, 400)
+            }
+
+            const payload = ChallengeRequestSchema.parse(parsedBody)
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
@@ -75,7 +87,19 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
-            const payload = EvaluationRequestSchema.parse(await c.req.json())
+            const rawBody = await c.req.text()
+            if (!rawBody.trim()) {
+              return c.json({ error: 'Empty request body. Expected JSON.' }, 400)
+            }
+
+            let parsedBody: unknown
+            try {
+              parsedBody = JSON.parse(rawBody)
+            } catch {
+              return c.json({ error: 'Invalid JSON in request body.' }, 400)
+            }
+
+            const payload = EvaluationRequestSchema.parse(parsedBody)
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()

@@ -160,7 +160,11 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
               <GenerationState isFetching={isFetching} />
             )}
             {localData?.error ? (
-              <div><p>Error loading data</p><pre>{JSON.stringify(localData, null, 2)}</pre></div>
+              <div><p>Error loading data</p>
+                <pre className="whitespace-pre-wrap">
+                  {JSON.stringify(localData, null, 2)}
+                </pre>
+              </div>
             ) : null}
             {localData?.type === 'theoretical' && (
               <Message

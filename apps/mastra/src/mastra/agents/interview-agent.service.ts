@@ -111,11 +111,20 @@ export const getChallenge = async (
       {
         structuredOutput: {
           schema: QuestionSchema,
-          jsonPromptInjection: true,
-        },
-      }
-    )
+        jsonPromptInjection: true,
+      },
+    }
+  )
     const generatedQuestion = generationResponse.object
+    if (!generatedQuestion) {
+      console.error('INTERVIEW_AGENT: missing structured output for challenge', {
+        topic,
+        level,
+        attempt,
+        hasText: Boolean(generationResponse.text),
+      })
+      throw new Error('Challenge generation returned no structured output')
+    }
 
     const parsed = QuestionSchema.safeParse(generatedQuestion)
     if (!parsed.success) {
@@ -201,6 +210,13 @@ export const submitAnswer = async (
       },
     }
   )
+  if (!generationResponse.object) {
+    console.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+      level,
+      hasText: Boolean(generationResponse.text),
+    })
+    throw new Error('Evaluation generation returned no structured output')
+  }
   const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
   if (!parsedFeedback.success) {
     throw new Error("Failed to generate feedback")
