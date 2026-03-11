@@ -13,8 +13,13 @@ const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
     avoid: ['Toy-only examples', 'Unbounded scope'],
   },
   senior: {
-    focus: ['Architecture choices', 'Edge cases', 'Accessibility and scalability'],
-    avoid: ['Pure syntax tests', 'Single-happy-path prompts'],
+    focus: ['Architecture choices', 'Edge cases', 'Accessibility', 'Scalability tradeoffs'],
+    avoid: [
+      'Pure syntax tests',
+      'Single-happy-path prompts',
+      'Multi-part system design questions',
+      'Unbounded scope or "millions of users" scale without constraints',
+    ],
   },
 }
 
@@ -23,6 +28,7 @@ const challengeFormats = ['debugging', 'refactor', 'feature extension', 'archite
 const topicExpansions: Record<TopicKey, readonly string[]> = {
   [Topic.react]: ['state management', 'render performance', 'hooks', 'accessibility'],
   [Topic.nextjs]: ['app router', 'server components', 'data fetching and caching', 'rendering strategies'],
+  [Topic.node]: ['api design', 'async error handling', 'streaming', 'performance profiling'],
   [Topic.typescript]: ['type narrowing', 'generic APIs', 'utility types', 'runtime validation boundaries'],
   [Topic.javascript]: ['async control flow', 'closures', 'event loop', 'data transformations'],
   [Topic.css]: ['layout systems', 'responsive strategy', 'design tokens', 'animation performance'],

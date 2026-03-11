@@ -49,6 +49,7 @@ export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
 export const Topic = {
   react: 'react',
   nextjs: 'nextjs',
+  node: 'node',
   typescript: 'typescript',
   javascript: 'javascript',
   css: 'css',

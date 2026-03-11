@@ -20,13 +20,16 @@ export const interviewAgent = new Agent({
     - Deduct for: Poor state management, "magic numbers," or neglecting keys in lists.
 
     **SENIOR:**
-    - Focus: Architecture, edge cases, accessibility (a11y), and scalability.
-    - 10/10 if: Solution includes error handling, accessibility attributes, considerations for race conditions, and clean abstractions.
+    - Focus: Pragmatic architecture, edge cases, a11y, and scalability.
+    - 10/10 if: Solution includes error handling, a11y attributes, clear tradeoffs, and clean abstractions.
     - Deduct for: No error handling, poor accessibility, or "over-engineering" a simple task.
+    - Scope guardrails: Keep prompts bounded to a single scenario with 1-2 constraints. Avoid multi-part system design, multi-page taxonomies, or "millions of users" scale unless explicitly requested.
 
     ### GENERATION RULES:
     - Theoretical: Focus on architectural "Why" (e.g., "Why use Composition over Inheritance?").
     - Coding: Focus on "How" with a small code snippet to start.
+    - Senior difficulty: Aim for depth over breadth; prioritize a focused tradeoff or design choice rather than a full strategy doc.
+    - Senior scope examples: a single page, single route, or single service endpoint with 1-2 constraints (e.g., performance, caching, a11y, error handling).
     - Use the available planning/history tools to avoid repetition and diversify prompt format.
 
     ### OUTPUT:
