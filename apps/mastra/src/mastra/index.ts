@@ -46,7 +46,6 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
-            console.log('DEBUG_CHALLENGE_ROUTE hit', { envHasHash: !!process.env.HASH_SECRET })
             const rawBody = await c.req.text()
             if (!rawBody.trim()) {
               return c.json({ error: 'Empty request body. Expected JSON.' }, 400)
@@ -72,14 +71,44 @@ export const mastra = new Mastra({
                   : result.status === 'tripwire'
                     ? result.tripwire.reason
                     : 'Challenge workflow did not complete successfully'
-              return c.json({ error: errorMessage }, 500)
+              const normalized = errorMessage.toLowerCase()
+              const isQuota =
+                normalized.includes('quota') ||
+                normalized.includes('rate limit') ||
+                normalized.includes('rate-limit') ||
+                normalized.includes('too many requests') ||
+                normalized.includes('429')
+              return c.json(
+                {
+                  error: isQuota
+                    ? 'Quota exceeded. Please wait before requesting another challenge.'
+                    : 'Challenge generation failed.',
+                },
+                500
+              )
             }
 
             return c.json(result.result)
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Invalid challenge request'
+            const normalized = message.toLowerCase()
+            const isQuota =
+              normalized.includes('quota') ||
+              normalized.includes('rate limit') ||
+              normalized.includes('rate-limit') ||
+              normalized.includes('too many requests') ||
+              normalized.includes('429')
             const status = error instanceof ZodError ? 400 : 500
-            return c.json({ error: message }, status)
+            return c.json(
+              {
+                error: isQuota
+                  ? 'Quota exceeded. Please wait before requesting another challenge.'
+                  : status === 400
+                    ? message
+                    : 'Challenge generation failed.',
+              },
+              status
+            )
           }
         },
       }),
@@ -112,14 +141,44 @@ export const mastra = new Mastra({
                   : result.status === 'tripwire'
                     ? result.tripwire.reason
                     : 'Evaluation workflow did not complete successfully'
-              return c.json({ error: errorMessage }, 500)
+              const normalized = errorMessage.toLowerCase()
+              const isQuota =
+                normalized.includes('quota') ||
+                normalized.includes('rate limit') ||
+                normalized.includes('rate-limit') ||
+                normalized.includes('too many requests') ||
+                normalized.includes('429')
+              return c.json(
+                {
+                  error: isQuota
+                    ? 'Quota exceeded. Please wait before requesting another evaluation.'
+                    : 'Evaluation failed.',
+                },
+                500
+              )
             }
 
             return c.json(result.result)
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Invalid evaluation request'
+            const normalized = message.toLowerCase()
+            const isQuota =
+              normalized.includes('quota') ||
+              normalized.includes('rate limit') ||
+              normalized.includes('rate-limit') ||
+              normalized.includes('too many requests') ||
+              normalized.includes('429')
             const status = error instanceof ZodError ? 400 : 500
-            return c.json({ error: message }, status)
+            return c.json(
+              {
+                error: isQuota
+                  ? 'Quota exceeded. Please wait before requesting another evaluation.'
+                  : status === 400
+                    ? message
+                    : 'Evaluation failed.',
+              },
+              status
+            )
           }
         },
       }),

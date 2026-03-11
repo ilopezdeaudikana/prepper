@@ -40,7 +40,7 @@ export const EvaluationResponseSchema = FeedbackSchema.extend({
 })
 
 export type Question = z.infer<typeof QuestionSchema>
-export type Feedback = z.infer<typeof FeedbackSchema>
+export type Feedback = z.infer<typeof FeedbackSchema> & { error?: string }
 export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
 export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
 export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>

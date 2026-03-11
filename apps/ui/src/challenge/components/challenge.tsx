@@ -23,7 +23,7 @@ import { Card } from '@/components/common/card'
 export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'storageMode'>) => {
   const SCORE = 7
   const [input, setInput] = useState<string>('')
-  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [feedback, setFeedback] = useState<Partial<Feedback> | null>(null)
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
@@ -90,7 +90,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
         setShowRestart(true)
       }
     } catch (error: any) {
-      setFeedback(error.error)
+      setFeedback({ error: error.error })
     } finally {
       setLoadingEvaluation(false)
     }
@@ -195,6 +195,13 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
             )}
             {feedback && (
               <div className="flex flex-col gap-2 overflow-auto">
+                 {feedback?.error ? (
+                  <div><p>Error loading data</p>
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(localData, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
                 {feedback.score && (
                   <p><Badge className="mr-2" color={feedback.score > SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
                 )}

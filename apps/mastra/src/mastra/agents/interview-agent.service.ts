@@ -117,11 +117,13 @@ export const getChallenge = async (
   )
     const generatedQuestion = generationResponse.object
     if (!generatedQuestion) {
+      const rawText = generationResponse.text ?? ""
       console.error('INTERVIEW_AGENT: missing structured output for challenge', {
         topic,
         level,
         attempt,
         hasText: Boolean(generationResponse.text),
+        textPreview: rawText.slice(0, 2000),
       })
       throw new Error('Challenge generation returned no structured output')
     }
@@ -211,9 +213,11 @@ export const submitAnswer = async (
     }
   )
   if (!generationResponse.object) {
+    const rawText = generationResponse.text ?? ""
     console.error('INTERVIEW_AGENT: missing structured output for evaluation', {
       level,
       hasText: Boolean(generationResponse.text),
+      textPreview: rawText.slice(0, 2000),
     })
     throw new Error('Evaluation generation returned no structured output')
   }
