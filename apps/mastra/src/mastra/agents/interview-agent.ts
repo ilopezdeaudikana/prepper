@@ -37,7 +37,7 @@ export const interviewAgent = new Agent({
 
     `,
   // google/gemini-2.5-flash-lite gone?
-  model: 'google/gemini-2.5-flash',
+  model: 'google/gemini-2.5-flash-lite',
   tools: {
     sessionQuestionHistoryTool,
     challengePlanningTool,

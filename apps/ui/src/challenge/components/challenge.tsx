@@ -73,20 +73,26 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     if (!input) return
     setInput('')
     setLoadingEvaluation(true)
-    const result: Feedback = await ChallengeService.submitAnswer(
-      data as Question,
-      input,
-      topicAndLevel.level,
-      sessionToken ?? undefined
-    )
-    setFeedback(result)
-    setLoadingEvaluation(false)
+    try {
+      const result: Feedback = await ChallengeService.submitAnswer(
+        data as Question,
+        input,
+        topicAndLevel.level,
+        sessionToken ?? undefined
+      )
 
-    if (result.score > SCORE) {
-      setProgress({ score: score + result.score, stage: stage + 1 })
-      setCanContinue(true)
-    } else {
-      setShowRestart(true)
+      setFeedback(result)
+
+      if (result.score > SCORE) {
+        setProgress({ score: score + result.score, stage: stage + 1 })
+        setCanContinue(true)
+      } else {
+        setShowRestart(true)
+      }
+    } catch (error: any) {
+      setFeedback(error.error)
+    } finally {
+      setLoadingEvaluation(false)
     }
   }
 
@@ -95,7 +101,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
       // trigger redirection
       setProgress({ score, stage: FINAL_STAGE })
       return
-    } 
+    }
     setLocalData(null)
     setFeedback(null)
     if (randomMode) {
@@ -141,7 +147,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
           {showRestart && <Button type="button" onClick={restart} size='sm'>
             Restart
           </Button>}
-          {!showRestart &&<Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
+          {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
             {isFetching ? 'Loading...' : 'Next question'}
           </Button>}
         </div>

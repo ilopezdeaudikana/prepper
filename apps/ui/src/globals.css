@@ -123,3 +123,28 @@
     @apply bg-background text-foreground;
     }
 }
+
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.78 0 0 / 0.6) oklch(0.2 0 0 / 0.6);
+}
+
+pre::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: oklch(0.2 0 0 / 0.6);
+  border-radius: 999px;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: oklch(0.78 0 0 / 0.6);
+  border-radius: 999px;
+  border: 2px solid oklch(0.2 0 0 / 0.6);
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.9 0 0 / 0.7);
+}
