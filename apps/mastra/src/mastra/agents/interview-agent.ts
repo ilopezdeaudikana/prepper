@@ -36,8 +36,8 @@ export const interviewAgent = new Agent({
     Always return strictly formatted JSON following the requested schema. No conversational filler outside the JSON.
 
     `,
-  // google/gemini-2.5-flash, lite is gone
-  model: 'google/gemini-2-flash',
+  // google/gemini-2.5-flash, lite is gone?
+  model: 'google/gemini-2.5-flash-lite',
   tools: {
     sessionQuestionHistoryTool,
     challengePlanningTool,
