@@ -16,7 +16,7 @@ const generateChallengeStep = createStep({
       inputData.topic,
       inputData.level,
       inputData.previousQuestions,
-      inputData.sessionId,
+      inputData.sessionToken,
       inputData.options
     )
   },
@@ -31,7 +31,7 @@ const evaluateAnswerStep = createStep({
       inputData.question,
       inputData.answer,
       inputData.level,
-      inputData.sessionId
+      inputData.sessionToken
     )
   },
 })

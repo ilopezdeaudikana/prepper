@@ -27,7 +27,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
 
@@ -56,7 +56,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
-      sessionId ?? undefined
+      sessionToken ?? undefined
     ),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -72,7 +72,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
       data as Question,
       input,
       topicAndLevel.level,
-      sessionId ?? undefined
+      sessionToken ?? undefined
     )
     setFeedback(result)
     setLoadingEvaluation(false)
@@ -105,8 +105,8 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   useEffect(() => setLocalData(data ?? null), [data])
 
   useEffect(() => {
-    if (data?.sessionId) {
-      setSessionId(data.sessionId)
+    if (data?.sessionToken) {
+      setSessionToken(data.sessionToken)
     }
   }, [data])
 
@@ -118,7 +118,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   }, [data])
 
   useEffect(() => {
-    setSessionId(null)
+    setSessionToken(null)
     setPreviousQuestions([])
     setFeedback(null)
     setLocalData(null)

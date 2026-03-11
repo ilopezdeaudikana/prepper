@@ -17,7 +17,7 @@ export const ChallengeRequestSchema = z.object({
   topic: z.string().min(1),
   level: z.string().min(1),
   previousQuestions: z.array(z.string()).default([]),
-  sessionId: z.uuid().optional(),
+  sessionToken: z.string().min(1).optional(),
   options: z.object({
     skipReuse: z.boolean().optional(),
     forceReuse: z.boolean().optional(),
@@ -25,18 +25,18 @@ export const ChallengeRequestSchema = z.object({
 })
 
 export const ChallengeResponseSchema = QuestionSchema.extend({
-  sessionId: z.uuid(),
+  sessionToken: z.string().min(1),
 })
 
 export const EvaluationRequestSchema = z.object({
   question: QuestionSchema,
   answer: z.string().min(1),
   level: z.string().min(1),
-  sessionId: z.uuid().optional(),
+  sessionToken: z.string().min(1).optional(),
 })
 
 export const EvaluationResponseSchema = FeedbackSchema.extend({
-  sessionId: z.uuid().optional(),
+  sessionToken: z.string().min(1).optional(),
 })
 
 export type Question = z.infer<typeof QuestionSchema>

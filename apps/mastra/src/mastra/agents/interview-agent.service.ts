@@ -13,13 +13,20 @@ import {
   isTooSimilar,
 } from "./interview-agent.helpers"
 
-const formatReusableQuestion = async (sessionId: string, reusableQuestion: Question) => {
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+
+const formatReusableQuestion = async (
+  sessionId: string,
+  sessionToken: string,
+  reusableQuestion: Question
+) => {
   await upsertQuestion(sessionId, reusableQuestion)
   return {
     question: reusableQuestion.question,
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
-    sessionId,
+    sessionToken,
   }
 }
 
@@ -27,7 +34,7 @@ export const getChallenge = async (
   topic: string,
   level: string,
   previousQuestions: string[] = [],
-  sessionId?: string,
+  sessionToken?: string,
   options?: { skipReuse?: boolean, forceReuse?: boolean }
 ) => {
   const {forceReuse, skipReuse } = options ?? {}
@@ -36,12 +43,13 @@ export const getChallenge = async (
     throw new Error("Invalid options: forceReuse cannot be combined with skipReuse")
   }
 
-  const existingSession = sessionId
-    ? await getSession(sessionId)
+  const legacySessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  const existingSession = legacySessionId
+    ? await getSession(legacySessionId)
     : null
 
-  if (sessionId && !existingSession) {
-    throw new Error(`Interview session not found: ${sessionId}`)
+  if (legacySessionId && !existingSession) {
+    throw new Error(`Interview session not found: ${legacySessionId}`)
   }
 
   const session = existingSession ?? await createSession(topic, level)
@@ -52,12 +60,12 @@ export const getChallenge = async (
     const reusableQuestion = await findReusableQuestion({
       topic,
       level,
-      excludeSessionId: session.id,
+      excludeSessionToken: sessionToken ?? session.sessionToken,
       previousQuestions: allPreviousQuestions,
     })
 
     if (reusableQuestion) {
-      return formatReusableQuestion(session.id, reusableQuestion)
+      return formatReusableQuestion(session.id, session.sessionToken, reusableQuestion)
     }
   }
 
@@ -71,7 +79,7 @@ export const getChallenge = async (
     })
 
     if (fallbackReusable) {
-      return formatReusableQuestion(session.id, fallbackReusable)
+      return formatReusableQuestion(session.id, session.sessionToken, fallbackReusable)
     }
 
     throw new Error(`No reusable challenge found for topic "${topic}" at level "${level}"`)
@@ -96,7 +104,7 @@ export const getChallenge = async (
       - Use challenge-planning-tool to diversify subtopic/format before finalizing.
       - If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
       - Variation token: ${variationToken}-attempt-${attempt}.
-      ${sessionId ? `- Current sessionId: ${sessionId}.` : ''}
+      - Current session id: ${session.id}.
 
       Previously asked questions to avoid (do not paraphrase these):
       ${exclusions}`,
@@ -122,7 +130,7 @@ export const getChallenge = async (
       await upsertQuestion(session.id, parsed.data)
       return {
         ...parsed.data,
-        sessionId: session.id,
+        sessionToken: session.sessionToken,
       }
     }
   }
@@ -134,7 +142,7 @@ export const getChallenge = async (
   await upsertQuestion(session.id, lastGenerated)
   return {
     ...lastGenerated,
-    sessionId: session.id,
+    sessionToken: session.sessionToken,
   }
 }
 
@@ -177,7 +185,7 @@ export const submitAnswer = async (
   question: Question,
   userAnswer: string,
   level: string,
-  sessionId?: string
+  sessionToken?: string
 ) => {
   const generationResponse = await generateWithRateLimit(
     `Level: ${level}
@@ -199,18 +207,22 @@ export const submitAnswer = async (
   }
   const generatedFeedback = parsedFeedback.data
 
-  if (!sessionId) {
-    return generatedFeedback
+  const legacySessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  if (!legacySessionId) {
+    return {
+      ...generatedFeedback,
+      sessionToken,
+    }
   }
 
-  const session = await getSession(sessionId)
+  const session = await getSession(legacySessionId)
   if (!session) {
-    throw new Error(`Interview session not found: ${sessionId}`)
+    throw new Error(`Interview session not found: ${legacySessionId}`)
   }
 
-  const questionId = await upsertQuestion(sessionId, question)
+  const questionId = await upsertQuestion(legacySessionId, question)
   await createFeedback({
-    sessionId,
+    sessionId: legacySessionId,
     questionId,
     answer: userAnswer,
     level,
@@ -219,6 +231,6 @@ export const submitAnswer = async (
 
   return {
     ...generatedFeedback,
-    sessionId,
+    sessionToken: session.sessionToken,
   }
 }

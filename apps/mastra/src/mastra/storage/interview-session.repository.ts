@@ -1,5 +1,6 @@
 import type { Feedback, Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
+import { hmacHex } from './utils'
 
 type InterviewSession = {
   id: string
@@ -30,7 +31,8 @@ export const createSession = async (topic: string, level: string) => {
     .single<InterviewSession>()
 
   if (error) throw new Error(`Failed to create session: ${error.message}`)
-  return data
+  const sessionToken = hmacHex(process.env.HASH_SECRET!, data.id)
+  return { ...data, sessionToken }
 }
 
 export const getSession = async (sessionId: string) => {
@@ -42,7 +44,9 @@ export const getSession = async (sessionId: string) => {
     .maybeSingle<InterviewSession>()
 
   if (error) throw new Error(`Failed to fetch session: ${error.message}`)
-  return data
+  if (!data) return null
+  const sessionToken = hmacHex(process.env.HASH_SECRET!, data.id)
+  return { ...data, sessionToken }
 }
 
 export const listQuestionTexts = async (sessionId: string) => {
@@ -60,34 +64,58 @@ export const listQuestionTexts = async (sessionId: string) => {
 export const listReusableQuestions = async (params: {
   topic: string
   level: string
-  excludeSessionId?: string
+  excludeSessionToken?: string
   limit?: number
 }) => {
   const supabase = getSupabaseClient()
-  const { topic, level, excludeSessionId, limit = 20 } = params
+  const { topic, level, excludeSessionToken, limit = 20 } = params
 
-  let query = supabase
-    .from(TABLES.questions)
-    .select('session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
-    .eq('interview_sessions.topic', topic)
-    .eq('interview_sessions.level', level)
-    .order('created_at', { ascending: false })
-    .limit(limit)
+  const pageSize = limit
+  const batchSize = pageSize * 3
+  const maxBatches = 3
 
-  if (excludeSessionId) {
-    query = query.neq('session_id', excludeSessionId)
+  const results: {
+    sessionId: string
+    sessionToken: string
+    question: string
+    initialCode?: string
+    type: Question['type']
+    createdAt: string
+  }[] = []
+
+  for (let batchIndex = 0; batchIndex < maxBatches && results.length < pageSize; batchIndex += 1) {
+    const offset = batchIndex * batchSize
+    const { data, error } = await supabase
+      .from(TABLES.questions)
+      .select('session_id, question, initial_code, type, created_at')
+    
+      .order('created_at', { ascending: false })
+      .range(offset, offset + batchSize - 1)
+
+    if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
+
+    const mapped = (data ?? []).map((row: any) => ({
+      sessionId: row.session_id as string,
+      question: row.question as string,
+      initialCode: (row.initial_code as string | null) ?? undefined,
+      type: row.type as Question['type'],
+      createdAt: row.created_at as string,
+      sessionToken: hmacHex(process.env.HASH_SECRET!, row.session_id as string),
+    }))
+
+    const filtered = excludeSessionToken
+      ? mapped.filter((row) => row.sessionToken !== excludeSessionToken)
+      : mapped
+
+    for (const row of filtered) {
+      if (results.length >= pageSize) break
+      results.push(row)
+    }
+
+    if ((data ?? []).length < batchSize) break
   }
 
-  const { data, error } = await query
-  if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
-
-  return (data ?? []).map((row: any) => ({
-    sessionId: row.session_id as string,
-    question: row.question as string,
-    initialCode: (row.initial_code as string | null) ?? undefined,
-    type: row.type as Question['type'],
-    createdAt: row.created_at as string,
-  }))
+  return results
 }
 
 export const upsertQuestion = async (sessionId: string, question: Question) => {

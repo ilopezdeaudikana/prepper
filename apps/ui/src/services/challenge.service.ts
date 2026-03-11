@@ -7,13 +7,13 @@ const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
 const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString()
 
-export type ChallengeResponse = Question & { sessionId?: string }
+export type ChallengeResponse = Question & { sessionToken?: string }
 
 export const ChallengeService = {
-  async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionId?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      return Promise.resolve(sample as ChallengeResponse)
-    }
+  async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionToken?: string) {
+    // if (process.env.NODE_ENV === 'development') {
+    //   return Promise.resolve(sample as ChallengeResponse)
+    // }
     
     const { storageMode } = useConfiguration.getState().configuration
     
@@ -24,12 +24,12 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level, previousQuestions, sessionId, options: { forceReuse: storageMode }}),
+      body: JSON.stringify({ topic, level, previousQuestions, sessionToken, options: { forceReuse: storageMode }}),
     })
     return response.json() as Promise<ChallengeResponse>
   },
 
-  async submitAnswer(question: Question, answer: string, level: string, sessionId?: string) {
+  async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {
     if (process.env.NODE_ENV === 'development') {
       return Promise.resolve(responseSample as EvaluationResponse)
     }
@@ -38,7 +38,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question, answer, level, sessionId }),
+      body: JSON.stringify({ question, answer, level, sessionToken }),
     })
     return response.json() as Promise<EvaluationResponse>
   }

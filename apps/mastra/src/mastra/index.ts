@@ -46,6 +46,7 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
+            console.log('DEBUG_CHALLENGE_ROUTE hit', { envHasHash: !!process.env.HASH_SECRET })
             const payload = ChallengeRequestSchema.parse(await c.req.json())
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
