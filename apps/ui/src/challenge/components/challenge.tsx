@@ -30,6 +30,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
+  const [showRestart, setShowRestart] = useState<boolean>(false)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -64,6 +65,10 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     refetchOnMount: false,
   })
 
+  const restart = () => {
+    setProgress({ score: 0, stage: 0 })
+  }
+
   const handleSubmit = async () => {
     if (!input) return
     setInput('')
@@ -78,18 +83,19 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     setLoadingEvaluation(false)
 
     if (result.score > SCORE) {
-      if (stage + 1 === FINAL_STAGE) {
-        // trigger redirection
-        setProgress({ score: score + result.score, stage: FINAL_STAGE })
-        return
-      } else {
-        setProgress({ score: score + result.score, stage: stage + 1 })
-        setCanContinue(true)
-      }
+      setProgress({ score: score + result.score, stage: stage + 1 })
+      setCanContinue(true)
+    } else {
+      setShowRestart(true)
     }
   }
 
   const loadNextQuestion = async () => {
+    if (stage === FINAL_STAGE) {
+      // trigger redirection
+      setProgress({ score, stage: FINAL_STAGE })
+      return
+    } 
     setLocalData(null)
     setFeedback(null)
     if (randomMode) {
@@ -132,9 +138,12 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
       >
         <div className="flex justify-end gap-4">
           <Button form="reply-form" type="submit" disabled={!input} size='sm'>Submit</Button>
-          <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
+          {showRestart && <Button type="button" onClick={restart} size='sm'>
+            Restart
+          </Button>}
+          {!showRestart &&<Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
             {isFetching ? 'Loading...' : 'Next question'}
-          </Button>
+          </Button>}
         </div>
       </Card>
 
