@@ -20,7 +20,6 @@ export const CodeArea = ({
   inputAriaLabelledBy,
   className,
 }: CodeAreaProps): JSX.Element => {
-
   const { openToast } = useToast()
 
   const handleCopy = () => {
@@ -31,6 +30,9 @@ export const CodeArea = ({
     openToast({ message: 'Failed to copy code to clipboard' })
   }
 
+  const showHeader = Boolean(header) || !editable
+  const showCopyButton = !editable
+
   return (
     <CodeBlock
       className={cn('dark', className)}
@@ -40,12 +42,16 @@ export const CodeArea = ({
       onEdit={onEdit}
       inputAriaLabelledBy={inputAriaLabelledBy}
     >
-      <CodeBlockHeader>
-        {header && (<p>{header}</p>)}
-        <CodeBlockActions>
-          <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
-        </CodeBlockActions>
-      </CodeBlockHeader>
+      {showHeader ? (
+        <CodeBlockHeader>
+          {header ? <p>{header}</p> : <span />}
+          {showCopyButton ? (
+            <CodeBlockActions>
+              <CodeBlockCopyButton onCopy={handleCopy} onError={handleCopyError} />
+            </CodeBlockActions>
+          ) : null}
+        </CodeBlockHeader>
+      ) : null}
     </CodeBlock>
   )
 }

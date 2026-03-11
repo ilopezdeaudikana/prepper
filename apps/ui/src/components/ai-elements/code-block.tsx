@@ -291,14 +291,14 @@ const CodeBlockBody = memo(
         <pre
           ref={preRef}
           className={cn(
-            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm flex-1 min-h-0 overflow-auto",
+            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm leading-6 flex-1 min-h-0 overflow-auto",
             className
           )}
           style={preStyle}
         >
           <code
             className={cn(
-              "font-mono text-sm",
+              "font-mono text-sm leading-6",
               showLineNumbers &&
                 "[counter-increment:line_0] [counter-reset:line]"
             )}
@@ -316,8 +316,9 @@ const CodeBlockBody = memo(
           <textarea
             name='code-input'
             aria-labelledby={inputAriaLabelledBy}
+            aria-label={inputAriaLabelledBy ? undefined : "Code editor"}
             className={cn(
-              "absolute inset-0 h-full w-full resize-none bg-transparent font-mono text-sm text-transparent caret-foreground outline-none overflow-auto",
+              "absolute inset-0 h-full w-full resize-none bg-transparent font-mono text-sm leading-6 text-transparent caret-foreground outline-none overflow-auto",
               "selection:bg-foreground/20 selection:text-transparent",
               showLineNumbers ? "pl-14 pr-4 py-4" : "p-4"
             )}
@@ -356,6 +357,7 @@ export const CodeBlockContainer = ({
   <div
     className={cn(
       "group relative w-full h-full min-h-0 overflow-hidden rounded-md border bg-background text-foreground flex flex-col",
+      "data-[editable=true]:focus-within:ring-2 data-[editable=true]:focus-within:ring-foreground/20 data-[editable=true]:focus-within:border-foreground/30",
       className
     )}
     data-language={language}
@@ -488,7 +490,12 @@ export const CodeBlock = ({
 
   return (
     <CodeBlockContext.Provider value={contextValue}>
-      <CodeBlockContainer className={className} language={language} {...props}>
+      <CodeBlockContainer
+        className={className}
+        language={language}
+        data-editable={editable ? "true" : "false"}
+        {...props}
+      >
         {children}
         <CodeBlockContent
           code={code}
