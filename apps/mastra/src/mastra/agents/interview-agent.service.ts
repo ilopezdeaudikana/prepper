@@ -110,7 +110,7 @@ export const getChallenge = async (
       ${exclusions}`,
       {
         structuredOutput: {
-          schema: QuestionSchemaOptionalType,
+        schema: QuestionSchema,
         jsonPromptInjection: true,
       },
     }
