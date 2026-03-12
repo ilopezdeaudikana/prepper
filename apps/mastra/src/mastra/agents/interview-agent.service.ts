@@ -128,7 +128,27 @@ export const getChallenge = async (
       throw new Error('Challenge generation returned no structured output')
     }
 
-    const parsed = QuestionSchema.safeParse(generatedQuestion)
+    const normalizedQuestion =
+      generatedQuestion && typeof generatedQuestion === "object"
+        ? {
+            ...generatedQuestion,
+            // Backfill type when models omit it.
+            type:
+              typeof (generatedQuestion as { type?: unknown }).type === "string"
+                ? (generatedQuestion as { type?: string }).type
+                : (generatedQuestion as { initialCode?: unknown }).initialCode
+                    ? "coding"
+                    : "theoretical",
+            // Ensure initialCode is only set for coding prompts.
+            initialCode:
+              (generatedQuestion as { initialCode?: unknown }).initialCode && 
+              ((generatedQuestion as { type?: unknown }).type ?? undefined) !== "theoretical"
+                ? (generatedQuestion as { initialCode?: string }).initialCode
+                : undefined,
+          }
+        : generatedQuestion
+
+    const parsed = QuestionSchema.safeParse(normalizedQuestion)
     if (!parsed.success) {
       continue
     }
