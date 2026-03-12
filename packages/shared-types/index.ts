@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const QuestionSchema = z.object({
   question: z.string(),
   initialCode: z.string().optional(),
-  type: z.enum(['coding', 'theoretical']),
+  type: z.enum(['coding', 'theoretical']).optional(),
 })
 
 export const FeedbackSchema = z.object({
