@@ -34,6 +34,8 @@ export const interviewAgent = new Agent({
 
     ### OUTPUT:
     Always return strictly formatted JSON following the requested schema. No conversational filler outside the JSON.
+    The JSON must include: "question" (string), "type" ("coding" | "theoretical"), and "initialCode" (string) when type is "coding".
+    If type is "theoretical", omit "initialCode".
 
     `,
   // google/gemini-2.5-flash-lite not fully working
