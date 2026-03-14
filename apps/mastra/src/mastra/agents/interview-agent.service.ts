@@ -43,13 +43,13 @@ export const getChallenge = async (
     throw new Error("Invalid options: forceReuse cannot be combined with skipReuse")
   }
 
-  const legacySessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
-  const existingSession = legacySessionId
-    ? await getSession(legacySessionId)
+  const sessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  const existingSession = sessionId
+    ? await getSession(sessionId)
     : null
 
-  if (legacySessionId && !existingSession) {
-    throw new Error(`Interview session not found: ${legacySessionId}`)
+  if (sessionId && !existingSession) {
+    throw new Error(`Interview session not found: ${sessionId}`)
   }
 
   const session = existingSession ?? await createSession(topic, level)
@@ -247,22 +247,22 @@ export const submitAnswer = async (
   }
   const generatedFeedback = parsedFeedback.data
 
-  const legacySessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
-  if (!legacySessionId) {
+  const sessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  if (!sessionId) {
     return {
       ...generatedFeedback,
       sessionToken,
     }
   }
 
-  const session = await getSession(legacySessionId)
+  const session = await getSession(sessionId)
   if (!session) {
-    throw new Error(`Interview session not found: ${legacySessionId}`)
+    throw new Error(`Interview session not found: ${sessionId}`)
   }
 
-  const questionId = await upsertQuestion(legacySessionId, question)
+  const questionId = await upsertQuestion(sessionId, question)
   await createFeedback({
-    sessionId: legacySessionId,
+    sessionId: sessionId,
     questionId,
     answer: userAnswer,
     level,

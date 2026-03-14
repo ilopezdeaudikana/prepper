@@ -1,6 +1,6 @@
 import type { Feedback, Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
-import { hmacHex } from './utils'
+import { getYesterdayTimestamp, hmacHex } from './utils'
 
 type InterviewSession = {
   id: string
@@ -90,6 +90,7 @@ export const listReusableQuestions = async (params: {
       .select('session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
       .eq('interview_sessions.topic', topic)
       .eq('interview_sessions.level', level)
+      .lt('created_at', getYesterdayTimestamp())
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
 

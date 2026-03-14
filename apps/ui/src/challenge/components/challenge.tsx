@@ -66,7 +66,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   })
 
   const restart = () => {
-    setProgress({ score: 0, stage: 0 })
+    setProgress({ score: 0, stage: -1 })
   }
 
   const handleSubmit = async () => {
