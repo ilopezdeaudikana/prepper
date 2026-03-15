@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query'
 
 import {
@@ -17,7 +18,7 @@ import { Button } from '@/components/common/button'
 import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
-import type { Configuration } from '@/store/configuration.store'
+import { useConfiguration, type Configuration } from '@/store/configuration.store'
 import { Card } from '@/components/common/card'
 
 export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'storageMode'>) => {
@@ -32,6 +33,8 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
 
+  const setConfiguration = useConfiguration(state => state.setConfiguration)
+  
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
 
@@ -48,21 +51,21 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     level: getRandomValue(levels),
   })
 
-  const [topicAndLevel, setTopicAndLevel] = useState(() =>
-    randomMode ? getRandomTopicAndLevel() : { topic, level }
-  )
+  const [topicAndLevel, setTopicAndLevel] = useState({ topic: '', level: ''})
+
+  const queryClient = useQueryClient()
 
   const { data, isFetching } = useQuery({
-    queryKey: ['question', topicAndLevel.topic, topicAndLevel.level, requestId],
+    queryKey: ['question', requestId],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
       sessionToken ?? undefined
     ),
     staleTime: Infinity,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
+    refetchOnReconnect: false
   })
 
   const restart = () => {
@@ -105,44 +108,53 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     setLocalData(null)
     setFeedback(null)
     if (randomMode) {
-      setTopicAndLevel(getRandomTopicAndLevel())
-    } else {
-      setRequestId((current) => current + 1)
+      // random only once
+      setConfiguration({
+        topic: topicAndLevel.topic,
+        level: topicAndLevel.level,
+        randomMode: false
+      })
     }
+    setRequestId((current) => current + 1)
     setCanContinue(false)
   }
 
   const shouldShowForm = feedback === null && !loadingEvaluation
 
-  useEffect(() => setLocalData(data ?? null), [data])
-
   useEffect(() => {
     if (data?.sessionToken) {
       setSessionToken(data.sessionToken)
     }
-  }, [data])
 
-  useEffect(() => {
     if (!data?.question) return
     setPreviousQuestions((current) =>
       current.includes(data.question) ? current : [...current, data.question]
     )
+
+    setLocalData(data ?? null)
   }, [data])
+
+  useEffect(() => {
+    queryClient.resetQueries({ queryKey: ['question'], exact: false })
+  }, [requestId]);
 
   useEffect(() => {
     setSessionToken(null)
     setPreviousQuestions([])
     setFeedback(null)
     setLocalData(null)
-    setTopicAndLevel(randomMode ? getRandomTopicAndLevel() : { topic, level })
-  }, [topic, level, randomMode])
+
+    if(randomMode) setTopicAndLevel(() => getRandomTopicAndLevel())
+  }, [])
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
       <Card
         className="h-[64px] flex-none"
       >
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-between">
+          <p>Topic: {topic || topicAndLevel.topic}, Level {level || topicAndLevel.level}</p>
+          <div className='flex gap-4'>
           <Button form="reply-form" type="submit" disabled={!input} size='sm'>Submit</Button>
           {showRestart && <Button type="button" onClick={restart} size='sm'>
             Restart
@@ -150,6 +162,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
           {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
             {isFetching ? 'Loading...' : 'Next question'}
           </Button>}
+          </div>
         </div>
       </Card>
 
