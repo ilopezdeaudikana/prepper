@@ -34,7 +34,7 @@ export default function Configuration() {
       randomMode,
       storageMode
     })
-    setProgress({ score: 0, stage: 1 })
+    setProgress({ score: 0, stage: 0 })
     navigate('/challenge')
   }
 

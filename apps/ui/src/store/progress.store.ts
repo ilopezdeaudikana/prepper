@@ -11,7 +11,7 @@ export interface ProgressStore {
 export const useProgress = create<ProgressStore>((set) => ({
   progress: { score: 0, stage: -1 },
   setProgress: (newProgress: { score: number; stage: number }) => set({ progress: newProgress }),
-  resetProgress: () => set({ progress: { score: 0, stage: 0 } })
+  resetProgress: () => set({ progress: { score: 0, stage: -1 } })
 }))
 
 
