@@ -9,7 +9,7 @@ export default function ChallengeView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === -INITIAL_STAGE || stage === FINAL_STAGE
+  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === INITIAL_STAGE || stage === FINAL_STAGE
   
   const to =  stage === FINAL_STAGE ? '/finale' : '/'
   
