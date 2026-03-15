@@ -1,6 +1,6 @@
 import { Challenge } from '../components/challenge'
 import { useConfiguration } from '@/store/configuration.store'
-import { useProgress, FINAL_STAGE } from '@/store/progress.store'
+import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 import { Redirector } from '@/components/common/redirector'
 
 export default function ChallengeView() {
@@ -9,7 +9,7 @@ export default function ChallengeView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === 0 || stage === FINAL_STAGE
+  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === -INITIAL_STAGE || stage === FINAL_STAGE
   
   const to =  stage === FINAL_STAGE ? '/finale' : '/'
   

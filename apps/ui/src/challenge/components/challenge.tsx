@@ -14,7 +14,7 @@ import { type Feedback, type Question, Topic } from '@repo/shared-types'
 import { Badge } from '@/components/common/badge'
 import { Textarea } from '@/components/common/textarea'
 import { Button } from '@/components/common/button'
-import { useProgress, FINAL_STAGE } from '@/store/progress.store'
+import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
 import type { Configuration } from '@/store/configuration.store'
@@ -66,7 +66,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
   })
 
   const restart = () => {
-    setProgress({ score: 0, stage: -1 })
+    setProgress({ score: 0, stage: INITIAL_STAGE })
   }
 
   const handleSubmit = async () => {
