@@ -49,7 +49,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
   const [topicAndLevel, setTopicAndLevel] = useState({ topic, level})
 
-  const { data, isFetching, isError  } = useQuery({
+  const { data, isFetching, isError, error  } = useQuery({
     queryKey: ['question', requestId],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
@@ -148,7 +148,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
-      {!!topicAndLevel.topic && !!topicAndLevel.level}
       <Card
         className="h-[64px] flex-none"
       >
@@ -172,10 +171,10 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
             {(!localData || isFetching) && (
               <GenerationState isFetching={isFetching} />
             )}
-            {localData?.error ? (
+            {localData?.error || error ? (
               <div><p>Error loading data</p>
                 <pre className="whitespace-pre-wrap">
-                  {JSON.stringify(localData, null, 2)}
+                  {JSON.stringify(localData?.error ?? error, null, 2)}
                 </pre>
               </div>
             ) : null}
