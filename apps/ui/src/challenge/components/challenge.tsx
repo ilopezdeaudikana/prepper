@@ -50,7 +50,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     level: getRandomValue(levels),
   })
 
-  const [topicAndLevel, setTopicAndLevel] = useState({ topic: '', level: ''})
+  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level})
 
   const queryClient = useQueryClient()
 
@@ -154,6 +154,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
+      {!!topicAndLevel.topic && !!topicAndLevel.level}
       <Card
         className="h-[64px] flex-none"
       >
