@@ -58,4 +58,12 @@ export const Topic = {
 
 export type TopicKey = (typeof Topic)[keyof typeof Topic]
 
+export const Level = {
+  react: 'junior',
+  nextjs: 'mid',
+  node: 'senior'
+} as const
+
+export type LevelKey = (typeof Level)[keyof typeof Level]
+
 export const MINIMUM_SCORE = 7

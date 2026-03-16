@@ -8,15 +8,16 @@ import {
   MessageResponse
 } from '@/components/ai-elements/message'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, MINIMUM_SCORE, type Question, Topic } from '@repo/shared-types'
+import { type Feedback, MINIMUM_SCORE, type Question } from '@repo/shared-types'
 import { Badge } from '@/components/common/badge'
 import { Textarea } from '@/components/common/textarea'
-import { Button } from '@/components/common/button'
-import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
+import { useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
 import { useConfiguration, type Configuration } from '@/store/configuration.store'
 import { Card } from '@/components/common/card'
+import { getRandomTopicAndLevel } from '../utils/getRandomTopicAndLevel'
+import { ChallengeTopbar } from './challenge-topbar'
 
 export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
   const [input, setInput] = useState<string>('')
@@ -34,19 +35,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
 
-  const levels = ['junior', 'mid', 'senior'] as const
-
-  const getRandomValue = <T,>(arr: readonly T[]): T => {
-    if (arr.length === 0) throw new Error('Cannot pick from an empty array')
-    const index = Math.floor(Math.random() * arr.length)
-    return arr[index]
-  }
-
-  const getRandomTopicAndLevel = () => ({
-    topic: getRandomValue(Object.values(Topic)),
-    level: getRandomValue(levels),
-  })
-
   const [topicAndLevel, setTopicAndLevel] = useState({ topic, level})
 
   const { data, isFetching, isError, error  } = useQuery({
@@ -62,10 +50,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     refetchOnWindowFocus: false,
     refetchOnReconnect: false
   })
-
-  const restart = () => {
-    setProgress({ score: 0, stage: INITIAL_STAGE })
-  }
 
   const handleSubmit = async () => {
     if (!input) return
@@ -95,11 +79,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   }
 
   const loadNextQuestion = async () => {
-    if (stage === FINAL_STAGE) {
-      // trigger redirection
-      setProgress({ score, stage: FINAL_STAGE })
-      return
-    }
     setLocalData(null)
     setFeedback(null)
     if (randomMode) {
@@ -148,23 +127,13 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
-      <Card
-        className="h-[64px] flex-none"
-      >
-        <div className="flex justify-between">
-          <p>Topic: {topic || topicAndLevel.topic}, Level {level || topicAndLevel.level}</p>
-          <div className='flex gap-4'>
-          <Button form="reply-form" type="submit" disabled={!input} size='sm'>Submit</Button>
-          {showRestart && <Button type="button" onClick={restart} size='sm'>
-            Restart
-          </Button>}
-          {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
-            {isFetching ? 'Loading...' : 'Next question'}
-          </Button>}
-          </div>
-        </div>
-      </Card>
-
+      <ChallengeTopbar 
+        isFetching={isFetching}
+        canContinue={canContinue}
+        disabled={!input} 
+        showRestart={showRestart} 
+        onLoadNextQuestion={loadNextQuestion}
+      />
       <div className="flex align-self-center gap-4 flex-1 min-h-0 overflow-hidden">
         <div className="flex flex-col flex-1 basis-1/2 overflow-hidden min-h-0">
           <Card className="min-h-0 overflow-hidden">
