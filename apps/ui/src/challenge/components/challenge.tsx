@@ -11,7 +11,7 @@ import {
 } from '@/components/ai-elements/message'
 
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, type Question, Topic } from '@repo/shared-types'
+import { type Feedback, MINIMUM_SCORE, type Question, Topic } from '@repo/shared-types'
 import { Badge } from '@/components/common/badge'
 import { Textarea } from '@/components/common/textarea'
 import { Button } from '@/components/common/button'
@@ -21,8 +21,7 @@ import { CodeArea } from './code-area'
 import { useConfiguration, type Configuration } from '@/store/configuration.store'
 import { Card } from '@/components/common/card'
 
-export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'storageMode'>) => {
-  const SCORE = 7
+export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
   const [input, setInput] = useState<string>('')
   const [feedback, setFeedback] = useState<Partial<Feedback> | null>(null)
   const [canContinue, setCanContinue] = useState(false)
@@ -55,13 +54,14 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
 
   const queryClient = useQueryClient()
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError  } = useQuery({
     queryKey: ['question', requestId],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
       sessionToken ?? undefined
     ),
+    enabled: !!topicAndLevel.topic && !!topicAndLevel.level,
     staleTime: Infinity,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
@@ -86,7 +86,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
 
       setFeedback(result)
 
-      if (result.score > SCORE) {
+      if (result.score > MINIMUM_SCORE) {
         setProgress({ score: score + result.score, stage: stage + 1 })
         setCanContinue(true)
       } else {
@@ -132,7 +132,7 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
     )
 
     setLocalData(data ?? null)
-  }, [data])
+  }, [isFetching])
 
   useEffect(() => {
     queryClient.resetQueries({ queryKey: ['question'], exact: false })
@@ -146,6 +146,11 @@ export const Challenge = ({ level, topic, randomMode }: Omit<Configuration, 'sto
 
     if(randomMode) setTopicAndLevel(() => getRandomTopicAndLevel())
   }, [])
+
+  useEffect(() => {
+
+    if(randomMode && isError && storageMode) setTopicAndLevel(() => getRandomTopicAndLevel())
+  }, [isError, storageMode])
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">

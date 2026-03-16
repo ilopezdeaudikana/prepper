@@ -4,6 +4,7 @@ export const QuestionSchema = z.object({
   question: z.string(),
   initialCode: z.string().optional(),
   type: z.enum(['coding', 'theoretical']).optional(),
+  completed: z.boolean().optional()
 })
 
 export const FeedbackSchema = z.object({
@@ -56,3 +57,5 @@ export const Topic = {
 } as const
 
 export type TopicKey = (typeof Topic)[keyof typeof Topic]
+
+export const MINIMUM_SCORE = 7

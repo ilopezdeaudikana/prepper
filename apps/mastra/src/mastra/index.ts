@@ -1,4 +1,3 @@
-
 import { Mastra } from '@mastra/core/mastra'
 import { PinoLogger } from '@mastra/loggers'
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability'
@@ -15,6 +14,41 @@ const PrefillRequestSchema = z.object({
   levels: z.array(z.string().min(1)).min(1).max(10),
   countPerPair: z.number().int().min(1).max(10).default(1),
 })
+
+// Plain-function request / error helpers (no classes)
+function createRequestError(message: string, status = 400): Error & { status: number } {
+  const err = new Error(message) as Error & { status: number }
+  err.status = status
+  return err
+}
+
+async function parseAndValidateBody<T>(c: any, schema: { parse: (v: unknown) => T }): Promise<T> {
+  const rawBody = await c.req.text()
+  if (!rawBody || !rawBody.trim()) {
+    throw createRequestError('Empty request body. Expected JSON.', 400)
+  }
+
+  let parsedBody: unknown
+  try {
+    parsedBody = JSON.parse(rawBody)
+  } catch {
+    throw createRequestError('Invalid JSON in request body.', 400)
+  }
+
+  return schema.parse(parsedBody)
+}
+
+function handleRequestError(c: any, error: unknown, fallbackMessage: string) {
+  const message = error instanceof Error ? error.message : fallbackMessage
+  const status =
+    error instanceof ZodError ? 400 : (error && typeof (error as any).status === 'number' ? (error as any).status : 500)
+  return c.json(
+    {
+      error: status === 400 ? message : fallbackMessage,
+    },
+    status
+  )
+}
 
 export const mastra = new Mastra({
   agents: { interviewAgent },
@@ -46,43 +80,16 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
-            const rawBody = await c.req.text()
-            if (!rawBody.trim()) {
-              return c.json({ error: 'Empty request body. Expected JSON.' }, 400)
-            }
-
-            let parsedBody: unknown
-            try {
-              parsedBody = JSON.parse(rawBody)
-            } catch {
-              return c.json({ error: 'Invalid JSON in request body.' }, 400)
-            }
-
-            const payload = ChallengeRequestSchema.parse(parsedBody)
+            const payload = await parseAndValidateBody(c, ChallengeRequestSchema)
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
 
             if (result.status !== 'success') {
-              const errorMessage =
-                result.status === 'failed'
-                  ? result.error.message
-                  : result.status === 'tripwire'
-                    ? result.tripwire.reason
-                    : 'Challenge workflow did not complete successfully'
-              const normalized = errorMessage.toLowerCase()
-              const isQuota =
-                normalized.includes('quota') ||
-                normalized.includes('rate limit') ||
-                normalized.includes('rate-limit') ||
-                normalized.includes('too many requests') ||
-                normalized.includes('429')
               return c.json(
                 {
-                  error: isQuota
-                    ? 'Quota exceeded. Please wait before requesting another challenge.'
-                    : 'Challenge generation failed.',
+                  error: 'Challenge generation failed.',
                 },
                 500
               )
@@ -90,25 +97,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
-            const message = error instanceof Error ? error.message : 'Invalid challenge request'
-            const normalized = message.toLowerCase()
-            const isQuota =
-              normalized.includes('quota') ||
-              normalized.includes('rate limit') ||
-              normalized.includes('rate-limit') ||
-              normalized.includes('too many requests') ||
-              normalized.includes('429')
-            const status = error instanceof ZodError ? 400 : 500
-            return c.json(
-              {
-                error: isQuota
-                  ? 'Quota exceeded. Please wait before requesting another challenge.'
-                  : status === 400
-                    ? message
-                    : 'Challenge generation failed.',
-              },
-              status
-            )
+            return handleRequestError(c, error, 'Challenge generation failed.')
           }
         },
       }),
@@ -116,43 +105,16 @@ export const mastra = new Mastra({
         method: "POST",
         handler: async (c) => {
           try {
-            const rawBody = await c.req.text()
-            if (!rawBody.trim()) {
-              return c.json({ error: 'Empty request body. Expected JSON.' }, 400)
-            }
-
-            let parsedBody: unknown
-            try {
-              parsedBody = JSON.parse(rawBody)
-            } catch {
-              return c.json({ error: 'Invalid JSON in request body.' }, 400)
-            }
-
-            const payload = EvaluationRequestSchema.parse(parsedBody)
+            const payload = await parseAndValidateBody(c, EvaluationRequestSchema)
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
 
             if (result.status !== 'success') {
-              const errorMessage =
-                result.status === 'failed'
-                  ? result.error.message
-                  : result.status === 'tripwire'
-                    ? result.tripwire.reason
-                    : 'Evaluation workflow did not complete successfully'
-              const normalized = errorMessage.toLowerCase()
-              const isQuota =
-                normalized.includes('quota') ||
-                normalized.includes('rate limit') ||
-                normalized.includes('rate-limit') ||
-                normalized.includes('too many requests') ||
-                normalized.includes('429')
               return c.json(
                 {
-                  error: isQuota
-                    ? 'Quota exceeded. Please wait before requesting another evaluation.'
-                    : 'Evaluation failed.',
+                  error: 'Evaluation failed.',
                 },
                 500
               )
@@ -160,25 +122,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
-            const message = error instanceof Error ? error.message : 'Invalid evaluation request'
-            const normalized = message.toLowerCase()
-            const isQuota =
-              normalized.includes('quota') ||
-              normalized.includes('rate limit') ||
-              normalized.includes('rate-limit') ||
-              normalized.includes('too many requests') ||
-              normalized.includes('429')
-            const status = error instanceof ZodError ? 400 : 500
-            return c.json(
-              {
-                error: isQuota
-                  ? 'Quota exceeded. Please wait before requesting another evaluation.'
-                  : status === 400
-                    ? message
-                    : 'Evaluation failed.',
-              },
-              status
-            )
+            return handleRequestError(c, error, 'Evaluation failed.')
           }
         },
       }),
@@ -196,15 +140,13 @@ export const mastra = new Mastra({
               return c.json({ error: 'Unauthorized' }, 401)
             }
 
-            const payload = PrefillRequestSchema.parse(await c.req.json())
+            const payload = await parseAndValidateBody(c, PrefillRequestSchema)
             const result = await prefillChallengePool(payload)
             console.log(result)
             return c.json(result)
           } catch (error) {
             console.log(error)
-            const message = error instanceof Error ? error.message : 'Invalid prefill request'
-            const status = error instanceof ZodError ? 400 : 500
-            return c.json({ error: message }, status)
+            return handleRequestError(c, error, 'Prefill failed.')
           }
         },
       }),

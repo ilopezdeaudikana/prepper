@@ -5,8 +5,10 @@ import { Redirector } from '@/components/common/redirector'
 
 export default function ChallengeView() {
 
-  const { level, topic, randomMode } = useConfiguration(state => state.configuration)
+  const configuration = useConfiguration(state => state.configuration)
 
+  const { topic, level, randomMode } = configuration
+  
   const { stage } = useProgress(state => state.progress)
 
   const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === INITIAL_STAGE || stage === FINAL_STAGE
@@ -16,7 +18,7 @@ export default function ChallengeView() {
   return (
     <div>
       <Redirector condition={shouldRedirect} to={to}>
-        <Challenge topic={topic} level={level} randomMode={randomMode}/>
+        <Challenge {...configuration}/>
       </Redirector>
     </div>
   )

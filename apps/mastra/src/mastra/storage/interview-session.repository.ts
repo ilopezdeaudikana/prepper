@@ -1,4 +1,4 @@
-import type { Feedback, Question } from '@repo/shared-types'
+import { MINIMUM_SCORE, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { getYesterdayTimestamp, hmacHex } from './utils'
 
@@ -14,6 +14,12 @@ type QuestionInsert = {
   question: string
   initial_code?: string | null
   type: Question['type']
+}
+
+type QuestionRow = Question & {
+  sessionId: string
+  sessionToken: string
+  createdAt: string
 }
 
 const TABLES = {
@@ -74,14 +80,7 @@ export const listReusableQuestions = async (params: {
   const batchSize = pageSize * 3
   const maxBatches = 3
 
-  const results: {
-    sessionId: string
-    sessionToken: string
-    question: string
-    initialCode?: string
-    type: Question['type']
-    createdAt: string
-  }[] = []
+  const results: QuestionRow[] = []
 
   for (let batchIndex = 0; batchIndex < maxBatches && results.length < pageSize; batchIndex += 1) {
     const offset = batchIndex * batchSize
@@ -103,6 +102,7 @@ export const listReusableQuestions = async (params: {
       type: row.type as Question['type'],
       createdAt: row.created_at as string,
       sessionToken: hmacHex(process.env.HASH_SECRET!, row.session_id as string),
+      completed: row.completed
     }))
 
     const filtered = excludeSessionToken
@@ -140,6 +140,24 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
   return data.id
 }
 
+export const completeQuestion = async (questionId: string) => {
+  const supabase = getSupabaseClient()
+
+  const insertPayload = {
+    completed: true
+  }
+
+  const { data, error } = await supabase
+    .from(TABLES.questions)
+    .update(insertPayload)
+    .eq('id', questionId)
+    .select('id')
+    .single<{ id: string }>()
+
+  if (error) throw new Error(`Failed to persist question: ${error.message}`)
+  return data.id
+}
+
 export const createFeedback = async (params: {
   sessionId: string
   questionId: string
@@ -161,5 +179,12 @@ export const createFeedback = async (params: {
     improved_code: feedback.improvedCode ?? null,
   })
 
+  if(feedback.score > MINIMUM_SCORE) {
+    try {
+      await completeQuestion(questionId)
+    } catch (error) {
+      console.log(error)
+    }
+  }
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }

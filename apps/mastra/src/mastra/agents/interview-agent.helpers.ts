@@ -74,7 +74,11 @@ export const findReusableQuestion = async (params: {
     limit: 30,
   })
 
-  return reusableQuestions.find(
+  const notCompleted = reusableQuestions.filter(
+    (question) => !question.completed
+  )
+  const target = notCompleted.length ? notCompleted : reusableQuestions
+  return target.find(
     (question) =>
       !previousQuestions.includes(question.question) &&
       !isTooSimilar(question.question, previousQuestions)
