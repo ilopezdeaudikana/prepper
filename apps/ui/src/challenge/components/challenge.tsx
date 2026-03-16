@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   useQuery,
-  useQueryClient,
 } from '@tanstack/react-query'
-
 import {
   Message,
   MessageContent,
   MessageResponse
 } from '@/components/ai-elements/message'
-
 import { ChallengeService } from '@/services/challenge.service'
 import { type Feedback, MINIMUM_SCORE, type Question, Topic } from '@repo/shared-types'
 import { Badge } from '@/components/common/badge'
@@ -51,8 +48,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   })
 
   const [topicAndLevel, setTopicAndLevel] = useState({ topic, level})
-
-  const queryClient = useQueryClient()
 
   const { data, isFetching, isError  } = useQuery({
     queryKey: ['question', requestId],
@@ -135,21 +130,20 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   }, [isFetching])
 
   useEffect(() => {
-    queryClient.resetQueries({ queryKey: ['question'], exact: false })
-  }, [requestId]);
-
-  useEffect(() => {
     setSessionToken(null)
     setPreviousQuestions([])
     setFeedback(null)
     setLocalData(null)
 
-    if(randomMode) setTopicAndLevel(() => getRandomTopicAndLevel())
+    if(randomMode) {
+      setTopicAndLevel(() => getRandomTopicAndLevel())
+    }
   }, [])
 
   useEffect(() => {
-
-    if(randomMode && isError && storageMode) setTopicAndLevel(() => getRandomTopicAndLevel())
+    if(randomMode && isError && storageMode) {
+      setTopicAndLevel(() => getRandomTopicAndLevel())
+    }
   }, [isError, storageMode])
 
   return (
