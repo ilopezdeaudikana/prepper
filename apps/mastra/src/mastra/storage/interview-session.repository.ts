@@ -154,9 +154,15 @@ export const completeQuestion = async (questionId: string) => {
     .select('id')
     .single<{ id: string }>()
 
-  if (error) throw new Error(`Failed to persist question: ${error.message}`)
+  if (error) throw new Error(`Failed to update question: ${questionId}`)
+  else if (!data) {
+    throw new Error(`No row matched ${questionId}`)
+  } 
+
+ 
   return data.id
 }
+
 
 export const createFeedback = async (params: {
   sessionId: string
