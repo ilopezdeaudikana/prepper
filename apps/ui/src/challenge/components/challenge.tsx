@@ -221,7 +221,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
                   </div>
                 ) : null}
                 {feedback.score && (
-                  <p><Badge className="mr-2" color={feedback.score > SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
+                  <p><Badge className="mr-2" color={feedback.score > MINIMUM_SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
                 )}
                 {feedback.critique && (
                   <Message
