@@ -22,7 +22,7 @@ import { ChallengeReply } from './challenge-reply'
 export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
 
   const [feedback, setFeedback] = useState<Feedback & { error?: string }| null>(null)
-  const [isDisabled, setIsDisabled] = useState(false)
+  const [isDisabled, setIsDisabled] = useState(true)
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
@@ -53,7 +53,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   })
 
   const handleInputChange = (reply?: string) => {
-    setIsDisabled(!!reply)
+    setIsDisabled(!reply)
   }
 
   const handleSubmit = async (reply: string) => {
@@ -180,7 +180,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
               <div><p>Loading evaluation...</p></div>
             )}
             {feedback && (<ChallengeFeedback feedback={feedback} />)}
-            {shouldShowForm && <ChallengeReply onChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type}/>}
+            {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type}/>}
           </Card>
         </div>
       </div>

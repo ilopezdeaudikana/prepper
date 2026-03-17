@@ -5,10 +5,10 @@ import { Textarea } from '@/components/common/textarea'
 
 interface ChallengeReplyProps {
   onSubmit: (reply: string) => void
-  onChange: (reply: string) => void
+  onInputChange: (reply: string) => void
   type: Question['type']
 }
-export const ChallengeReply = ({ onSubmit, onChange, type }: ChallengeReplyProps) => {
+export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReplyProps) => {
   const [input, setInput] = useState<string>('')
 
   const submit = (e: React.SubmitEvent) => {
@@ -17,9 +17,9 @@ export const ChallengeReply = ({ onSubmit, onChange, type }: ChallengeReplyProps
     setInput('')
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value)
-    onChange(e.target.value)
+  const handleChange = (reply: string) => {
+    setInput(reply)
+    onInputChange(reply)
   }
 
   return (
@@ -32,7 +32,7 @@ export const ChallengeReply = ({ onSubmit, onChange, type }: ChallengeReplyProps
         <span id="reply-label">Type your reply here:</span>
         {type === 'theoretical' && (<Textarea
           name='reply'
-          onChange={handleChange}
+          onChange={(e) => handleChange(e.target.value)}
           className="min-h-25 mb-2 mt-4 flex-1"
           aria-labelledby="reply-label"
           value={input}
@@ -43,7 +43,7 @@ export const ChallengeReply = ({ onSubmit, onChange, type }: ChallengeReplyProps
             inputAriaLabelledBy="reply-label"
             editable
             code={input}
-            onEdit={(e: string) => setInput(e)}
+            onEdit={handleChange}
           />)}
       </div>
     </form>
