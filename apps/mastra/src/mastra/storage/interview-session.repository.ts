@@ -1,4 +1,4 @@
-import { MINIMUM_SCORE, type Feedback, type Question } from '@repo/shared-types'
+import { type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { getYesterdayTimestamp, hmacHex } from './utils'
 
@@ -186,12 +186,5 @@ export const createFeedback = async (params: {
     improved_code: feedback.improvedCode ?? null,
   })
 
-  if(feedback.score > MINIMUM_SCORE) {
-    try {
-      await completeQuestion(questionId)
-    } catch (error) {
-      console.log(error)
-    }
-  }
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }

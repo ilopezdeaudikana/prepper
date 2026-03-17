@@ -8,6 +8,7 @@ import { ChallengeRequestSchema, EvaluationRequestSchema } from '@repo/shared-ty
 import { z, ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 import { prefillChallengePool } from './agents/interview-agent.service'
+import { LibSQLStore } from '@mastra/libsql'
 
 const PrefillRequestSchema = z.object({
   topics: z.array(z.string().min(1)).min(1).max(20),
@@ -15,7 +16,7 @@ const PrefillRequestSchema = z.object({
   countPerPair: z.number().int().min(1).max(10).default(1),
 })
 
-// Plain-function request / error helpers (no classes)
+// Plain-function request / error helpers
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
   err.status = status
@@ -50,16 +51,24 @@ function handleRequestError(c: any, error: unknown, fallbackMessage: string) {
   )
 }
 
+const storage = process.env.NODE_ENV === 'production'
+  ? undefined
+  : new LibSQLStore({
+    id: 'dev-db',
+    url: 'file:./mastra.db'
+  })
+
 export const mastra = new Mastra({
   agents: { interviewAgent },
+  storage,
+  logger: new PinoLogger({
+    name: 'Mastra',
+    level: 'info'
+  }),
   workflows: {
     generateChallengeWorkflow,
     evaluateAnswerWorkflow,
   },
-  logger: new PinoLogger({
-    name: 'Mastra',
-    level: 'info',
-  }),
   observability: new Observability({
     configs: {
       default: {
@@ -79,14 +88,17 @@ export const mastra = new Mastra({
       registerApiRoute("/interview/challenge", {
         method: "POST",
         handler: async (c) => {
+          const mastra = c.get('mastra')
+          const logger = mastra.getLogger()
+
           try {
             const payload = await parseAndValidateBody(c, ChallengeRequestSchema)
-            const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
 
             if (result.status !== 'success') {
+              logger.error('Challenge generation failed', JSON.stringify(result))
               return c.json(
                 {
                   error: 'Challenge generation failed.',
@@ -97,6 +109,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
+            logger.error('Unexpected challenge generation error')
             return handleRequestError(c, error, 'Challenge generation failed.')
           }
         },
@@ -129,6 +142,7 @@ export const mastra = new Mastra({
       registerApiRoute("/interview/prefill", {
         method: "POST",
         handler: async (c) => {
+
           try {
             const configuredSecret = process.env.PREFILL_SECRET
             if (!configuredSecret) {
@@ -142,10 +156,10 @@ export const mastra = new Mastra({
 
             const payload = await parseAndValidateBody(c, PrefillRequestSchema)
             const result = await prefillChallengePool(payload)
-            console.log(result)
+
             return c.json(result)
           } catch (error) {
-            console.log(error)
+
             return handleRequestError(c, error, 'Prefill failed.')
           }
         },

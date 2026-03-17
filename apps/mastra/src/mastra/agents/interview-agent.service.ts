@@ -1,17 +1,19 @@
-import { type Question, QuestionSchema, FeedbackSchema, ChallengeType } from "@repo/shared-types"
+import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE } from '@repo/shared-types'
 import {
   createFeedback,
   createSession,
   getSession,
   listQuestionTexts,
   upsertQuestion,
-} from "../storage/interview-session.repository"
+  completeQuestion
+} from '../storage/interview-session.repository'
 import {
   dedupeQuestions,
   findReusableQuestion,
   generateWithRateLimit,
   isTooSimilar,
-} from "./interview-agent.helpers"
+} from './interview-agent.helpers'
+import { ILogger } from '../logger.service'
 
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -35,13 +37,15 @@ export const getChallenge = async (
   topic: string,
   level: string,
   previousQuestions: string[] = [],
+  logger: ILogger,
   sessionToken?: string,
-  options?: { skipReuse?: boolean, forceReuse?: boolean }
+  options?: { skipReuse?: boolean, forceReuse?: boolean },
 ) => {
   const {forceReuse, skipReuse } = options ?? {}
 
+
   if (forceReuse && skipReuse) {
-    throw new Error("Invalid options: forceReuse cannot be combined with skipReuse")
+    throw new Error('Invalid options: forceReuse cannot be combined with skipReuse')
   }
 
   const sessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
@@ -83,14 +87,14 @@ export const getChallenge = async (
       return formatReusableQuestion(session.id, session.sessionToken, fallbackReusable)
     }
 
-    throw new Error(`No reusable challenge found for topic "${topic}" at level "${level}"`)
+    throw new Error(`No reusable challenge found for topic '${topic}' at level '${level}'`)
   }
 
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
   const exclusions = allPreviousQuestions.length
-    ? allPreviousQuestions.map((question, index) => `${index + 1}. ${question}`).join("\n")
-    : "None"
+    ? allPreviousQuestions.map((question, index) => `${index + 1}. ${question}`).join('\n')
+    : 'None'
 
   let lastGenerated: Question | null = null
 
@@ -118,8 +122,8 @@ export const getChallenge = async (
   )
     const generatedQuestion = generationResponse.object
     if (!generatedQuestion) {
-      const rawText = generationResponse.text ?? ""
-      console.error('INTERVIEW_AGENT: missing structured output for challenge', {
+      const rawText = generationResponse.text ?? ''
+      logger.error('INTERVIEW_AGENT: missing structured output for challenge', {
         topic,
         level,
         attempt,
@@ -130,12 +134,12 @@ export const getChallenge = async (
     }
 
     const normalizedQuestion =
-      generatedQuestion && typeof generatedQuestion === "object"
+      generatedQuestion && typeof generatedQuestion === 'object'
         ? {
             ...generatedQuestion,
             // Backfill type when models omit it.
             type:
-              typeof (generatedQuestion as { type?: unknown }).type === "string"
+              typeof (generatedQuestion as { type?: unknown }).type === 'string'
                 ? (generatedQuestion as { type?: string }).type
                 : (generatedQuestion as { initialCode?: unknown }).initialCode
                     ? ChallengeType.Coding
@@ -156,7 +160,7 @@ export const getChallenge = async (
 
     lastGenerated = parsed.data
 
-    console.log(lastGenerated)
+    logger.info(JSON.stringify(lastGenerated))
 
     if (!isTooSimilar(parsed.data?.question, allPreviousQuestions)) {
       await upsertQuestion(session.id, parsed.data)
@@ -168,7 +172,7 @@ export const getChallenge = async (
   }
 
   if (!lastGenerated) {
-    throw new Error("Failed to generate challenge")
+    throw new Error('Failed to generate challenge')
   }
 
   await upsertQuestion(session.id, lastGenerated)
@@ -217,8 +221,10 @@ export const submitAnswer = async (
   question: Question,
   userAnswer: string,
   level: string,
+  logger: ILogger,
   sessionToken?: string
 ) => {
+
   const generationResponse = await generateWithRateLimit(
     `Level: ${level}
      Question: ${JSON.stringify(question)}
@@ -234,8 +240,8 @@ export const submitAnswer = async (
     }
   )
   if (!generationResponse.object) {
-    const rawText = generationResponse.text ?? ""
-    console.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+    const rawText = generationResponse.text ?? ''
+    logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
       level,
       hasText: Boolean(generationResponse.text),
       textPreview: rawText.slice(0, 2000),
@@ -244,7 +250,7 @@ export const submitAnswer = async (
   }
   const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
   if (!parsedFeedback.success) {
-    throw new Error("Failed to generate feedback")
+    throw new Error('Failed to generate feedback')
   }
   const generatedFeedback = parsedFeedback.data
 
@@ -270,6 +276,13 @@ export const submitAnswer = async (
     feedback: generatedFeedback,
   })
 
+  logger.info(`Score ${generatedFeedback.score} for questionId ${questionId}`)
+
+  if (generatedFeedback.score > MINIMUM_SCORE) {
+    completeQuestion(questionId).catch(error => {
+      logger.error(`Error completing challenge ${JSON.stringify(error)}`)
+    })
+  }
   return {
     ...generatedFeedback,
     sessionToken: session.sessionToken,

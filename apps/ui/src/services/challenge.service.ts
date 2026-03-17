@@ -12,14 +12,14 @@ export type ChallengeResponse = Question & { sessionToken?: string }
 let hasThrown = false
 export const ChallengeService = {
   async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionToken?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      if(!hasThrown){
-        hasThrown = !hasThrown
-        return Promise.reject(new Error('Simulated error in development mode'))
-      } else { 
-        return Promise.resolve(sample as ChallengeResponse)
-      }
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   if(!hasThrown){
+    //     hasThrown = !hasThrown
+    //     return Promise.reject(new Error('Simulated error in development mode'))
+    //   } else { 
+    //     return Promise.resolve(sample as ChallengeResponse)
+    //   }
+    // }
     
     const { storageMode } = useConfiguration.getState().configuration
     
@@ -36,9 +36,9 @@ export const ChallengeService = {
   },
 
   async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      return Promise.resolve(responseSample as EvaluationResponse)
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   return Promise.resolve(responseSample as EvaluationResponse)
+    // }
     const response = await fetch(getApiUrl('interview/evaluate'), {
       method: 'POST',
       headers: {
