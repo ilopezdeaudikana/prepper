@@ -9,8 +9,6 @@ import {
 } from '@/components/ai-elements/message'
 import { ChallengeService } from '@/services/challenge.service'
 import { type Feedback, MINIMUM_SCORE, type Question } from '@repo/shared-types'
-import { Badge } from '@/components/common/badge'
-import { Textarea } from '@/components/common/textarea'
 import { useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
@@ -18,10 +16,13 @@ import { useConfiguration, type Configuration } from '@/store/configuration.stor
 import { Card } from '@/components/common/card'
 import { getRandomTopicAndLevel } from '../utils/getRandomTopicAndLevel'
 import { ChallengeTopbar } from './challenge-topbar'
+import { ChallengeFeedback } from './challenge-feedback'
+import { ChallengeReply } from './challenge-reply'
 
 export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
-  const [input, setInput] = useState<string>('')
-  const [feedback, setFeedback] = useState<Partial<Feedback> | null>(null)
+
+  const [feedback, setFeedback] = useState<Feedback & { error?: string }| null>(null)
+  const [isDisabled, setIsDisabled] = useState(false)
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
@@ -51,14 +52,18 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     refetchOnReconnect: false
   })
 
-  const handleSubmit = async () => {
-    if (!input) return
-    setInput('')
+  const handleInputChange = (reply?: string) => {
+    setIsDisabled(!!reply)
+  }
+
+  const handleSubmit = async (reply: string) => {
+    if (!reply) return
+ 
     setLoadingEvaluation(true)
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
         data as Question,
-        input,
+        reply,
         topicAndLevel.level,
         sessionToken ?? undefined
       )
@@ -72,7 +77,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
         setShowRestart(true)
       }
     } catch (error: any) {
-      setFeedback({ error: error.error })
+      setFeedback({ error: error.error } as Feedback)
     } finally {
       setLoadingEvaluation(false)
     }
@@ -130,7 +135,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
       <ChallengeTopbar 
         isFetching={isFetching}
         canContinue={canContinue}
-        disabled={!input} 
+        disabled={isDisabled} 
         showRestart={showRestart} 
         onLoadNextQuestion={loadNextQuestion}
       />
@@ -174,66 +179,8 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
             {loadingEvaluation && (
               <div><p>Loading evaluation...</p></div>
             )}
-            {feedback && (
-              <div className="flex flex-col gap-2 overflow-auto">
-                 {feedback?.error ? (
-                  <div><p>Error loading data</p>
-                    <pre className="whitespace-pre-wrap">
-                      {JSON.stringify(localData, null, 2)}
-                    </pre>
-                  </div>
-                ) : null}
-                {feedback.score && (
-                  <p><Badge className="mr-2" color={feedback.score > MINIMUM_SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
-                )}
-                {feedback.critique && (
-                  <Message
-                    from="assistant"
-                  >
-                    <MessageContent>
-                      <MessageResponse>{feedback.critique}</MessageResponse>
-                    </MessageContent>
-                  </Message>
-                )}
-                {feedback.improvedCode && (
-                  <CodeArea className="flex-1" code={feedback.improvedCode} header='Improved Code' />
-                )}
-                {feedback.missedPoints && (
-                  <Message
-                    from="assistant"
-                  >
-                    <MessageContent>
-                      {feedback.missedPoints.map((point, i) => (
-                        <MessageResponse key={`missed-point-${i}`}>{point}</MessageResponse>))}
-                    </MessageContent>
-                  </Message>
-                )}
-              </div>
-            )}
-            {shouldShowForm && <form
-              id="reply-form"
-              onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
-              className="flex flex-col flex-1 min-h-0 overflow-hidden"
-            >
-              <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
-                <span id="reply-label">Type your reply here:</span>
-                {localData?.type === 'theoretical' && (<Textarea
-                  name='reply'
-                  onChange={(e) => setInput(e.target.value)}
-                  className="min-h-25 mb-2 mt-4 flex-1"
-                  aria-labelledby="reply-label"
-                  value={input}
-                />)}
-                {localData?.type === 'coding' && (
-                  <CodeArea
-                    className="flex-1"
-                    inputAriaLabelledBy="reply-label"
-                    editable
-                    code={input}
-                    onEdit={(e: string) => setInput(e)}
-                  />)}
-              </div>
-            </form>}
+            {feedback && (<ChallengeFeedback feedback={feedback} />)}
+            {shouldShowForm && <ChallengeReply onChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type}/>}
           </Card>
         </div>
       </div>

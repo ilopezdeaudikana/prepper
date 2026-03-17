@@ -1,0 +1,51 @@
+import { useState } from 'react'
+import { type Question } from '@repo/shared-types'
+import { CodeArea } from './code-area'
+import { Textarea } from '@/components/common/textarea'
+
+interface ChallengeReplyProps {
+  onSubmit: (reply: string) => void
+  onChange: (reply: string) => void
+  type: Question['type']
+}
+export const ChallengeReply = ({ onSubmit, onChange, type }: ChallengeReplyProps) => {
+  const [input, setInput] = useState<string>('')
+
+  const submit = (e: React.SubmitEvent) => {
+    e.preventDefault()
+    onSubmit(input)
+    setInput('')
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+    onChange(e.target.value)
+  }
+
+  return (
+    <form
+      id="reply-form"
+      onSubmit={submit}
+      className="flex flex-col flex-1 min-h-0 overflow-hidden"
+    >
+      <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
+        <span id="reply-label">Type your reply here:</span>
+        {type === 'theoretical' && (<Textarea
+          name='reply'
+          onChange={handleChange}
+          className="min-h-25 mb-2 mt-4 flex-1"
+          aria-labelledby="reply-label"
+          value={input}
+        />)}
+        {type === 'coding' && (
+          <CodeArea
+            className="flex-1"
+            inputAriaLabelledBy="reply-label"
+            editable
+            code={input}
+            onEdit={(e: string) => setInput(e)}
+          />)}
+      </div>
+    </form>
+  )
+}
