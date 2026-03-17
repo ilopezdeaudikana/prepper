@@ -14,6 +14,7 @@ const generateChallengeStep = createStep({
   outputSchema: ChallengeResponseSchema,
   execute: async ({ inputData, mastra }) => {
     const logger = Logger(mastra.getLogger())
+    logger.info('getChallenge starts')
     return getChallenge(
       inputData.topic,
       inputData.level,
@@ -31,6 +32,7 @@ const evaluateAnswerStep = createStep({
   outputSchema: EvaluationResponseSchema,
   execute: async ({ inputData, mastra }) => {
     const logger = Logger(mastra.getLogger())
+    logger.info('submitAnswer starts')
     return submitAnswer(
       inputData.question,
       inputData.answer,
