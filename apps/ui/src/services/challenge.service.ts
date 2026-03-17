@@ -12,14 +12,14 @@ export type ChallengeResponse = Question & { sessionToken?: string }
 let hasThrown = false
 export const ChallengeService = {
   async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionToken?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      if(!hasThrown){
-        hasThrown = !hasThrown
-        return Promise.reject(new Error('Simulated error in development mode'))
-      } else { 
-        return Promise.resolve(sample as ChallengeResponse)
-      }
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   if(!hasThrown){
+    //     hasThrown = !hasThrown
+    //     return Promise.reject(new Error('Simulated error in development mode'))
+    //   } else { 
+    //     return Promise.resolve(sample as ChallengeResponse)
+    //   }
+    // }
     
     const { storageMode } = useConfiguration.getState().configuration
     

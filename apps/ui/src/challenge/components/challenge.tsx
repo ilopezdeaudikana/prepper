@@ -8,7 +8,7 @@ import {
   MessageResponse
 } from '@/components/ai-elements/message'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, MINIMUM_SCORE, type Question } from '@repo/shared-types'
+import { type Feedback, MINIMUM_SCORE, type Question, ChallengeType } from '@repo/shared-types'
 import { useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from './code-area'
@@ -152,23 +152,23 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
                 </pre>
               </div>
             ) : null}
-            {localData?.type === 'theoretical' && (
+            {localData?.type === ChallengeType.Theoretical && (
               <Message
                 from="assistant">
                 <MessageContent>
-                  <MessageResponse>{localData.question}</MessageResponse>
+                  <MessageResponse>{localData?.question}</MessageResponse>
                 </MessageContent>
               </Message>
             )}
-            {localData?.type === 'coding' && (
+            {localData?.type === ChallengeType.Coding && (
               <Message className="flex-1 min-h-0 overflow-hidden" from="assistant">
                 <MessageContent className="flex-1 min-h-0 overflow-hidden flex flex-col">
                   <MessageResponse
                     className='mb-4'
                   >
-                    {localData.question}
+                    {localData?.question}
                   </MessageResponse>
-                  <CodeArea className="flex-1" code={localData.initialCode ?? ''} />
+                  <CodeArea className="flex-1" code={localData?.initialCode ?? ''} />
                 </MessageContent>
               </Message>
             )}

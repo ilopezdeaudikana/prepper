@@ -86,7 +86,7 @@ export const listReusableQuestions = async (params: {
     const offset = batchIndex * batchSize
     const { data, error } = await supabase
       .from(TABLES.questions)
-      .select('session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
+      .select('id, session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
       .eq('interview_sessions.topic', topic)
       .eq('interview_sessions.level', level)
       .lt('created_at', getYesterdayTimestamp())
@@ -96,6 +96,7 @@ export const listReusableQuestions = async (params: {
     if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
     const mapped = (data ?? []).map((row: any) => ({
+      id: row.id as string,
       sessionId: row.session_id as string,
       question: row.question as string,
       initialCode: (row.initial_code as string | null) ?? undefined,

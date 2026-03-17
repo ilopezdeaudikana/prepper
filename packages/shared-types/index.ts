@@ -1,9 +1,17 @@
 import { z } from 'zod'
 
+export const ChallengeType = {
+  Coding: 'coding',
+  Theoretical: 'theoretical'
+} as const
+
+export type ChallengeKey = (typeof ChallengeType)[keyof typeof ChallengeType]
+
 export const QuestionSchema = z.object({
+  id: z.uuid().optional(),
   question: z.string(),
   initialCode: z.string().optional(),
-  type: z.enum(['coding', 'theoretical']).optional(),
+  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical]).optional(),
   completed: z.boolean().optional()
 })
 
@@ -48,20 +56,20 @@ export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
 export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
 
 export const Topic = {
-  react: 'react',
-  nextjs: 'nextjs',
-  node: 'node',
-  typescript: 'typescript',
-  javascript: 'javascript',
-  css: 'css',
+  React: 'react',
+  Nextjs: 'nextjs',
+  Node: 'node',
+  Typescript: 'typescript',
+  Javascript: 'javascript',
+  Css: 'css',
 } as const
 
 export type TopicKey = (typeof Topic)[keyof typeof Topic]
 
 export const Level = {
-  react: 'junior',
-  nextjs: 'mid',
-  node: 'senior'
+  Junior: 'junior',
+  Mid: 'mid',
+  Senior: 'senior'
 } as const
 
 export type LevelKey = (typeof Level)[keyof typeof Level]

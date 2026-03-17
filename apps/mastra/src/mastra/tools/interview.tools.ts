@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
 import { listQuestionTexts } from '../storage/interview-session.repository'
-import { Topic, TopicKey } from '@repo/shared-types'
+import { Topic, TopicKey, ChallengeType } from '@repo/shared-types'
 
 const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
   junior: {
@@ -26,12 +26,12 @@ const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
 const challengeFormats = ['debugging', 'refactor', 'feature extension', 'architecture decision']
 
 const topicExpansions: Record<TopicKey, readonly string[]> = {
-  [Topic.react]: ['state management', 'render performance', 'hooks', 'accessibility'],
-  [Topic.nextjs]: ['app router', 'server components', 'data fetching and caching', 'rendering strategies'],
-  [Topic.node]: ['api design', 'async error handling', 'streaming', 'performance profiling'],
-  [Topic.typescript]: ['type narrowing', 'generic APIs', 'utility types', 'runtime validation boundaries'],
-  [Topic.javascript]: ['async control flow', 'closures', 'event loop', 'data transformations'],
-  [Topic.css]: ['layout systems', 'responsive strategy', 'design tokens', 'animation performance'],
+  [Topic.React]: ['state management', 'render performance', 'hooks', 'accessibility'],
+  [Topic.Nextjs]: ['app router', 'server components', 'data fetching and caching', 'rendering strategies'],
+  [Topic.Node]: ['api design', 'async error handling', 'streaming', 'performance profiling'],
+  [Topic.Typescript]: ['type narrowing', 'generic APIs', 'utility types', 'runtime validation boundaries'],
+  [Topic.Javascript]: ['async control flow', 'closures', 'event loop', 'data transformations'],
+  [Topic.Css]: ['layout systems', 'responsive strategy', 'design tokens', 'animation performance'],
 }
 
 const isTopicExpansionKey = (value: string): value is TopicKey => value in topicExpansions
@@ -98,7 +98,7 @@ export const rubricGuidanceTool = createTool({
   description: 'Returns deterministic scoring checks and common misses for interview evaluation by level.',
   inputSchema: z.object({
     level: z.string().min(1),
-    questionType: z.enum(['coding', 'theoretical']),
+    questionType: z.enum([ChallengeType.Coding, ChallengeType.Theoretical]),
   }),
   outputSchema: z.object({
     mustCheck: z.array(z.string()),
@@ -111,7 +111,7 @@ export const rubricGuidanceTool = createTool({
       avoid: ['Purely subjective scoring'],
     }
 
-    const mustCheck = questionType === 'coding'
+    const mustCheck = questionType === ChallengeType.Coding
       ? [...levelConfig.focus, 'Code correctness', 'Edge-case handling']
       : [...levelConfig.focus, 'Reasoning depth', 'Tradeoff discussion']
 

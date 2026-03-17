@@ -1,4 +1,4 @@
-import { type Question, QuestionSchema, FeedbackSchema } from "@repo/shared-types"
+import { type Question, QuestionSchema, FeedbackSchema, ChallengeType } from "@repo/shared-types"
 import {
   createFeedback,
   createSession,
@@ -23,6 +23,7 @@ const formatReusableQuestion = async (
 ) => {
   await upsertQuestion(sessionId, reusableQuestion)
   return {
+    id: reusableQuestion.id,
     question: reusableQuestion.question,
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
@@ -137,12 +138,12 @@ export const getChallenge = async (
               typeof (generatedQuestion as { type?: unknown }).type === "string"
                 ? (generatedQuestion as { type?: string }).type
                 : (generatedQuestion as { initialCode?: unknown }).initialCode
-                    ? "coding"
-                    : "theoretical",
+                    ? ChallengeType.Coding
+                    : ChallengeType.Theoretical,
             // Ensure initialCode is only set for coding prompts.
             initialCode:
               (generatedQuestion as { initialCode?: unknown }).initialCode && 
-              ((generatedQuestion as { type?: unknown }).type ?? undefined) !== "theoretical"
+              ((generatedQuestion as { type?: unknown }).type ?? undefined) !== ChallengeType.Theoretical
                 ? (generatedQuestion as { initialCode?: string }).initialCode
                 : undefined,
           }

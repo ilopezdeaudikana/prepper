@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type Question } from '@repo/shared-types'
+import { type Question, ChallengeType } from '@repo/shared-types'
 import { CodeArea } from './code-area'
 import { Textarea } from '@/components/common/textarea'
 
@@ -30,14 +30,14 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
     >
       <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
         <span id="reply-label">Type your reply here:</span>
-        {type === 'theoretical' && (<Textarea
+        {type === ChallengeType.Theoretical && (<Textarea
           name='reply'
           onChange={(e) => handleChange(e.target.value)}
           className="min-h-25 mb-2 mt-4 flex-1"
           aria-labelledby="reply-label"
           value={input}
         />)}
-        {type === 'coding' && (
+        {type === ChallengeType.Coding && (
           <CodeArea
             className="flex-1"
             inputAriaLabelledBy="reply-label"
