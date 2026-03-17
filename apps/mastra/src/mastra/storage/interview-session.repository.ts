@@ -87,9 +87,9 @@ export const listReusableQuestions = async (params: {
     const { data, error } = await supabase
       .from(TABLES.questions)
       .select('id, session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
+      .lt('created_at', getYesterdayTimestamp())
       .eq('interview_sessions.topic', topic)
       .eq('interview_sessions.level', level)
-      .lt('created_at', getYesterdayTimestamp())
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
 
