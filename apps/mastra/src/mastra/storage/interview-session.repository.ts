@@ -1,6 +1,6 @@
 import { type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
-import { getYesterdayTimestamp, hmacHex } from './utils'
+import { createSessionToken, getYesterdayTimestamp } from './utils'
 
 type InterviewSession = {
   id: string
@@ -37,7 +37,7 @@ export const createSession = async (topic: string, level: string) => {
     .single<InterviewSession>()
 
   if (error) throw new Error(`Failed to create session: ${error.message}`)
-  const sessionToken = hmacHex(process.env.HASH_SECRET!, data.id)
+  const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
   return { ...data, sessionToken }
 }
 
@@ -51,7 +51,7 @@ export const getSession = async (sessionId: string) => {
 
   if (error) throw new Error(`Failed to fetch session: ${error.message}`)
   if (!data) return null
-  const sessionToken = hmacHex(process.env.HASH_SECRET!, data.id)
+  const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
   return { ...data, sessionToken }
 }
 
@@ -102,7 +102,7 @@ export const listReusableQuestions = async (params: {
       initialCode: (row.initial_code as string | null) ?? undefined,
       type: row.type as Question['type'],
       createdAt: row.created_at as string,
-      sessionToken: hmacHex(process.env.HASH_SECRET!, row.session_id as string),
+      sessionToken: createSessionToken(process.env.HASH_SECRET!, row.session_id as string),
       completed: row.completed
     }))
 

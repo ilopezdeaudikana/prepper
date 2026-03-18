@@ -36,10 +36,10 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
 
-  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level})
+  const [topicAndLevel, setTopicAndLevel] = useState({topic, level})
 
   const { data, isFetching, isError, error  } = useQuery({
-    queryKey: ['question', requestId],
+    queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
       previousQuestions,
@@ -60,6 +60,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     if (!reply) return
  
     setLoadingEvaluation(true)
+    setIsDisabled(true)
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
         data as Question,

@@ -14,9 +14,7 @@ import {
   isTooSimilar,
 } from './interview-agent.helpers'
 import { ILogger } from '../logger.service'
-
-const isUuid = (value: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+import { resolveSessionIdFromToken } from '../storage/utils'
 
 const formatReusableQuestion = async (
   sessionId: string,
@@ -33,22 +31,31 @@ const formatReusableQuestion = async (
   }
 }
 
-export const getChallenge = async (
-  topic: string,
-  level: string,
-  previousQuestions: string[] = [],
-  logger: ILogger,
-  sessionToken?: string,
-  options?: { skipReuse?: boolean, forceReuse?: boolean },
-) => {
-  const {forceReuse, skipReuse } = options ?? {}
+type ChallengeOptions = { skipReuse?: boolean, forceReuse?: boolean }
 
+type ChallengeSessionContext = {
+  session: Awaited<ReturnType<typeof createSession>>
+  persistedQuestions: string[]
+  allPreviousQuestions: string[]
+}
+
+const validateChallengeOptions = (options?: ChallengeOptions) => {
+  const { forceReuse, skipReuse } = options ?? {}
 
   if (forceReuse && skipReuse) {
     throw new Error('Invalid options: forceReuse cannot be combined with skipReuse')
   }
 
-  const sessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  return { forceReuse, skipReuse }
+}
+
+const resolveChallengeSession = async (
+  topic: string,
+  level: string,
+  previousQuestions: string[] = [],
+  sessionToken?: string,
+): Promise<ChallengeSessionContext> => {
+  const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
   const existingSession = sessionId
     ? await getSession(sessionId)
     : null
@@ -61,46 +68,90 @@ export const getChallenge = async (
   const persistedQuestions = await listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
 
-  if (!skipReuse) {
-    const reusableQuestion = await findReusableQuestion({
-      topic,
-      level,
-      excludeSessionToken: sessionToken ?? session.sessionToken,
-      previousQuestions: allPreviousQuestions,
-    })
+  return {
+    session,
+    persistedQuestions,
+    allPreviousQuestions,
+  }
+}
 
-    if (reusableQuestion) {
-      return formatReusableQuestion(session.id, session.sessionToken, reusableQuestion)
-    }
+const tryReuseChallenge = async (params: {
+  topic: string
+  level: string
+  sessionId: string
+  sessionToken: string
+  existingSessionToken?: string
+  previousQuestions: string[]
+  skipReuse?: boolean
+}) => {
+  const {
+    topic,
+    level,
+    sessionId,
+    sessionToken,
+    existingSessionToken,
+    previousQuestions,
+    skipReuse,
+  } = params
+
+  if (skipReuse) {
+    return null
   }
 
-  if (forceReuse) {
-    // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
-    const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
-    const fallbackReusable = await findReusableQuestion({
-      topic,
-      level,
-      previousQuestions: latestQuestion ? [latestQuestion] : [],
-    })
+  const reusableQuestion = await findReusableQuestion({
+    topic,
+    level,
+    excludeSessionToken: existingSessionToken ?? sessionToken,
+    previousQuestions,
+  })
 
-    if (fallbackReusable) {
-      return formatReusableQuestion(session.id, session.sessionToken, fallbackReusable)
-    }
+  if (!reusableQuestion) {
+    return null
+  }
 
+  return formatReusableQuestion(sessionId, sessionToken, reusableQuestion)
+}
+
+const forceReuseChallenge = async (params: {
+  topic: string
+  level: string
+  sessionId: string
+  sessionToken: string
+  previousQuestions: string[]
+  persistedQuestions: string[]
+}) => {
+  const { topic, level, sessionId, sessionToken, previousQuestions, persistedQuestions } = params
+  // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
+  const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
+  const fallbackReusable = await findReusableQuestion({
+    topic,
+    level,
+    previousQuestions: latestQuestion ? [latestQuestion] : [],
+  })
+
+  if (!fallbackReusable) {
     throw new Error(`No reusable challenge found for topic '${topic}' at level '${level}'`)
   }
 
-  const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  return formatReusableQuestion(sessionId, sessionToken, fallbackReusable)
+}
 
-  const exclusions = allPreviousQuestions.length
-    ? allPreviousQuestions.map((question, index) => `${index + 1}. ${question}`).join('\n')
+const formatQuestionExclusions = (questions: string[]) =>
+  questions.length
+    ? questions.map((question, index) => `${index + 1}. ${question}`).join('\n')
     : 'None'
 
-  let lastGenerated: Question | null = null
+const buildChallengePrompt = (params: {
+  topic: string
+  level: string
+  variationToken: string
+  attempt: number
+  sessionId: string
+  exclusions: string
+}) => {
+  const { topic, level, variationToken, attempt, sessionId, exclusions } = params
 
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
-    const generationResponse = await generateWithRateLimit(
-      `Generate one ${level}-level frontend interview challenge about ${topic}.
+  return `Generate one ${level}-level frontend interview challenge about ${topic}.
       Requirements:
       - Return exactly one challenge.
       - The challenge must be meaningfully different from previous ones.
@@ -109,64 +160,92 @@ export const getChallenge = async (
       - Use challenge-planning-tool to diversify subtopic/format before finalizing.
       - If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
       - Variation token: ${variationToken}-attempt-${attempt}.
-      - Current session id: ${session.id}.
+      - Current session id: ${sessionId}.
 
       Previously asked questions to avoid (do not paraphrase these):
-      ${exclusions}`,
+      ${exclusions}`
+}
+
+const normalizeGeneratedQuestion = (generatedQuestion: unknown) => {
+  if (!generatedQuestion || typeof generatedQuestion !== 'object') {
+    return generatedQuestion
+  }
+
+  return {
+    ...generatedQuestion,
+    // Backfill type when models omit it.
+    type:
+      typeof (generatedQuestion as { type?: unknown }).type === 'string'
+        ? (generatedQuestion as { type?: string }).type
+        : (generatedQuestion as { initialCode?: unknown }).initialCode
+          ? ChallengeType.Coding
+          : ChallengeType.Theoretical,
+    // Ensure initialCode is only set for coding prompts.
+    initialCode:
+      (generatedQuestion as { initialCode?: unknown }).initialCode &&
+        ((generatedQuestion as { type?: unknown }).type ?? undefined) !== ChallengeType.Theoretical
+        ? (generatedQuestion as { initialCode?: string }).initialCode
+        : undefined,
+  }
+}
+
+const generateFreshChallenge = async (params: {
+  topic: string
+  level: string
+  sessionId: string
+  sessionToken: string
+  allPreviousQuestions: string[]
+  logger?: ILogger
+}) => {
+  const { topic, level, sessionId, sessionToken, allPreviousQuestions, logger } = params
+  const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  const exclusions = formatQuestionExclusions(allPreviousQuestions)
+  let lastGenerated: Question | null = null
+
+  for (let i = 1; i <= 4; i++) {
+    const generationResponse = await generateWithRateLimit(
+      buildChallengePrompt({
+        topic,
+        level,
+        variationToken,
+        attempt: i,
+        sessionId,
+        exclusions,
+      }),
       {
         structuredOutput: {
-        schema: QuestionSchema,
-        jsonPromptInjection: true,
-      },
-    }
-  )
+          schema: QuestionSchema,
+          jsonPromptInjection: true,
+        },
+      }
+    )
     const generatedQuestion = generationResponse.object
     if (!generatedQuestion) {
       const rawText = generationResponse.text ?? ''
-      logger.error('INTERVIEW_AGENT: missing structured output for challenge', {
+      logger?.error('INTERVIEW_AGENT: missing structured output for challenge', {
         topic,
         level,
-        attempt,
+        i,
         hasText: Boolean(generationResponse.text),
         textPreview: rawText.slice(0, 2000),
       })
       throw new Error('Challenge generation returned no structured output')
     }
 
-    const normalizedQuestion =
-      generatedQuestion && typeof generatedQuestion === 'object'
-        ? {
-            ...generatedQuestion,
-            // Backfill type when models omit it.
-            type:
-              typeof (generatedQuestion as { type?: unknown }).type === 'string'
-                ? (generatedQuestion as { type?: string }).type
-                : (generatedQuestion as { initialCode?: unknown }).initialCode
-                    ? ChallengeType.Coding
-                    : ChallengeType.Theoretical,
-            // Ensure initialCode is only set for coding prompts.
-            initialCode:
-              (generatedQuestion as { initialCode?: unknown }).initialCode && 
-              ((generatedQuestion as { type?: unknown }).type ?? undefined) !== ChallengeType.Theoretical
-                ? (generatedQuestion as { initialCode?: string }).initialCode
-                : undefined,
-          }
-        : generatedQuestion
-
-    const parsed = QuestionSchema.safeParse(normalizedQuestion)
+    const parsed = QuestionSchema.safeParse(normalizeGeneratedQuestion(generatedQuestion))
     if (!parsed.success) {
       continue
     }
 
     lastGenerated = parsed.data
 
-    logger.info(JSON.stringify(lastGenerated))
+    logger?.info('', JSON.stringify(lastGenerated))
 
-    if (!isTooSimilar(parsed.data?.question, allPreviousQuestions)) {
-      await upsertQuestion(session.id, parsed.data)
+    if (!isTooSimilar(parsed.data.question, allPreviousQuestions)) {
+      await upsertQuestion(sessionId, parsed.data)
       return {
         ...parsed.data,
-        sessionToken: session.sessionToken,
+        sessionToken,
       }
     }
   }
@@ -175,11 +254,62 @@ export const getChallenge = async (
     throw new Error('Failed to generate challenge')
   }
 
-  await upsertQuestion(session.id, lastGenerated)
+  await upsertQuestion(sessionId, lastGenerated)
   return {
     ...lastGenerated,
-    sessionToken: session.sessionToken,
+    sessionToken,
   }
+}
+
+export const getChallenge = async (
+  topic: string,
+  level: string,
+  previousQuestions: string[] = [],
+  logger: ILogger | undefined,
+  sessionToken?: string,
+  options?: ChallengeOptions,
+) => {
+  const { forceReuse, skipReuse } = validateChallengeOptions(options)
+  const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
+    topic,
+    level,
+    previousQuestions,
+    sessionToken,
+  )
+
+  const reusedChallenge = await tryReuseChallenge({
+    topic,
+    level,
+    sessionId: session.id,
+    sessionToken: session.sessionToken,
+    existingSessionToken: sessionToken,
+    previousQuestions: allPreviousQuestions,
+    skipReuse,
+  })
+
+  if (reusedChallenge) {
+    return reusedChallenge
+  }
+
+  if (forceReuse) {
+    return forceReuseChallenge({
+      topic,
+      level,
+      sessionId: session.id,
+      sessionToken: session.sessionToken,
+      previousQuestions,
+      persistedQuestions,
+    })
+  }
+
+  return generateFreshChallenge({
+    topic,
+    level,
+    sessionId: session.id,
+    sessionToken: session.sessionToken,
+    allPreviousQuestions,
+    logger,
+  })
 }
 
 export const prefillChallengePool = async (params: {
@@ -197,7 +327,7 @@ export const prefillChallengePool = async (params: {
 
   for (const job of jobs) {
     try {
-      await getChallenge(job.topic, job.level, [], undefined, { skipReuse: true })
+      await getChallenge(job.topic, job.level, [], undefined, undefined, { skipReuse: true })
       generated += 1
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown prefill error'
@@ -254,7 +384,7 @@ export const submitAnswer = async (
   }
   const generatedFeedback = parsedFeedback.data
 
-  const sessionId = sessionToken && isUuid(sessionToken) ? sessionToken : undefined
+  const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
   if (!sessionId) {
     return {
       ...generatedFeedback,
@@ -279,9 +409,11 @@ export const submitAnswer = async (
   logger.info(`Score ${generatedFeedback.score} for questionId ${questionId}`)
 
   if (generatedFeedback.score > MINIMUM_SCORE) {
-    completeQuestion(questionId).catch(error => {
+    try {
+      await completeQuestion(questionId)
+    } catch (error) {
       logger.error(`Error completing challenge ${JSON.stringify(error)}`)
-    })
+    }
   }
   return {
     ...generatedFeedback,
