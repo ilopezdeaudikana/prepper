@@ -34,7 +34,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
         </Message>
       )}
       {feedback.improvedCode && (
-        <CodeArea className="flex-1" code={feedback.improvedCode} header='Improved Code' />
+        <CodeArea className="flex-1 min-h-96" code={feedback.improvedCode} header='Improved Code' />
       )}
       {feedback.missedPoints && (
         <Message
