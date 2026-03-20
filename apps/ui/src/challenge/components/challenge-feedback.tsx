@@ -6,14 +6,13 @@ import {
 
 import { type Feedback, MINIMUM_SCORE } from '@repo/shared-types'
 import { Badge } from '@/components/common/badge'
-
 import { CodeArea } from './code-area'
 
 export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
 
-  return (
 
-    <div className="flex flex-col gap-2 overflow-auto">
+  return (
+    <div className="flex flex-col gap-2 overflow-auto min-h-full">
       {feedback?.error ? (
         <div><p>Error loading data</p>
           <pre className="whitespace-pre-wrap">
@@ -33,19 +32,25 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
           </MessageContent>
         </Message>
       )}
-      {feedback.improvedCode && (
-        <CodeArea className="flex-1 min-h-96" code={feedback.improvedCode} header='Improved Code' />
-      )}
       {feedback.missedPoints && (
-        <Message
-          from="assistant"
-        >
-          <MessageContent>
-            {feedback.missedPoints.map((point, i) => (
-              <MessageResponse key={`missed-point-${i}`}>{point}</MessageResponse>))}
-          </MessageContent>
-        </Message>
+        <>
+          <p><strong>Missed points:</strong></p>
+          <Message
+            from="assistant"
+          >
+            <MessageContent>
+              {feedback.missedPoints.map((point, i) => (
+                <MessageResponse key={`missed-point-${i}`}>{point}</MessageResponse>))}
+            </MessageContent>
+          </Message>
+        </>
       )}
-    </div>
+      {feedback.improvedCode && (
+        <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
+          <CodeArea value={feedback.improvedCode} />
+        </div>
+      )}
+
+    </div >
   )
 }

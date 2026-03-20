@@ -21,7 +21,7 @@ import { ChallengeReply } from './challenge-reply'
 
 export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
 
-  const [feedback, setFeedback] = useState<Feedback & { error?: string }| null>(null)
+  const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
   const [isDisabled, setIsDisabled] = useState(true)
   const [canContinue, setCanContinue] = useState(false)
   const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
@@ -32,13 +32,13 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const [showRestart, setShowRestart] = useState<boolean>(false)
 
   const setConfiguration = useConfiguration(state => state.setConfiguration)
-  
+
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
 
-  const [topicAndLevel, setTopicAndLevel] = useState({topic, level})
-
-  const { data, isFetching, isError, error  } = useQuery({
+  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level })
+  
+  const { data, isFetching, isError, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
       topicAndLevel,
@@ -58,7 +58,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
   const handleSubmit = async (reply: string) => {
     if (!reply) return
- 
+
     setLoadingEvaluation(true)
     setIsDisabled(true)
     try {
@@ -120,29 +120,29 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     setFeedback(null)
     setLocalData(null)
 
-    if(randomMode) {
+    if (randomMode) {
       setTopicAndLevel(() => getRandomTopicAndLevel())
     }
   }, [])
 
   useEffect(() => {
-    if(randomMode && isError && storageMode) {
+    if (randomMode && isError && storageMode) {
       setTopicAndLevel(() => getRandomTopicAndLevel())
     }
   }, [isError, storageMode])
 
   return (
-    <div className="flex flex-col h-screen p-4 align-self-center gap-4 overflow-hidden">
-      <ChallengeTopbar 
+    <div className="flex flex-col h-screen p-4 align-self-center gap-4">
+      <ChallengeTopbar
         isFetching={isFetching}
         canContinue={canContinue}
-        disabled={isDisabled} 
-        showRestart={showRestart} 
+        disabled={isDisabled}
+        showRestart={showRestart}
         onLoadNextQuestion={loadNextQuestion}
       />
-      <div className="flex align-self-center gap-4 flex-1 min-h-0 overflow-hidden">
-        <div className="flex flex-col flex-1 basis-1/2 overflow-hidden min-h-0">
-          <Card className="min-h-0 overflow-hidden">
+      <div className="flex align-self-center gap-4 h-full">
+        <div className="flex flex-col flex-1 basis-1/2">
+          <Card>
             {(!localData || isFetching) && (
               <GenerationState isFetching={isFetching} />
             )}
@@ -162,26 +162,30 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
               </Message>
             )}
             {localData?.type === ChallengeType.Coding && (
-              <Message className="flex-1 min-h-0 overflow-hidden" from="assistant">
-                <MessageContent className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                  <MessageResponse
-                    className='mb-4'
-                  >
-                    {localData?.question}
-                  </MessageResponse>
-                  <CodeArea className="flex-1" code={localData?.initialCode ?? ''} />
-                </MessageContent>
-              </Message>
+              <>
+                <Message from="assistant">
+                  <MessageContent>
+                    <MessageResponse
+                      className='mb-4'
+                    >
+                      {localData?.question}
+                    </MessageResponse>
+                  </MessageContent>
+                </Message>
+                <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
+                  <CodeArea value={localData?.initialCode ?? ''} />
+                </div>
+              </>
             )}
           </Card>
         </div>
-        <div className="flex flex-col basis-1/2 overflow-hidden min-h-0">
-          <Card className="min-h-0 overflow-hidden">
+        <div className="flex flex-col basis-1/2 overflow-hidden">
+          <Card>
             {loadingEvaluation && (
               <div><p>Loading evaluation...</p></div>
             )}
             {feedback && (<ChallengeFeedback feedback={feedback} />)}
-            {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type}/>}
+            {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type} />}
           </Card>
         </div>
       </div>

@@ -10,25 +10,25 @@ interface ChallengeReplyProps {
 }
 export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReplyProps) => {
   const [input, setInput] = useState<string>('')
-
+  
   const submit = (e: React.SubmitEvent) => {
     e.preventDefault()
     onSubmit(input)
     setInput('')
   }
 
-  const handleChange = (reply: string) => {
-    setInput(reply)
-    onInputChange(reply)
+  const handleChange = (reply?: string) => {
+    setInput(reply ?? '')
+    onInputChange(reply ?? '')
   }
 
   return (
     <form
       id="reply-form"
       onSubmit={submit}
-      className="flex flex-col flex-1 min-h-0 overflow-hidden"
+      className="flex flex-col flex-1"
     >
-      <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col gap-2 flex-1">
         <span id="reply-label">Type your reply here:</span>
         {type === ChallengeType.Theoretical && (<Textarea
           name='reply'
@@ -38,13 +38,10 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
           value={input}
         />)}
         {type === ChallengeType.Coding && (
-          <CodeArea
-            className="flex-1"
-            inputAriaLabelledBy="reply-label"
-            editable
-            code={input}
-            onEdit={handleChange}
-          />)}
+          <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
+            <CodeArea onChange={handleChange}/>
+          </div>
+        )}
       </div>
     </form>
   )
