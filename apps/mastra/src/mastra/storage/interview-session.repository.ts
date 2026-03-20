@@ -90,6 +90,7 @@ export const listReusableQuestions = async (params: {
       .lt('created_at', getYesterdayTimestamp())
       .eq('interview_sessions.topic', topic)
       .eq('interview_sessions.level', level)
+      .eq('interview_sessions.completed', false)
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
 

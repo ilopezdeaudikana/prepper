@@ -32,7 +32,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
           </MessageContent>
         </Message>
       )}
-      {feedback.missedPoints && (
+      {feedback.missedPoints && feedback.missedPoints.length && (
         <>
           <p><strong>Missed points:</strong></p>
           <Message
