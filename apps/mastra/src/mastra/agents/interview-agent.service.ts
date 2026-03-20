@@ -39,16 +39,6 @@ type ChallengeSessionContext = {
   allPreviousQuestions: string[]
 }
 
-const validateChallengeOptions = (options?: ChallengeOptions) => {
-  const { forceReuse, skipReuse } = options ?? {}
-
-  if (forceReuse && skipReuse) {
-    throw new Error('Invalid options: forceReuse cannot be combined with skipReuse')
-  }
-
-  return { forceReuse, skipReuse }
-}
-
 const resolveChallengeSession = async (
   topic: string,
   level: string,
@@ -269,7 +259,8 @@ export const getChallenge = async (
   sessionToken?: string,
   options?: ChallengeOptions,
 ) => {
-  const { forceReuse, skipReuse } = validateChallengeOptions(options)
+  const { forceReuse, skipReuse } = options ?? {}
+
   const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
     topic,
     level,
