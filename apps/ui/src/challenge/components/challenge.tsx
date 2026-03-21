@@ -3,21 +3,20 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import {
-  Message,
-  MessageContent,
-  MessageResponse
-} from '@/components/ai-elements/message'
+  MarkdownText
+} from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, MINIMUM_SCORE, type Question, ChallengeType } from '@repo/shared-types'
+import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
 import { useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
-import { CodeArea } from './code-area'
+import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration, type Configuration } from '@/store/configuration.store'
-import { Card } from '@/components/common/card'
+import { Card } from '@/common/components/card'
 import { getRandomTopicAndLevel } from '../utils/getRandomTopicAndLevel'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
+import { useReport } from '@/store/report.store'
 
 export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
 
@@ -30,14 +29,15 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
+  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level })
 
   const setConfiguration = useConfiguration(state => state.setConfiguration)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
+  const addToReport = useReport(state => state.addToReport)
 
-  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level })
-  
+
   const { data, isFetching, isError, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
@@ -71,16 +71,18 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
 
       setFeedback(result)
 
-      if (result.score > MINIMUM_SCORE) {
-        setProgress({ score: score + result.score, stage: stage + 1 })
-        setCanContinue(true)
-      } else {
-        setShowRestart(true)
+      setProgress({ score: score + result.score, stage: stage + 1 })
+
+      if (localData) {
+        const { question, initialCode, type } = localData
+        addToReport({ challenge: { question, initialCode, type }, reply, evaluation: result })
       }
     } catch (error: any) {
       setFeedback({ error: error.error } as Feedback)
+      setShowRestart(true)
     } finally {
       setLoadingEvaluation(false)
+      setCanContinue(true)
     }
   }
 
@@ -154,25 +156,12 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
               </div>
             ) : null}
             {localData?.type === ChallengeType.Theoretical && (
-              <Message
-                from="assistant">
-                <MessageContent>
-                  <MessageResponse>{localData?.question}</MessageResponse>
-                </MessageContent>
-              </Message>
+              <MarkdownText content={localData?.question}/>
             )}
             {localData?.type === ChallengeType.Coding && (
               <>
-                <Message from="assistant">
-                  <MessageContent>
-                    <MessageResponse
-                      className='mb-4'
-                    >
-                      {localData?.question}
-                    </MessageResponse>
-                  </MessageContent>
-                </Message>
-                <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
+              <MarkdownText content={localData?.question}/>
+              <div className='grow min-h-0 relative mt-4'>
                   <CodeArea value={localData?.initialCode ?? ''} />
                 </div>
               </>

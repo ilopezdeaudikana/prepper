@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { type Question, ChallengeType } from '@repo/shared-types'
-import { CodeArea } from './code-area'
-import { Textarea } from '@/components/common/textarea'
+import { CodeArea } from '../../common/components/code-area'
+import { Textarea } from '@/common/components/textarea'
 
 interface ChallengeReplyProps {
   onSubmit: (reply: string) => void

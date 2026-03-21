@@ -1,9 +1,10 @@
 import { type JSX } from 'react'
 import Editor from '@monaco-editor/react'
-import { monacoTheme } from '../utils/monacoTheme'
+import { monacoTheme } from '../../challenge/utils/monacoTheme'
 
-export const CodeArea = ({ value, onChange }: {
+export const CodeArea = ({ value, onChange, height }: {
   value?: string,
+  height?: number
   onChange?: (code?: string) => void
 }): JSX.Element => {
 
@@ -19,7 +20,7 @@ export const CodeArea = ({ value, onChange }: {
   return (
     <Editor
       defaultLanguage="typescript"
-      height="100%"
+      height={height ?? "100%"}
       value={value}
       onChange={onChange}
       beforeMount={handleEditorWillMount}

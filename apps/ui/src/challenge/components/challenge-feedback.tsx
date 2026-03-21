@@ -1,15 +1,10 @@
-import {
-  Message,
-  MessageContent,
-  MessageResponse
-} from '@/components/ai-elements/message'
+import { MarkdownText } from '@/common/components/markdown-text'
 
 import { type Feedback, MINIMUM_SCORE } from '@repo/shared-types'
-import { Badge } from '@/components/common/badge'
-import { CodeArea } from './code-area'
+import { Badge } from '@/common/components/badge'
+import { CodeArea } from '../../common/components/code-area'
 
 export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
-
 
   return (
     <div className="flex flex-col gap-2 overflow-auto min-h-full">
@@ -24,25 +19,13 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
         <p><Badge className="mr-2" color={feedback.score > MINIMUM_SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
       )}
       {feedback.critique && (
-        <Message
-          from="assistant"
-        >
-          <MessageContent>
-            <MessageResponse>{feedback.critique}</MessageResponse>
-          </MessageContent>
-        </Message>
+        <MarkdownText content={feedback.critique} />
       )}
       {feedback.missedPoints && feedback.missedPoints.length && (
         <>
           <p><strong>Missed points:</strong></p>
-          <Message
-            from="assistant"
-          >
-            <MessageContent>
-              {feedback.missedPoints.map((point, i) => (
-                <MessageResponse key={`missed-point-${i}`}>{point}</MessageResponse>))}
-            </MessageContent>
-          </Message>
+          {feedback.missedPoints.map((point, i) => (
+            <p key={`missed-point-${i}`}>{point}</p>))}
         </>
       )}
       {feedback.improvedCode && (

@@ -1,7 +1,7 @@
 import { Challenge } from '../components/challenge'
 import { useConfiguration } from '@/store/configuration.store'
 import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
-import { Redirector } from '@/components/common/redirector'
+import { Redirector } from '@/common/components/redirector'
 
 export default function ChallengeView() {
 

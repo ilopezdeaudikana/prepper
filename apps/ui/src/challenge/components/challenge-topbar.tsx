@@ -1,8 +1,8 @@
-import { Button } from '@/components/common/button'
+import { Button } from '@/common/components/button'
 import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 
 import { useConfiguration } from '@/store/configuration.store'
-import { Card } from '@/components/common/card'
+import { Card } from '@/common/components/card'
 
 interface ChallengeTopbarProps {
   canContinue: boolean

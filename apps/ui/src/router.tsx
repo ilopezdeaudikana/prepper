@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
-import { Loading } from './components/common/loading.tsx'
+import { Loading } from './common/components/loading.tsx'
 
 const Challenge = lazy(() => import('./challenge/views/challenge.view.tsx'))
 const Configuration = lazy(() => import('./configuration/views/configuration.view.tsx'))

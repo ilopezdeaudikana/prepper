@@ -1,14 +1,18 @@
-import { Button } from '@/components/common/button'
+import { Button } from '@/common/components/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
-import { Card } from '@/components/common/card'
+import { Card } from '@/common/components/card'
+import { Report } from './report'
+import { useReport, type ReportStore } from '@/store/report.store'
 
 export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'storageMode'>) => {
 
   const resetConfiguration = useConfiguration((state: ConfigurationStore) => state.resetConfiguration)
 
   const resetProgress = useProgress((state: ProgressStore) => state.resetProgress)
+
+  const resetReport = useReport((state: ReportStore) => state.resetReport)
 
   const { score } = useProgress((state: ProgressStore) => state.progress)
 
@@ -17,13 +21,14 @@ export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'stora
   const goBackToStart = () => {
     resetConfiguration()
     resetProgress()
+    resetReport()
     navigate('/')
   }
 
   const topicAndLevel = randomMode ? `for random topic and levels` : `for ${topic} topic and ${level} level`
 
   return (
-    <div className="max-w-1/2 flex flex-col mx-auto my-8">
+    <div className="w-8/10 flex flex-col mx-auto my-8">
       <Card className="justify-center">
         <div className="flex flex-col gap-8 items-center">
           <h1 className="text-2xl font-bold text-center">
@@ -33,6 +38,7 @@ export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'stora
           <p className="text-center">Your score is: {score}</p>
           <Button size='sm' type="button" onClick={goBackToStart}>Go back to the start</Button>
         </div>
+        <Report />
       </Card>
     </div>
   )

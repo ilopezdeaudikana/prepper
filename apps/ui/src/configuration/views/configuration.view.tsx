@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { Input } from '@/components/common/input'
-import { Button } from '@/components/common/button'
+import { Input } from '@/common/components/input'
+import { Button } from '@/common/components/button'
 import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/common/components/select'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
-import { Switch } from '@/components/common/switch'
-import { Checkbox } from '@/components/common/checkbox'
+import { Switch } from '@/common/components/switch'
+import { Checkbox } from '@/common/components/checkbox'
 
 import { Topic } from '@repo/shared-types'
-import { Card } from '@/components/common/card'
-import { Separator } from '@/components/common/separator'
+import { Card } from '@/common/components/card'
+import { Separator } from '@/common/components/separator'
 
 export default function Configuration() {
 
