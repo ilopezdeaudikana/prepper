@@ -33,7 +33,7 @@ ${row.evaluation.improvedCode ?? row.reply}
             <p><strong>Score: {row.evaluation.score}</strong></p>
             <p><strong>Evaluation:</strong></p>
             <MarkdownText content={row.evaluation.critique}/>
-            {row.evaluation.missedPoints && row.evaluation.missedPoints.length && <>
+            {row.evaluation.missedPoints && row.evaluation.missedPoints.length > 0 && <>
               <p><strong>Missed points:</strong></p>
               {row.evaluation.missedPoints.map(point => <p>{point}</p>)}
             </>}
