@@ -1,11 +1,10 @@
 import { MarkdownText } from '@/common/components/markdown-text'
 
 import { type Feedback, MINIMUM_SCORE } from '@repo/shared-types'
-import { Badge } from '@/common/components/badge'
+import { Frown, Smile } from 'lucide-react'
 import { CodeArea } from '../../common/components/code-area'
 
 export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
-
   return (
     <div className="flex flex-col gap-2 overflow-auto min-h-full">
       {feedback?.error ? (
@@ -16,7 +15,10 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
         </div>
       ) : null}
       {feedback.score && (
-        <p><Badge className="mr-2" color={feedback.score > MINIMUM_SCORE ? 'green' : 'red'}>{feedback.score}</Badge></p>
+        <p className='flex gap-2'>
+          <span>{feedback.score > MINIMUM_SCORE ? (<Smile className="text-green-600" />) : (<Frown className="text-orange-600" />)}</span>
+          <span className={feedback.score > MINIMUM_SCORE ? 'text-green-600' : 'text-orange-600'}>{feedback.score}</span>
+        </p>
       )}
       {feedback.critique && (
         <MarkdownText content={feedback.critique} />
@@ -30,7 +32,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
       )}
       {feedback.improvedCode && (
         <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
-          <CodeArea value={feedback.improvedCode} />
+          <CodeArea value={feedback.improvedCode} id="improved-code" />
         </div>
       )}
 

@@ -116,7 +116,7 @@ export default function Configuration() {
             </div>
             <Separator />
             <div className="flex flex-col w-[150px] self-center">
-              <Button type="submit" size="sm" disabled={isSaveDisabled()}>Submit</Button>
+              <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
             </div>
           </div>
         </form>

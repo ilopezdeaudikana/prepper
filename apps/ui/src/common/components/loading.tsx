@@ -17,7 +17,7 @@ function Loading({
         className={cn(
           'inline-block animate-spin rounded-full border-current border-t-transparent',
           'size-4 border-2',
-          className
+          className ?? ''
         )}
         {...props}
       />

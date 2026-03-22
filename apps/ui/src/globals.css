@@ -120,19 +120,35 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    @apply bg-zinc-100 text-white;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
 }
 
-.monaco-editor {
+.monaco-editor , .monaco-diff-editor{
   border-radius: 1rem;
 }
 
-.monaco-editor[role=code] {
+.monaco-editor.original-in-monaco-diff-editor {
+  border-radius: 0;
+}
+
+.monaco-editor.modified-in-monaco-diff-editor {
+  border-radius: 0;
+}
+
+.monaco-editor.gutter {
+  border-radius: 0;
+}
+
+.monaco-editor[role=code], .monaco-diff-editor {
   overflow: hidden;
 }
-/* Optional: Round the scrollbar */
+
 .monaco-editor .slider {
   border-radius: 1rem;
 }

@@ -43,11 +43,11 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
       <div className="flex justify-between">
         <p>Topic: {topic }, Level {level}</p>
         <div className='flex gap-4'>
-          <Button form="reply-form" type="submit" disabled={disabled} size='sm'>Submit</Button>
-          {showRestart && <Button type="button" onClick={restart} size='sm'>
+          <Button form="reply-form" type="submit" disabled={disabled}>Submit</Button>
+          {showRestart && <Button type="button" onClick={restart}>
             Restart
           </Button>}
-          {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue} size='sm'>
+          {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue}>
             {isFetching ? 'Loading...' : 'Next question'}
           </Button>}
         </div>

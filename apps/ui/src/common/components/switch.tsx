@@ -1,6 +1,6 @@
-import * as React from "react"
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 import { Switch as SwitchPrimitive } from 'radix-ui'
 
 export const Switch =({ className, name, ...props }: React.ComponentPropsWithRef<typeof SwitchPrimitive.Root>) => {
@@ -14,7 +14,7 @@ export const Switch =({ className, name, ...props }: React.ComponentPropsWithRef
         data-[state=checked]:bg-foreground
         disabled:cursor-not-allowed disabled:opacity-50
         data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50`,
-      className
+      className ?? ''
     )}
       name={name}
       {...props}>

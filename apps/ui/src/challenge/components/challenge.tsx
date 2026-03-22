@@ -162,7 +162,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
               <>
               <MarkdownText content={localData?.question}/>
               <div className='grow min-h-0 relative mt-4'>
-                  <CodeArea value={localData?.initialCode ?? ''} />
+                  <CodeArea value={localData?.initialCode ?? ''} id="initial-code"/>
                 </div>
               </>
             )}

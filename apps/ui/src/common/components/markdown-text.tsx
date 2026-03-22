@@ -7,13 +7,13 @@ const highlighterOptions =
   langs: ['tsx', 'typescript'] as BundledLanguage[]
 }
 
+const highlighterPromise = createHighlighter(highlighterOptions)
+
 export const MarkdownText = ({ content }: { content: string }) => {
   const [highlighter, setHighlighter] = useState<Highlighter | null>(null)
 
   useEffect(() => {
-    let active = true
-    createHighlighter(highlighterOptions).then(h => active && setHighlighter(h))
-    return () => { active = false }
+    highlighterPromise.then(setHighlighter);
   }, [])
 
   const rendered = useMemo(() => {

@@ -39,7 +39,7 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
         />)}
         {type === ChallengeType.Coding && (
           <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
-            <CodeArea onChange={handleChange}/>
+            <CodeArea onChange={handleChange} id="user-code"/>
           </div>
         )}
       </div>

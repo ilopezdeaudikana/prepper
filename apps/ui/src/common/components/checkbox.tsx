@@ -1,8 +1,8 @@
-import * as React from "react"
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
-import { Check } from "lucide-react"
+import { Check } from 'lucide-react'
 
 export const  Checkbox = ({ className, name, ...props }: React.ComponentPropsWithRef<typeof CheckboxPrimitive.Root>) => {
   return (
@@ -13,7 +13,7 @@ export const  Checkbox = ({ className, name, ...props }: React.ComponentPropsWit
         [-webkit-tap-highlight-color_var(--color-foreground)]
         focus:shadow-[0_0_0_2px_var(--color-foreground)]
         hover:shadow-[0_0_0_2px_var(--color-ring)]`,
-      className
+      className ?? ''
     )}
       name={name}
       {...props}>
