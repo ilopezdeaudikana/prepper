@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react'
 import Editor, { DiffEditor } from '@monaco-editor/react'
 import { shikiToMonaco } from '@shikijs/monaco'
-import { getHighlighter } from '../utils/shiki-engine'
+import { getHighlighter, themes } from '../utils/shiki-engine'
 
 export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
   value?: string,
@@ -38,10 +38,10 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
   const editorOptions = {
     defaultLanguage: 'typescript',
     height: height ?? '100%',
+    theme: themes[0],
     value: isDiff ? undefined : value,
     onChange: onChange,
     beforeMount: handleEditorWillMount,
-    theme: 'one-dark-pro',
     path: `${id}.tsx`,
     original: isDiff ? value : undefined,
     modified,
