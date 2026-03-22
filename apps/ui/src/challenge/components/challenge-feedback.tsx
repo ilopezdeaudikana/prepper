@@ -16,8 +16,8 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
       ) : null}
       {feedback.score && (
         <p className='flex gap-2'>
-          <span>{feedback.score > MINIMUM_SCORE ? (<Smile className="text-green-600" />) : (<Frown className="text-orange-600" />)}</span>
-          <span className={feedback.score > MINIMUM_SCORE ? 'text-green-600' : 'text-orange-600'}>{feedback.score}</span>
+          <span>{feedback.score > MINIMUM_SCORE ? (<Smile className="text-green-700" />) : (<Frown className="text-orange-600" />)}</span>
+          <span className={feedback.score > MINIMUM_SCORE ? 'font-semibold text-green-700' : 'font-semibold text-orange-600'}>{feedback.score}</span>
         </p>
       )}
       {feedback.critique && (
@@ -25,7 +25,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
       )}
       {feedback.missedPoints && feedback.missedPoints.length && (
         <>
-          <p><strong>Missed points:</strong></p>
+          <p className='font-semibold'>Missed points:</p>
           {feedback.missedPoints.map((point, i) => (
             <p key={`missed-point-${i}`}>{point}</p>))}
         </>

@@ -1,11 +1,11 @@
 import * as React from 'react'
 
-import { cn } from '@/lib/utils'
+import { tailwindMerge } from '@/common/utils/tailwind-merge'
 import { Switch as SwitchPrimitive } from 'radix-ui'
 
 export const Switch =({ className, name, ...props }: React.ComponentPropsWithRef<typeof SwitchPrimitive.Root>) => {
   return (
-    <SwitchPrimitive.Root className={cn(
+    <SwitchPrimitive.Root className={tailwindMerge(
       `relative h-[25px] w-[42px] rounded-full
         bg-[var(--color-foreground)]
         shadow-[0_2px_10px_var(--color-ring)]

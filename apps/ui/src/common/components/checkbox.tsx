@@ -1,12 +1,12 @@
 import * as React from 'react'
 
-import { cn } from '@/lib/utils'
+import { tailwindMerge } from '@/common/utils/tailwind-merge'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import { Check } from 'lucide-react'
 
 export const  Checkbox = ({ className, name, ...props }: React.ComponentPropsWithRef<typeof CheckboxPrimitive.Root>) => {
   return (
-    <CheckboxPrimitive.Root className={cn(
+    <CheckboxPrimitive.Root className={tailwindMerge(
       `flex items-center justify-center h-[20px] w-[20px] rounded-sm
         bg-[var(--color-white)]
         shadow-[0_2px_10px_var(--color-ring)]

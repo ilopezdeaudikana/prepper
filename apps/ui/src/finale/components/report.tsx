@@ -12,23 +12,28 @@ export const Report = () => {
       <section>
         {rows.map((row, index) =>
           <article key={index} className="flex flex-col gap-4 mt-4 mb-4">
-            <h1><strong>Question {index + 1}</strong></h1>
-            <MarkdownText content={row.challenge.question}/>
-            <p><strong>Score: {row.evaluation.score}</strong></p>
-            <p><strong>Evaluation:</strong></p>
-            <MarkdownText content={row.evaluation.critique}/>
+            <h1 className='font-semibold'>Question {index + 1}</h1>
+            <MarkdownText content={row.challenge.question} />
+            <p className='font-semibold'>Score: {row.evaluation.score}</p>
+            <p className='font-semibold'>Evaluation:</p>
+            <MarkdownText content={row.evaluation.critique} />
             {row.evaluation.missedPoints && row.evaluation.missedPoints.length > 0 && <>
-              <p><strong>Missed points:</strong></p>
+              <p className='font-semibold'>Missed points:</p>
               {row.evaluation.missedPoints.map((point, i) => <p key={i}>{point}</p>)}
             </>}
-            {row.challenge.type === ChallengeType.Coding && <CodeArea 
-              value={row.challenge.initialCode} 
-              modified={row.evaluation.improvedCode ?? row.reply}
-              height={500} 
-              isDiff={true}
-              id={`diff-${index}`}
-            />}
-            {index !== rows.length - 1 &&<Separator className="mt-4 mb-4" />}
+            {row.challenge.type === ChallengeType.Coding && 
+            <>
+              <p className='font-semibold'>Code:</p>
+              <CodeArea
+                value={row.challenge.initialCode}
+                modified={row.evaluation.improvedCode ?? row.reply}
+                height={500}
+                isDiff={true}
+                id={`diff-${index}`}
+              />
+            </>
+            }
+            {index !== rows.length - 1 && <Separator className="mt-4 mb-4" />}
           </article>
         )}
 

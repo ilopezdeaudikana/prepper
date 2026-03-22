@@ -1,6 +1,7 @@
-import { type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import Editor, { DiffEditor } from '@monaco-editor/react'
-import { monacoTheme } from '../../challenge/utils/monacoTheme'
+import { shikiToMonaco } from '@shikijs/monaco'
+import { getHighlighter } from '../utils/shiki-engine'
 
 export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
   value?: string,
@@ -11,9 +12,15 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
   isDiff?: boolean
 }): JSX.Element => {
 
-  const handleEditorWillMount = (monaco: any) => {
+  const [isReady, setIsReady] = useState(false)
+  const [canLoad, setCanLoad] = useState(false)
+
+  const highlighterRef = useRef<any>(null)
+  const monacoRef = useRef<any>(null)
+
+  const handleEditorWillMount = async (monaco: any) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
-    monaco.editor.defineTheme('default', monacoTheme)
+
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       jsx: monaco.languages.typescript.JsxEmit.React,
       target: monaco.languages.typescript.ScriptTarget.Latest,
@@ -24,16 +31,19 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       diagnosticCodesToIgnore: [2307]
     })
+    monacoRef.current = monaco
+    setCanLoad(true)
   }
 
   const editorOptions = {
     defaultLanguage: 'typescript',
     height: height ?? '100%',
     value: isDiff ? undefined : value,
-    onChange: onChange, beforeMount: handleEditorWillMount,
-    theme: 'default',
+    onChange: onChange,
+    beforeMount: handleEditorWillMount,
+    theme: 'one-dark-pro',
     path: `${id}.tsx`,
-    original: isDiff ? value : undefined, 
+    original: isDiff ? value : undefined,
     modified,
     options: {
       minimap: { enabled: false },
@@ -48,13 +58,28 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
       tabSize: 2
     }
   }
+
+  useEffect(() => {
+
+    if (!monacoRef.current) return
+    getHighlighter().then((h) => {
+      highlighterRef.current = h
+      shikiToMonaco(h, monacoRef.current)
+      setIsReady(true)
+    })
+    return () => {
+      highlighterRef.current = null
+      monacoRef.current = null
+    }
+  }, [monacoRef.current, canLoad])
+
   return (
-    <>
+    <div style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.2s', height: '100%' }}>
       {
         isDiff ?
           (<DiffEditor {...editorOptions} options={editorOptions.options} />)
           :
           (<Editor {...editorOptions} options={editorOptions.options} />)}
-    </>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { twMerge } from 'tailwind-merge'
 
-export function cn(...inputs: string[]) {
+export const tailwindMerge = (...inputs: string[]) => {
   return twMerge(inputs)
 }

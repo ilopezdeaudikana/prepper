@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { cn } from '@/lib/utils'
+import { tailwindMerge } from '@/common/utils/tailwind-merge'
 
 function Loading({
   className,
@@ -14,7 +14,7 @@ function Loading({
         data-slot='loading-spinner'
         role='status'
         aria-label='loading spinner'
-        className={cn(
+        className={tailwindMerge(
           'inline-block animate-spin rounded-full border-current border-t-transparent',
           'size-4 border-2',
           className ?? ''
