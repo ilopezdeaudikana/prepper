@@ -23,7 +23,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
       {feedback.critique && (
         <MarkdownText content={feedback.critique} />
       )}
-      {feedback.missedPoints && feedback.missedPoints.length && (
+      {feedback.missedPoints && feedback.missedPoints.length > 0 && (
         <>
           <p className='font-semibold'>Missed points:</p>
           {feedback.missedPoints.map((point, i) => (

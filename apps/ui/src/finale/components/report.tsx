@@ -25,7 +25,7 @@ export const Report = () => {
             <>
               <p className='font-semibold'>Code:</p>
               <CodeArea
-                value={row.challenge.initialCode}
+                value={row.reply ?? row.challenge.initialCode}
                 modified={row.evaluation.improvedCode ?? row.reply}
                 height={500}
                 isDiff={true}

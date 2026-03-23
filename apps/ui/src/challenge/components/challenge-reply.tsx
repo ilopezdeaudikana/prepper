@@ -29,7 +29,7 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
       className="flex flex-col flex-1"
     >
       <div className="flex flex-col gap-2 flex-1">
-        <span id="reply-label">Type your reply here:</span>
+        {type && <span id="reply-label">Type your reply here:</span>}
         {type === ChallengeType.Theoretical && (<Textarea
           name='reply'
           onChange={(e) => handleChange(e.target.value)}

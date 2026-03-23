@@ -25,7 +25,9 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
   }
 
 
-  const loadNextQuestion = async () => {
+  const loadNextQuestion = async (args?: ({ skip: boolean } | undefined) ) => {
+  
+    if (args?.skip) setProgress({ score, stage: stage + 1 })
     if (stage === FINAL_STAGE) {
       // trigger redirection
       setProgress({ score, stage: FINAL_STAGE })
@@ -43,12 +45,13 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
       <div className="flex justify-between">
         <p>Topic: {topic }, Level {level}</p>
         <div className='flex gap-4'>
+          <Button type="button" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>
+          {!showRestart && <Button type="button" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
+            {isFetching ? 'Loading...' : 'Next question'}
+          </Button>}
           <Button form="reply-form" type="submit" disabled={disabled}>Submit</Button>
           {showRestart && <Button type="button" onClick={restart}>
             Restart
-          </Button>}
-          {!showRestart && <Button type="button" onClick={loadNextQuestion} disabled={isFetching || !canContinue}>
-            {isFetching ? 'Loading...' : 'Next question'}
           </Button>}
         </div>
       </div>

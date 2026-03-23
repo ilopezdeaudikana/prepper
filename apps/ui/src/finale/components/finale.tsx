@@ -25,7 +25,7 @@ export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'stora
     navigate('/')
   }
 
-  const topicAndLevel = randomMode ? `for random topic and levels` : `for ${topic} topic and ${level} level`
+  const topicAndLevel = randomMode ? `random topic and levels` : `${topic} topic and ${level} level`
 
   return (
     <div className="w-8/10 flex flex-col mx-auto my-8">
