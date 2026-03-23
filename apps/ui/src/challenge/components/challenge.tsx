@@ -52,6 +52,10 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     refetchOnReconnect: false
   })
 
+  const requestErrorMessage =
+    localData?.error ??
+    (error instanceof Error ? error.message : error ? JSON.stringify(error, null, 2) : null)
+
   const handleInputChange = (reply?: string) => {
     setIsDisabled(!reply)
   }
@@ -78,7 +82,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
         addToReport({ challenge: { question, initialCode, type }, reply, evaluation: result })
       }
     } catch (error: any) {
-      setFeedback({ error: error.error } as Feedback)
+      setFeedback({ error: error?.error ?? error?.message ?? 'Evaluation failed.' } as Feedback)
       setShowRestart(true)
     } finally {
       setLoadingEvaluation(false)
@@ -114,7 +118,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     )
 
     setLocalData(data ?? null)
-  }, [isFetching])
+  }, [data])
 
   useEffect(() => {
     setSessionToken(null)
@@ -145,13 +149,13 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
       <div className="flex align-self-center gap-4 h-full">
         <div className="flex flex-col flex-1 basis-1/2">
           <Card>
-            {(!localData || isFetching) && (
+            {!requestErrorMessage && (!localData || isFetching) && (
               <GenerationState isFetching={isFetching} />
             )}
-            {localData?.error || error ? (
+            {requestErrorMessage ? (
               <div><p>Error loading data</p>
                 <pre className="whitespace-pre-wrap">
-                  {JSON.stringify(localData?.error ?? error, null, 2)}
+                  {requestErrorMessage}
                 </pre>
               </div>
             ) : null}

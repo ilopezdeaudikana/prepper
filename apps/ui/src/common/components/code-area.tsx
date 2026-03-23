@@ -17,6 +17,7 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
 
   const highlighterRef = useRef<any>(null)
   const monacoRef = useRef<any>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleEditorWillMount = async (monaco: any) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
@@ -63,11 +64,16 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
 
     if (!monacoRef.current) return
     getHighlighter().then((h) => {
-      highlighterRef.current = h
-      shikiToMonaco(h, monacoRef.current)
-      setIsReady(true)
+
+      timeoutRef.current = setTimeout(() => {
+        highlighterRef.current = h
+        shikiToMonaco(h, monacoRef.current)
+        setIsReady(true)
+      }, 0)
+
     })
     return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
       highlighterRef.current = null
       monacoRef.current = null
     }
@@ -77,7 +83,7 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
     <div style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.2s', height: '100%' }}>
       {
         isDiff ?
-          (<DiffEditor {...editorOptions} options={editorOptions.options} />)
+          (<DiffEditor {...editorOptions} options={editorOptions.options} keepCurrentOriginalModel={true} keepCurrentModifiedModel={true} />)
           :
           (<Editor {...editorOptions} options={editorOptions.options} />)}
     </div>

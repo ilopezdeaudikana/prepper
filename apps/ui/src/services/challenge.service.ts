@@ -10,6 +10,19 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 export type ChallengeResponse = Question & { sessionToken?: string }
 
 let hasThrown = false
+
+const parseResponse = async <T>(response: Response, fallbackMessage: string): Promise<T> => {
+  const body = await response.json().catch(() => null) as { error?: string } | null
+
+  if (!response.ok) {
+    const error = new Error(body?.error ?? fallbackMessage) as Error & { status?: number }
+    error.status = response.status
+    throw error
+  }
+
+  return body as T
+}
+
 export const ChallengeService = {
   async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionToken?: string) {
     if (process.env.NODE_ENV === 'development') {
@@ -32,7 +45,7 @@ export const ChallengeService = {
       },
       body: JSON.stringify({ topic, level, previousQuestions, sessionToken, options: { forceReuse: storageMode }}),
     })
-    return response.json() as Promise<ChallengeResponse>
+    return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
   },
 
   async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {
@@ -46,6 +59,6 @@ export const ChallengeService = {
       },
       body: JSON.stringify({ question, answer, level, sessionToken }),
     })
-    return response.json() as Promise<EvaluationResponse>
+    return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   }
 }

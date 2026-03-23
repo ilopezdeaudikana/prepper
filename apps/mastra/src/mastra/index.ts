@@ -16,7 +16,6 @@ const PrefillRequestSchema = z.object({
   countPerPair: z.number().int().min(1).max(10).default(1),
 })
 
-// Plain-function request / error helpers
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
   err.status = status
@@ -110,7 +109,7 @@ export const mastra = new Mastra({
             return c.json(result.result)
           } catch (error) {
             logger.error('Unexpected challenge generation error')
-            return handleRequestError(c, error, 'Challenge generation failed.')
+            return handleRequestError(c, error, 'Challenge generation failed. Unexpected error')
           }
         },
       }),
