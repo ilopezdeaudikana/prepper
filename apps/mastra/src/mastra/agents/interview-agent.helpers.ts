@@ -1,15 +1,4 @@
-import { interviewAgent } from "./interview-agent"
 import { listReusableQuestions } from "../storage/interview-session.repository"
-
-const MAX_REQUESTS_PER_MINUTE = 5
-const MIN_GENERATE_INTERVAL_MS = Math.ceil(60_000 / MAX_REQUESTS_PER_MINUTE)
-
-let lastGenerateRequestAt = 0
-let generateQueue: Promise<unknown> = Promise.resolve()
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const clearQueueError = () => undefined
 
 const normalize = (text: string) =>
   text
@@ -35,30 +24,11 @@ const jaccardSimilarity = (a: string, b: string) => {
   return union === 0 ? 0 : intersection / union
 }
 
-const waitForGenerateSlot = async () => {
-  const now = Date.now()
-  const waitTime = Math.max(0, lastGenerateRequestAt + MIN_GENERATE_INTERVAL_MS - now)
-  if (waitTime > 0) {
-    await sleep(waitTime)
-  }
-
-  lastGenerateRequestAt = Date.now()
-}
 
 export const dedupeQuestions = (questions: string[]) => Array.from(new Set(questions))
 
 export const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
   previousQuestions.some((previousQuestion) => jaccardSimilarity(candidate, previousQuestion) >= 0.55)
-
-export const generateWithRateLimit = (...args: Parameters<typeof interviewAgent.generate>) => {
-  const scheduled = generateQueue
-    .catch(clearQueueError)
-    .then(waitForGenerateSlot)
-    .then(() => interviewAgent.generate(...args))
-
-  generateQueue = scheduled.then(clearQueueError, clearQueueError)
-  return scheduled
-}
 
 export const findReusableQuestion = async (params: {
   topic: string

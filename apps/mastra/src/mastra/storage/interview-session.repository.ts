@@ -68,8 +68,8 @@ export const listQuestionTexts = async (sessionId: string) => {
 }
 
 export const listReusableQuestions = async (params: {
-  topic: string
-  level: string
+  topic?: string
+  level?: string
   excludeSessionToken?: string
   limit?: number
 }) => {
@@ -84,15 +84,23 @@ export const listReusableQuestions = async (params: {
 
   for (let batchIndex = 0; batchIndex < maxBatches && results.length < pageSize; batchIndex += 1) {
     const offset = batchIndex * batchSize
-    const { data, error } = await supabase
+    let query = supabase
       .from(TABLES.questions)
       .select('id, session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
       .eq('completed', false)
       .lt('created_at', getYesterdayTimestamp())
-      .eq('interview_sessions.topic', topic)
-      .eq('interview_sessions.level', level)
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
+
+    if (topic) {
+      query = query.eq('interview_sessions.topic', topic)
+    }
+
+    if (level) {
+      query = query.eq('interview_sessions.level', level)
+    }
+
+    const { data, error } = await query
 
     if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 

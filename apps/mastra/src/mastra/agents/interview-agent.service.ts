@@ -3,6 +3,7 @@ import {
   createFeedback,
   createSession,
   getSession,
+  listReusableQuestions,
   listQuestionTexts,
   upsertQuestion,
   completeQuestion
@@ -10,24 +11,26 @@ import {
 import {
   dedupeQuestions,
   findReusableQuestion,
-  generateWithRateLimit,
   isTooSimilar,
 } from './interview-agent.helpers'
 import { ILogger } from '../logger.service'
 import { resolveSessionIdFromToken } from '../storage/utils'
+import { interviewAgent } from "./interview-agent"
 
 const formatReusableQuestion = async (
   sessionId: string,
   sessionToken: string,
-  reusableQuestion: Question
+  reusableQuestion: Question,
+  notice?: string,
 ) => {
-  await upsertQuestion(sessionId, reusableQuestion)
+  const questionId = await upsertQuestion(sessionId, reusableQuestion)
   return {
-    id: reusableQuestion.id,
+    id: reusableQuestion.id ?? questionId,
     question: reusableQuestion.question,
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
     sessionToken,
+    notice,
   }
 }
 
@@ -126,6 +129,31 @@ const forceReuseChallenge = async (params: {
   return formatReusableQuestion(sessionId, sessionToken, fallbackReusable)
 }
 
+const getRandomStoredChallenge = async (params: {
+  sessionId: string
+  sessionToken: string
+  previousQuestions: string[]
+  notice: string
+}) => {
+  const { sessionId, sessionToken, previousQuestions, notice } = params
+  const reusableQuestions = await listReusableQuestions({
+    excludeSessionToken: sessionToken,
+    limit: 30,
+  })
+
+  const unseenQuestions = reusableQuestions.filter(
+    (question) => !previousQuestions.includes(question.question)
+  )
+  const candidates = unseenQuestions.length > 0 ? unseenQuestions : reusableQuestions
+  const randomQuestion = candidates[Math.floor(Math.random() * candidates.length)]
+
+  if (!randomQuestion) {
+    throw new Error('Skipped generated challenge, but no stored fallback exists')
+  }
+
+  return formatReusableQuestion(sessionId, sessionToken, randomQuestion, notice)
+}
+
 const formatQuestionExclusions = (questions: string[]) =>
   questions.length
     ? questions.map((question, index) => `${index + 1}. ${question}`).join('\n')
@@ -135,11 +163,10 @@ const buildChallengePrompt = (params: {
   topic: string
   level: string
   variationToken: string
-  attempt: number
   sessionId: string
   exclusions: string
 }) => {
-  const { topic, level, variationToken, attempt, sessionId, exclusions } = params
+  const { topic, level, variationToken, sessionId, exclusions } = params
 
   return `Generate one ${level}-level frontend interview challenge about ${topic}.
       Requirements:
@@ -149,7 +176,7 @@ const buildChallengePrompt = (params: {
       - Vary both the subtopic and the format (debugging, refactor, feature extension, architecture decision).
       - Use challenge-planning-tool to diversify subtopic/format before finalizing.
       - If sessionId exists, use session-question-history-tool to double-check uniqueness against persisted history.
-      - Variation token: ${variationToken}-attempt-${attempt}.
+      - Variation token: ${variationToken}.
       - Current session id: ${sessionId}.
 
       Previously asked questions to avoid (do not paraphrase these):
@@ -192,63 +219,70 @@ const generateFreshChallenge = async (params: {
   const exclusions = formatQuestionExclusions(allPreviousQuestions)
   let lastGenerated: Question | null = null
 
-  for (let i = 1; i <= 4; i++) {
-    const generationResponse = await generateWithRateLimit(
-      buildChallengePrompt({
-        topic,
-        level,
-        variationToken,
-        attempt: i,
-        sessionId,
-        exclusions,
-      }),
-      {
-        structuredOutput: {
-          schema: QuestionSchema,
-          jsonPromptInjection: true,
-        },
-      }
-    )
-    const generatedQuestion = generationResponse.object
-    if (!generatedQuestion) {
-      const rawText = generationResponse.text ?? ''
-      logger?.error('INTERVIEW_AGENT: missing structured output for challenge', {
-        topic,
-        level,
-        i,
-        hasText: Boolean(generationResponse.text),
-        textPreview: rawText.slice(0, 2000),
-      })
-      throw new Error('Challenge generation returned no structured output')
-    }
+  const generationResponse = await interviewAgent.generate(buildChallengePrompt({
+    topic,
+    level,
+    variationToken,
+    sessionId,
+    exclusions,
+  }),
+    {
+      structuredOutput: {
+        schema: QuestionSchema,
+        jsonPromptInjection: true,
+      },
+    })
 
-    const parsed = QuestionSchema.safeParse(normalizeGeneratedQuestion(generatedQuestion))
-    if (!parsed.success) {
-      continue
-    }
 
+  const generatedQuestion = generationResponse.object
+  if (!generatedQuestion) {
+    const rawText = generationResponse.text ?? ''
+    logger?.error('INTERVIEW_AGENT: missing structured output for challenge', {
+      topic,
+      level,
+      hasText: Boolean(generationResponse.text),
+      textPreview: rawText.slice(0, 2000),
+    })
+    throw new Error('Challenge generation returned no structured output')
+  }
+
+  const parsed = QuestionSchema.safeParse(normalizeGeneratedQuestion(generatedQuestion))
+
+  if (parsed.success) {
     lastGenerated = parsed.data
+  } else {
+    throw new Error('Unable to parse generated question')
+  }
 
-    logger?.info('', JSON.stringify(lastGenerated))
 
-    if (!isTooSimilar(parsed.data.question, allPreviousQuestions)) {
-      await upsertQuestion(sessionId, parsed.data)
+  logger?.info('', JSON.stringify(lastGenerated))
+
+  if (lastGenerated) {
+    if (!isTooSimilar(lastGenerated.question, allPreviousQuestions)) {
+      const questionId = await upsertQuestion(sessionId, lastGenerated)
       return {
-        ...parsed.data,
+        ...lastGenerated,
+        id: lastGenerated.id ?? questionId,
         sessionToken,
       }
     }
+
+    logger?.info('INTERVIEW_AGENT: skipped generated challenge because it was too similar', {
+      topic,
+      level,
+      sessionId,
+      generatedQuestion: lastGenerated.question,
+    })
+
+    return getRandomStoredChallenge({
+      sessionId,
+      sessionToken,
+      previousQuestions: allPreviousQuestions,
+      notice: 'We skipped a too-similar generated question and loaded a random stored challenge instead.',
+    })
   }
 
-  if (!lastGenerated) {
-    throw new Error('Failed to generate challenge')
-  }
-
-  await upsertQuestion(sessionId, lastGenerated)
-  return {
-    ...lastGenerated,
-    sessionToken,
-  }
+  throw new Error('Challenge generation did not produce a usable question')
 }
 
 export const getChallenge = async (
@@ -303,41 +337,6 @@ export const getChallenge = async (
   })
 }
 
-export const prefillChallengePool = async (params: {
-  topics: string[]
-  levels: string[]
-  countPerPair: number
-}) => {
-  const { topics, levels, countPerPair } = params
-  const jobs = topics
-    .flatMap((topic) => levels.map((level) => ({ topic, level })))
-    .flatMap((job) => Array.from({ length: countPerPair }, () => job))
-
-  let generated = 0
-  const failures: { topic: string; level: string; message: string }[] = []
-
-  for (const job of jobs) {
-    try {
-      await getChallenge(job.topic, job.level, [], undefined, undefined, { skipReuse: true })
-      generated += 1
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown prefill error'
-      failures.push({
-        topic: job.topic,
-        level: job.level,
-        message,
-      })
-    }
-  }
-
-  return {
-    requested: jobs.length,
-    generated,
-    failed: failures.length,
-    failures,
-  }
-}
-
 export const submitAnswer = async (
   question: Question,
   userAnswer: string,
@@ -346,7 +345,7 @@ export const submitAnswer = async (
   sessionToken?: string
 ) => {
 
-  const generationResponse = await generateWithRateLimit(
+  const generationResponse = await interviewAgent.generate(
     `Level: ${level}
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer}

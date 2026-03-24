@@ -23,7 +23,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
   const [isDisabled, setIsDisabled] = useState(true)
   const [canContinue, setCanContinue] = useState(false)
-  const [localData, setLocalData] = useState<Question & { error?: string } | null>(null)
+  const [localData, setLocalData] = useState<(Question & { error?: string, notice?: string }) | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
@@ -157,6 +157,11 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
                 <pre className="whitespace-pre-wrap">
                   {requestErrorMessage}
                 </pre>
+              </div>
+            ) : null}
+            {localData?.notice ? (
+              <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                {localData.notice}
               </div>
             ) : null}
             {localData?.type === ChallengeType.Theoretical && (

@@ -5,16 +5,10 @@ import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
 import { ChallengeRequestSchema, EvaluationRequestSchema } from '@repo/shared-types'
-import { z, ZodError } from 'zod'
+import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
-import { prefillChallengePool } from './agents/interview-agent.service'
 import { LibSQLStore } from '@mastra/libsql'
 
-const PrefillRequestSchema = z.object({
-  topics: z.array(z.string().min(1)).min(1).max(20),
-  levels: z.array(z.string().min(1)).min(1).max(10),
-  countPerPair: z.number().int().min(1).max(10).default(1),
-})
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
@@ -137,32 +131,7 @@ export const mastra = new Mastra({
             return handleRequestError(c, error, 'Evaluation failed.')
           }
         },
-      }),
-      registerApiRoute("/interview/prefill", {
-        method: "POST",
-        handler: async (c) => {
-
-          try {
-            const configuredSecret = process.env.PREFILL_SECRET
-            if (!configuredSecret) {
-              return c.json({ error: 'Prefill endpoint not configured' }, 500)
-            }
-
-            const authorization = c.req.header('authorization')
-            if (authorization !== `Bearer ${configuredSecret}`) {
-              return c.json({ error: 'Unauthorized' }, 401)
-            }
-
-            const payload = await parseAndValidateBody(c, PrefillRequestSchema)
-            const result = await prefillChallengePool(payload)
-
-            return c.json(result)
-          } catch (error) {
-
-            return handleRequestError(c, error, 'Prefill failed.')
-          }
-        },
-      }),
+      })
     ],
   },
   deployer: new VercelDeployer()

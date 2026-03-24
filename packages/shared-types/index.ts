@@ -35,6 +35,7 @@ export const ChallengeRequestSchema = z.object({
 
 export const ChallengeResponseSchema = QuestionSchema.extend({
   sessionToken: z.string().min(1),
+  notice: z.string().min(1).optional(),
 })
 
 export const EvaluationRequestSchema = z.object({

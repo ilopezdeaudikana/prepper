@@ -7,7 +7,7 @@ const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
 
 const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString()
 
-export type ChallengeResponse = Question & { sessionToken?: string }
+export type ChallengeResponse = Question & { sessionToken?: string, notice?: string }
 
 let hasThrown = false
 
