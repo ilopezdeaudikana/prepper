@@ -7,7 +7,7 @@ import {
 } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
 import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
-import { useProgress } from '@/store/progress.store'
+import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration, type Configuration } from '@/store/configuration.store'
@@ -144,6 +144,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
         canContinue={canContinue}
         disabled={isDisabled}
         showRestart={showRestart}
+        showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
       />
       <div className="flex align-self-center gap-4 h-full">

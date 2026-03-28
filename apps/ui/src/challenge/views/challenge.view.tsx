@@ -11,9 +11,10 @@ export default function ChallengeView() {
   
   const { stage } = useProgress(state => state.progress)
 
-  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === INITIAL_STAGE || stage === FINAL_STAGE
+  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage === INITIAL_STAGE || stage === FINAL_STAGE + 1
   
-  const to =  stage === FINAL_STAGE ? '/finale' : '/'
+  // Allow checking the feedback for the last question before opening the report
+  const to = stage === (FINAL_STAGE + 1) ? '/finale' : '/'
   
   return (
     <div>

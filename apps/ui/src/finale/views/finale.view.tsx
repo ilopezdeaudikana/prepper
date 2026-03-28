@@ -9,7 +9,7 @@ export default function FinaleView() {
 
   const { stage } = useProgress(state => state.progress)
 
-  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage !== FINAL_STAGE
+  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage !== FINAL_STAGE + 1
 
   return (
     <div>

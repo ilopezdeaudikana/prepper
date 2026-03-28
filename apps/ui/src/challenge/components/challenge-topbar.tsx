@@ -9,10 +9,11 @@ interface ChallengeTopbarProps {
    isFetching: boolean
    disabled: boolean
    showRestart: boolean
+   showFinish: boolean
   onLoadNextQuestion: () => void
 }
 
-export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart, onLoadNextQuestion }: ChallengeTopbarProps) => {
+export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart, onLoadNextQuestion, showFinish }: ChallengeTopbarProps) => {
 
   const { topic, level } = useConfiguration(state => state.configuration)
 
@@ -37,6 +38,9 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
     }
   }
 
+  const goToReport = () => {
+    setProgress({ score: 0, stage: FINAL_STAGE + 1 })
+  }
 
   return (
     <Card
@@ -45,13 +49,16 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
       <div className="flex justify-between">
         <p>Topic: {topic }, Level {level}</p>
         <div className='flex gap-4'>
-          <Button type="button" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>
-          {!showRestart && <Button type="button" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
+          {!showRestart && !showFinish && !isFetching && <Button type="button" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
+          {!showRestart && !showFinish && <Button type="button" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
             {isFetching ? 'Loading...' : 'Next question'}
           </Button>}
-          <Button form="reply-form" type="submit" disabled={disabled}>Submit</Button>
-          {showRestart && <Button type="button" onClick={restart}>
+          {(!showRestart || !showFinish) &&<Button form="reply-form" type="submit" disabled={disabled}>Submit</Button>}
+          {(showRestart || showFinish) && <Button type="button" onClick={restart}>
             Restart
+          </Button>}
+          {showFinish && <Button type="button" onClick={goToReport}>
+            See evaluation report
           </Button>}
         </div>
       </div>
