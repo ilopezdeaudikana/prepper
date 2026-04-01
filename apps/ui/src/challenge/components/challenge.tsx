@@ -147,8 +147,8 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
       />
-      <div className="flex align-self-center gap-4 h-full">
-        <div className="flex flex-col flex-1 basis-1/2">
+      <div className="flex align-self-center gap-4 h-full min-w-0">
+        <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
           <Card>
             {!requestErrorMessage && (!localData || isFetching) && (
               <GenerationState isFetching={isFetching} />
@@ -178,7 +178,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
             )}
           </Card>
         </div>
-        <div className="flex flex-col basis-1/2 overflow-hidden">
+        <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
           <Card>
             {loadingEvaluation && (
               <div><p>Loading evaluation...</p></div>
