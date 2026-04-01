@@ -39,7 +39,7 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
   }
 
   const goToReport = () => {
-    setProgress({ score: 0, stage: FINAL_STAGE + 1 })
+    setProgress({ score, stage: FINAL_STAGE + 1 })
   }
 
   return (
