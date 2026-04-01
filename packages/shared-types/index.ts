@@ -16,10 +16,21 @@ export const QuestionSchema = z.object({
 })
 
 export const FeedbackSchema = z.object({
-  score: z.number().min(0).max(10),
-  critique: z.string(),
-  missedPoints: z.array(z.string()),
-  improvedCode: z.string().optional(),
+  score: z.number().min(0).max(10)
+    .describe('Numeric interview score from 0 to 10.'),
+  critique: z.string()
+    .describe(
+      'A brief overall summary of why the answer did or did not meet the bar. Keep this shorter than missedPoints and focus on the main reasons for the score, not the full teaching detail.'
+    ),
+  missedPoints: z.array(
+    z.string().describe(
+      'One clearly explained expectation the candidate missed. Explain what should have been done, mentioned, or justified, why it matters in this specific question, and what a stronger answer would have looked like. Do not write fragment bullets or simply restate that something was missing.'
+    )
+  ).describe(
+    'A list of well-explained missed points. This is the detailed coaching section. Each item should teach the candidate what was expected and how to improve, and should be more detailed than the critique.'
+  ),
+  improvedCode: z.string()
+    .describe('An improved version of the answer when code changes would help. Omit when not applicable.'),
 })
 
 export const ChallengeRequestSchema = z.object({

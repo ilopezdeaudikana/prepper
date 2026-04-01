@@ -351,7 +351,21 @@ export const submitAnswer = async (
      User Answer: ${userAnswer}
 
      Evaluate based on the rubric.
-     Use rubric-guidance-tool to build deterministic must-check criteria before scoring.`,
+     Use rubric-guidance-tool to build deterministic must-check criteria before scoring.
+     Write critique in direct, helpful prose that explains the main reason the answer passed or failed.
+     Do not give vague feedback like "missing a11y" or "did not handle edge cases" unless you immediately explain what accessible implementation or edge-case handling was expected here.
+     For critique:
+     - keep it shorter than missedPoints,
+     - summarize the answer quality and the main reasons for the score,
+     - treat it as "you passed/failed mainly because of this".
+     For missedPoints:
+     - do not return terse bullet fragments,
+     - each item must explain what was expected,
+     - explain why that expectation matters for this specific question,
+     - explain what the candidate should have mentioned, implemented, or justified,
+     - treat this as the "this is what you should have done" section.
+     Prefer concrete examples of expected behavior, code, or reasoning over labels.
+     Keep the tone constructive and specific.`,
     {
       structuredOutput: {
         schema: FeedbackSchema,
