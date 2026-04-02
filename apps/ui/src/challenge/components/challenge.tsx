@@ -10,7 +10,7 @@ import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/share
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
-import { useConfiguration, type Configuration } from '@/store/configuration.store'
+import type { Configuration } from '@/store/configuration.store'
 import { Card } from '@/common/components/card'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
@@ -29,8 +29,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
   const [topicAndLevel, setTopicAndLevel] = useState({ topic, level })
-
-  const setConfiguration = useConfiguration(state => state.setConfiguration)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
