@@ -1,4 +1,4 @@
-import { type Feedback, type Question } from '@repo/shared-types'
+import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp } from './utils'
 
@@ -22,16 +22,16 @@ type QuestionRow = Question & {
   createdAt: string
 }
 
-const TABLES = {
-  sessions: 'interview_sessions',
-  questions: 'interview_questions',
-  feedback: 'interview_feedback',
+const Tables = {
+  Sessions: 'interview_sessions',
+  Questions: 'interview_questions',
+  Feedback: 'interview_feedback',
 } as const
 
 export const createSession = async (topic: string, level: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
-    .from(TABLES.sessions)
+    .from(Tables.Sessions)
     .insert({ topic, level })
     .select('id, topic, level, created_at')
     .single<InterviewSession>()
@@ -44,7 +44,7 @@ export const createSession = async (topic: string, level: string) => {
 export const getSession = async (sessionId: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
-    .from(TABLES.sessions)
+    .from(Tables.Sessions)
     .select('id, topic, level, created_at')
     .eq('id', sessionId)
     .maybeSingle<InterviewSession>()
@@ -58,7 +58,7 @@ export const getSession = async (sessionId: string) => {
 export const listQuestionTexts = async (sessionId: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
-    .from(TABLES.questions)
+    .from(Tables.Questions)
     .select('question')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true })
@@ -82,21 +82,25 @@ export const listReusableQuestions = async (params: {
 
   const results: QuestionRow[] = []
 
+  const isRandomMode = topic === RANDOM
+
+  const innerJoin = isRandomMode ? '' : `, ${Tables.Sessions}!inner(topic, level)`
+
   for (let batchIndex = 0; batchIndex < maxBatches && results.length < pageSize; batchIndex += 1) {
     const offset = batchIndex * batchSize
     let query = supabase
-      .from(TABLES.questions)
-      .select('id, session_id, question, initial_code, type, created_at, interview_sessions!inner(topic, level)')
+      .from(Tables.Questions)
+      .select(`id, session_id, question, initial_code, type, created_at${innerJoin}`)
       .eq('completed', false)
       .lt('created_at', getYesterdayTimestamp())
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
 
-    if (topic) {
+    if (topic && !isRandomMode) {
       query = query.eq('interview_sessions.topic', topic)
     }
 
-    if (level) {
+    if (level && !isRandomMode) {
       query = query.eq('interview_sessions.level', level)
     }
 
@@ -141,7 +145,7 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
   }
 
   const { data, error } = await supabase
-    .from(TABLES.questions)
+    .from(Tables.Questions)
     .upsert(insertPayload, { onConflict: 'session_id,question' })
     .select('id')
     .single<{ id: string }>()
@@ -158,7 +162,7 @@ export const completeQuestion = async (questionId: string) => {
   }
 
   const { data, error } = await supabase
-    .from(TABLES.questions)
+    .from(Tables.Questions)
     .update(insertPayload)
     .eq('id', questionId)
     .select('id')
@@ -184,7 +188,7 @@ export const createFeedback = async (params: {
   const supabase = getSupabaseClient()
   const { sessionId, questionId, answer, level, feedback } = params
 
-  const { error } = await supabase.from(TABLES.feedback).insert({
+  const { error } = await supabase.from(Tables.Feedback).insert({
     session_id: sessionId,
     question_id: questionId,
     answer,

@@ -6,13 +6,12 @@ import {
   MarkdownText
 } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
+import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration, type Configuration } from '@/store/configuration.store'
 import { Card } from '@/common/components/card'
-import { getRandomTopicAndLevel } from '../utils/getRandomTopicAndLevel'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
@@ -93,14 +92,6 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const loadNextQuestion = async () => {
     setLocalData(null)
     setFeedback(null)
-    if (randomMode) {
-      // random only once
-      setConfiguration({
-        topic: topicAndLevel.topic,
-        level: topicAndLevel.level,
-        randomMode: false
-      })
-    }
     setRequestId((current) => current + 1)
     setCanContinue(false)
   }
@@ -127,13 +118,19 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     setLocalData(null)
 
     if (randomMode) {
-      setTopicAndLevel(() => getRandomTopicAndLevel())
+      setTopicAndLevel(() => ({
+        topic: RANDOM,
+        level: RANDOM
+      }))
     }
   }, [])
 
   useEffect(() => {
     if (randomMode && isError && storageMode) {
-      setTopicAndLevel(() => getRandomTopicAndLevel())
+      setTopicAndLevel(() => ({
+        topic: RANDOM,
+        level: RANDOM
+      }))
     }
   }, [isError, storageMode])
 
@@ -166,13 +163,13 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
               </div>
             ) : null}
             {localData?.type === ChallengeType.Theoretical && (
-              <MarkdownText content={localData?.question}/>
+              <MarkdownText content={localData?.question} />
             )}
             {localData?.type === ChallengeType.Coding && (
               <>
-              <MarkdownText content={localData?.question}/>
-              <div className='grow min-h-0 relative mt-4'>
-                  <CodeArea value={localData?.initialCode ?? ''} id="initial-code"/>
+                <MarkdownText content={localData?.question} />
+                <div className='grow min-h-0 relative mt-4'>
+                  <CodeArea value={localData?.initialCode ?? ''} id="initial-code" />
                 </div>
               </>
             )}

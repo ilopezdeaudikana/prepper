@@ -8,7 +8,7 @@ import { useProgress, type ProgressStore } from '@/store/progress.store'
 import { Switch } from '@/common/components/switch'
 import { Checkbox } from '@/common/components/checkbox'
 
-import { Topic } from '@repo/shared-types'
+import { RANDOM, Topic } from '@repo/shared-types'
 import { Card } from '@/common/components/card'
 import { Separator } from '@/common/components/separator'
 
@@ -29,8 +29,8 @@ export default function Configuration() {
   const handleSubmit = async () => {
     const { topic, level, randomMode, storageMode } = configuration
     setConfiguration({
-      topic: topic.trim(),
-      level: level.trim(),
+      topic: randomMode ? RANDOM : topic.trim(),
+      level: randomMode ? RANDOM :level.trim(),
       randomMode,
       storageMode
     })

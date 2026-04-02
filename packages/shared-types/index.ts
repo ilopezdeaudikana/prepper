@@ -87,3 +87,5 @@ export const Level = {
 export type LevelKey = (typeof Level)[keyof typeof Level]
 
 export const MINIMUM_SCORE = 7
+
+export const RANDOM = 'random'
