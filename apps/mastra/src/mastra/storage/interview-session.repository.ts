@@ -20,7 +20,7 @@ type QuestionRow = Question & {
   sessionId: string
   sessionToken: string
   createdAt: string
-}
+} & Feedback
 
 const Tables = {
   Sessions: 'interview_sessions',
@@ -154,11 +154,16 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
   return data.id
 }
 
-export const completeQuestion = async (questionId: string) => {
+export const completeQuestion = async (questionId: string, solution: Feedback) => {
   const supabase = getSupabaseClient()
 
+  const { improvedCode, critique, score, missedPoints } = solution
   const insertPayload = {
-    completed: true
+    completed: true,
+    improved_code: improvedCode,
+    critique, 
+    score, 
+    missed_points: missedPoints
   }
 
   const { data, error } = await supabase
@@ -171,9 +176,9 @@ export const completeQuestion = async (questionId: string) => {
   if (error) throw new Error(`Failed to update question: ${questionId}`)
   else if (!data) {
     throw new Error(`No row matched ${questionId}`)
-  } 
+  }
 
- 
+
   return data.id
 }
 
@@ -200,4 +205,31 @@ export const createFeedback = async (params: {
   })
 
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
+}
+
+export const listCompletedQuestions = async (start?: number): Promise<Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[]> => {
+  const supabase = getSupabaseClient()
+
+  const pageSize = 20
+
+  const query = supabase
+    .from(Tables.Questions)
+    .select(`id, question, initial_code, type, score, critique, improved_code, missed_points`)
+    .eq('completed', true)
+    .order('created_at', { ascending: false })
+    .range(start ?? 0, pageSize)
+
+  const { data, error } = await query
+
+  if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
+
+  return (data ?? []).map((row: any) => ({
+    question: row.question as string,
+    initialCode: (row.initial_code as string | null) ?? undefined,
+    type: row.type as Question['type'],
+    score: row.score,
+    critique: row.critique,
+    missedPoints: row.missed_points,
+    improvedCode: row.improved_code
+  }))
 }

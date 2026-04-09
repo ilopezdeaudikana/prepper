@@ -38,8 +38,8 @@ export const interviewAgent = new Agent({
     If type is "theoretical", omit "initialCode".
 
     `,
-  // google/gemini-2.5-flash-lite not fully working
-  model: 'google/gemini-2.5-flash',
+  // google/gemini-2.5-flash
+  model: 'groq/llama-3.3-70b-versatile',
   tools: {
     sessionQuestionHistoryTool,
     challengePlanningTool,

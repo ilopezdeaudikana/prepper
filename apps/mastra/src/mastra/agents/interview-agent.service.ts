@@ -412,9 +412,9 @@ export const submitAnswer = async (
 
   logger.info(`Score ${generatedFeedback.score} for questionId ${questionId}`)
 
-  if (generatedFeedback.score > MINIMUM_SCORE) {
+  if (generatedFeedback?.score && generatedFeedback?.score > MINIMUM_SCORE) {
     try {
-      await completeQuestion(questionId)
+      await completeQuestion(questionId, generatedFeedback)
     } catch (error) {
       logger.error(`Error completing challenge ${JSON.stringify(error)}`)
     }

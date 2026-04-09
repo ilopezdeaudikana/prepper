@@ -10,14 +10,14 @@ import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/share
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
-import type { Configuration } from '@/store/configuration.store'
+import { useConfiguration } from '@/store/configuration.store'
 import { Card } from '@/common/components/card'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
 
-export const Challenge = ({ level, topic, randomMode, storageMode }: Configuration) => {
+export const Challenge = () => {
 
   const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
   const [isDisabled, setIsDisabled] = useState(true)
@@ -28,7 +28,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
-  const [topicAndLevel, setTopicAndLevel] = useState({ topic, level })
+  const { level, topic, randomMode, storageMode } = useConfiguration(state => state.configuration)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -38,11 +38,11 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
   const { data, isFetching, isError, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
-      topicAndLevel,
+      { topic, level },
       previousQuestions,
       sessionToken ?? undefined
     ),
-    enabled: !!topicAndLevel.topic && !!topicAndLevel.level,
+    enabled: !!topic && !!level,
     staleTime: Infinity,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
@@ -66,13 +66,13 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
       const result: Feedback = await ChallengeService.submitAnswer(
         data as Question,
         reply,
-        topicAndLevel.level,
+        level,
         sessionToken ?? undefined
       )
 
       setFeedback(result)
 
-      setProgress({ score: score + result.score, stage: stage + 1 })
+      setProgress({ score: score + (result.score ?? 0), stage: stage + 1 })
 
       if (localData) {
         const { question, initialCode, type } = localData
@@ -114,23 +114,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
     setPreviousQuestions([])
     setFeedback(null)
     setLocalData(null)
-
-    if (randomMode) {
-      setTopicAndLevel(() => ({
-        topic: RANDOM,
-        level: RANDOM
-      }))
-    }
   }, [])
-
-  useEffect(() => {
-    if (randomMode && isError && storageMode) {
-      setTopicAndLevel(() => ({
-        topic: RANDOM,
-        level: RANDOM
-      }))
-    }
-  }, [isError, storageMode])
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4">
@@ -146,7 +130,7 @@ export const Challenge = ({ level, topic, randomMode, storageMode }: Configurati
         <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
           <Card>
             {!requestErrorMessage && (!localData || isFetching) && (
-              <GenerationState isFetching={isFetching} />
+              <GenerationState isFetching={isFetching} isReady={!!topic || !!level}/>
             )}
             {requestErrorMessage ? (
               <div><p>Error loading data</p>

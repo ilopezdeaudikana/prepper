@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
 
-export const GenerationState = ({ isFetching }: { isFetching: boolean }): JSX.Element => {
+export const GenerationState = ({ isFetching, isReady }: { isFetching: boolean, isReady: boolean }): JSX.Element => {
   const [generationStage, setGenerationStage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export const GenerationState = ({ isFetching }: { isFetching: boolean }): JSX.El
   }, [isFetching])
   return (
     <div>
-      <p>{generationStage ?? 'Loading challenge...'}</p>
+      <p>{generationStage ?? (isReady ? 'Loading challenge...' : '')}</p>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export interface Configuration {
+export interface ConfigurationState {
   topic: string
   level: string
   randomMode: boolean
@@ -8,8 +8,8 @@ export interface Configuration {
 }
 
 export interface ConfigurationStore {
-  configuration: Configuration
-  setConfiguration: (newConfig: Configuration) => void
+  configuration: ConfigurationState
+  setConfiguration: (newConfig: ConfigurationState) => void
   resetConfiguration: () => void
 }
 
@@ -19,6 +19,6 @@ export const useConfiguration = create<ConfigurationStore>((set) => ({
     level: '',
     randomMode: false
   },
-  setConfiguration: (newConfig: Configuration) => set({ configuration: newConfig }),
+  setConfiguration: (newConfig: ConfigurationState) => set({ configuration: newConfig }),
   resetConfiguration: () => set({ configuration: { topic: '', level: '', randomMode: false } })
 }))

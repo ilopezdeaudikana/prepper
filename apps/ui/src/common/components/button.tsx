@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Slot } from 'radix-ui'
 
 import { tailwindMerge } from '@/common/utils/tailwind-merge'
 
@@ -13,7 +12,7 @@ function Button({
 }: React.ComponentPropsWithRef<'button'> & {
     asChild?: boolean
   }) {
-  const Comp = asChild ? Slot.Root : 'button'
+  const Comp = 'button'
 
   return (
     <Comp
