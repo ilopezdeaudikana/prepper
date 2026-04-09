@@ -6,7 +6,7 @@ import {
   MarkdownText
 } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/shared-types'
+import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
@@ -28,14 +28,14 @@ export const Challenge = () => {
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
-  const { level, topic, randomMode, storageMode } = useConfiguration(state => state.configuration)
+  const { level, topic } = useConfiguration(state => state.configuration)
 
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
   const addToReport = useReport(state => state.addToReport)
 
 
-  const { data, isFetching, isError, error } = useQuery({
+  const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
       { topic, level },

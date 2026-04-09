@@ -1,11 +1,8 @@
 import { Challenge } from '../components/challenge'
-import { useConfiguration } from '@/store/configuration.store'
 import { useProgress, FINAL_STAGE } from '@/store/progress.store'
 import { Redirector } from '@/common/components/redirector'
 
 export default function ChallengeView() {
-
-  const configuration = useConfiguration(state => state.configuration)
   
   const { stage } = useProgress(state => state.progress)
 
@@ -14,7 +11,7 @@ export default function ChallengeView() {
   return (
     <div>
       <Redirector condition={shouldRedirect} to="/finale">
-        <Challenge {...configuration}/>
+        <Challenge />
       </Redirector>
     </div>
   )

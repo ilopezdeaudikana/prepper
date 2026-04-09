@@ -1,12 +1,12 @@
 import { Button } from '@/common/components/button'
-import { useConfiguration, type Configuration, type ConfigurationStore } from '@/store/configuration.store'
+import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
 import { Card } from '@/common/components/card'
 import { Report } from './report'
 import { useReport, type ReportStore } from '@/store/report.store'
 
-export const Finale = ({ topic, level, randomMode } : Omit<Configuration, 'storageMode'>) => {
+export const Finale = ({ topic, level, randomMode } : Omit<ConfigurationState, 'storageMode'>) => {
 
   const resetConfiguration = useConfiguration((state: ConfigurationStore) => state.resetConfiguration)
 
