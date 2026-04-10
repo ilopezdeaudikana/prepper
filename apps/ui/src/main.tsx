@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query'
 import ErrorBoundary from './common/components/error-boundary'
 import { ToastProvider } from '@repo/toast'
+import { ConfigProvider, theme } from 'antd'
 
 const queryClient = new QueryClient()
 
@@ -16,9 +17,18 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <ConfigProvider
+          theme={{
+            algorithm: theme.defaultAlgorithm,
+            token: {
+              colorBgBase: '#e5e7eb',
+            },
+          }}
+        >
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </ConfigProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>

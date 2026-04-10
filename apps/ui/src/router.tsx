@@ -4,6 +4,7 @@ import { Loading } from './common/components/loading.tsx'
 
 const Challenge = lazy(() => import('./challenge/views/challenge.view.tsx'))
 const Finale = lazy(() => import('./finale/views/finale.view.tsx'))
+const History = lazy(() => import('./history/views/history.view.tsx'))
 
 export const router = createBrowserRouter([
   {
@@ -11,6 +12,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<Loading />}>
         <Challenge />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/history',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <History />
       </Suspense>
     ),
   },

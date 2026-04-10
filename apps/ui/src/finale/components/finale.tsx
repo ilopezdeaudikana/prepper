@@ -1,8 +1,7 @@
-import { Button } from '@/common/components/button'
+import { Button, Card } from 'antd'
 import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
 import { useNavigate } from 'react-router-dom'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
-import { Card } from '@/common/components/card'
 import { Report } from './report'
 import { useReport, type ReportStore } from '@/store/report.store'
 
@@ -36,7 +35,7 @@ export const Finale = ({ topic, level, randomMode } : Omit<ConfigurationState, '
           </h1>
           <p className="text-center">You've completed the challenge for {topicAndLevel}!</p>
           <p className="text-center">Your score is: {score}</p>
-          <Button type="button" onClick={goBackToStart}>Go back to the start</Button>
+          <Button type="primary" onClick={goBackToStart}>Go back to the start</Button>
         </div>
         <Report />
       </Card>

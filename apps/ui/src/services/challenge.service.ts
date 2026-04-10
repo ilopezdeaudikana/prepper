@@ -1,4 +1,4 @@
-import type { EvaluationResponse, Question } from "@repo/shared-types"
+import type { EvaluationResponse, Feedback, Question } from "@repo/shared-types"
 import * as sample from '../sample.json'
 import * as responseSample from '../sample-response.json'
 import { useConfiguration } from "@/store/configuration.store"
@@ -24,28 +24,43 @@ const parseResponse = async <T>(response: Response, fallbackMessage: string): Pr
 }
 
 export const ChallengeService = {
-  async getChallenge(options: {topic: string, level: string}, previousQuestions: string[] = [], sessionToken?: string) {
+  async getChallenge(options: { topic: string, level: string }, previousQuestions: string[] = [], sessionToken?: string) {
     if (process.env.NODE_ENV === 'development') {
-      if(!hasThrown){
+      if (!hasThrown) {
         hasThrown = !hasThrown
         return Promise.reject(new Error('Simulated error in development mode'))
-      } else { 
+      } else {
         return Promise.resolve(sample as ChallengeResponse)
       }
     }
-    
+
     const { storageMode } = useConfiguration.getState().configuration
-    
-    const {topic, level} = options
+
+    const { topic, level } = options
 
     const response = await fetch(getApiUrl('interview/challenge'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level, previousQuestions, sessionToken, options: { forceReuse: storageMode }}),
+      body: JSON.stringify({ topic, level, previousQuestions, sessionToken, options: { forceReuse: storageMode } }),
     })
     return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
+  },
+
+  async getChallenges(start: string, completed: string) {
+    const url = new URL(getApiUrl('interview/all-challenges'))
+    url.searchParams.append('start', start)
+    url.searchParams.append('completed', completed)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    
+  return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge generation failed.')
+
   },
 
   async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {

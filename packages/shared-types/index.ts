@@ -12,7 +12,9 @@ export const QuestionSchema = z.object({
   question: z.string(),
   initialCode: z.string().optional(),
   type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical]).optional(),
-  completed: z.boolean().optional()
+  completed: z.boolean().optional(),
+  level: z.string().optional(),
+  topic: z.string().optional(),
 })
 
 export const FeedbackSchema = z.object({
@@ -42,6 +44,11 @@ export const ChallengeRequestSchema = z.object({
     skipReuse: z.boolean().optional(),
     forceReuse: z.boolean().optional(),
   }).optional(),
+})
+
+export const AllChallengesRequestSchema = z.object({
+  completed: z.string(),
+  start: z.string()
 })
 
 export const ChallengeResponseSchema = QuestionSchema.extend({

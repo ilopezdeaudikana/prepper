@@ -1,6 +1,7 @@
 import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp } from './utils'
+import { IMastraLogger } from '@mastra/core/logger'
 
 type InterviewSession = {
   id: string
@@ -161,8 +162,8 @@ export const completeQuestion = async (questionId: string, solution: Feedback) =
   const insertPayload = {
     completed: true,
     improved_code: improvedCode,
-    critique, 
-    score, 
+    critique,
+    score,
     missed_points: missedPoints
   }
 
@@ -181,7 +182,6 @@ export const completeQuestion = async (questionId: string, solution: Feedback) =
 
   return data.id
 }
-
 
 export const createFeedback = async (params: {
   sessionId: string
@@ -207,29 +207,50 @@ export const createFeedback = async (params: {
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }
 
-export const listCompletedQuestions = async (start?: number): Promise<Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[]> => {
+export const listAllQuestions = async (start: string, completed: string, logger: IMastraLogger)
+  : Promise<{ data: Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[], count: number }> => {
   const supabase = getSupabaseClient()
 
-  const pageSize = 20
+  const pageSize = 10
+  
+  const offset =  Number(start) * pageSize
+
+  logger.info(`Start ${start?.toString() ?? ''}`)
 
   const query = supabase
     .from(Tables.Questions)
-    .select(`id, question, initial_code, type, score, critique, improved_code, missed_points`)
-    .eq('completed', true)
+    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback}!inner(critique, score, missed_points, improved_code)`, {
+      count: "exact"
+    })
+    .eq('completed', completed === 'true')
     .order('created_at', { ascending: false })
-    .range(start ?? 0, pageSize)
+    .range(offset, pageSize + offset)
 
-  const { data, error } = await query
+
+  const { data, error, count } = await query
+
+  logger.info(`Count ${count?.toString() ?? ''}`)
 
   if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
-  return (data ?? []).map((row: any) => ({
-    question: row.question as string,
-    initialCode: (row.initial_code as string | null) ?? undefined,
-    type: row.type as Question['type'],
-    score: row.score,
-    critique: row.critique,
-    missedPoints: row.missed_points,
-    improvedCode: row.improved_code
-  }))
+  return { 
+    data: (data ?? []).map((row: any) => {
+    const feedback = row.interview_feedback?.[0]
+    const { question, initial_code: initialCode, type, completed, id, level, topic } = row
+    return {
+      question,
+      initialCode,
+      type,
+      completed,
+      id,
+      topic, 
+      level,
+      score: feedback.score,
+      critique: feedback.critique,
+      missedPoints: feedback.missed_points,
+      improvedCode: feedback.improved_code
+    }
+  }),
+  count: count ?? 0
+ }
 }

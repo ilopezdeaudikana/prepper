@@ -1,9 +1,9 @@
-import { Button } from '@/common/components/button'
+import { Button, Card } from 'antd'
 import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 import { Configuration } from '@/configuration/configuration.component'
 import { useConfiguration } from '@/store/configuration.store'
-import { Card } from '@/common/components/card'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface ChallengeTopbarProps {
   canContinue: boolean
@@ -23,6 +23,8 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
 
   const setProgress = useProgress(state => state.setProgress)
 
+  const navigate = useNavigate()
+  
   const restart = () => {
     setProgress({ score: 0, stage: INITIAL_STAGE })
   }
@@ -47,26 +49,30 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
     <Card
       className="h-[64px] flex-none"
     >
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
+        <Button type="primary" className="mr-2" onClick={() => navigate('/history')}>
+          Check previous challenges
+        </Button>
+
         {topic && level ? 
         <>
           <p>Topic: {topic}, Level {level}</p>
           <div className='flex gap-4'>
-            {!showRestart && !showFinish && !isFetching && <Button type="button" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
-            {!showRestart && !showFinish && <Button type="button" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
+            {!showRestart && !showFinish && !isFetching && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
+            {!showRestart && !showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
               {isFetching ? 'Loading...' : 'Next question'}
             </Button>}
-            {(!showRestart || !showFinish) && <Button form="reply-form" type="submit" disabled={disabled}>Submit</Button>}
-            {(showRestart || showFinish) && <Button type="button" onClick={restart}>
+            {(!showRestart || !showFinish) && <Button form="reply-form" htmlType="submit" type="primary" disabled={disabled}>Submit</Button>}
+            {(showRestart || showFinish) && <Button type="dashed" onClick={restart}>
               Restart
             </Button>}
-            {showFinish && <Button type="button" onClick={goToReport}>
+            {showFinish && <Button type="primary" onClick={goToReport}>
               See evaluation report
             </Button>}
           </div>
         </>
         :
-        <Button type="button" className="ml-auto" onClick={() => openConfiguration(true)}>Configure challenge</Button>}
+        <Button type="primary" className="ml-auto" onClick={() => openConfiguration(true)}>Configure new challenge</Button>}
       </div>
       <Configuration open={isConfigurationOpen} onClose={() => openConfiguration(false)}/>
     </Card>

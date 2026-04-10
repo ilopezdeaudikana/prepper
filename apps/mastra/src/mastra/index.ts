@@ -4,10 +4,11 @@ import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } fr
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 import { LibSQLStore } from '@mastra/libsql'
+import { listAllQuestions } from './storage/interview-session.repository'
 
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
@@ -16,8 +17,8 @@ function createRequestError(message: string, status = 400): Error & { status: nu
   return err
 }
 
-async function parseAndValidateBody<T>(c: any, schema: { parse: (v: unknown) => T }): Promise<T> {
-  const rawBody = await c.req.text()
+function parseAndValidateBody<T>(rawBody: string, schema: { parse: (v: unknown) => T }): T {
+
   if (!rawBody || !rawBody.trim()) {
     throw createRequestError('Empty request body. Expected JSON.', 400)
   }
@@ -78,14 +79,15 @@ export const mastra = new Mastra({
   }),
   server: {
     apiRoutes: [
-      registerApiRoute("/interview/challenge", {
-        method: "POST",
+      registerApiRoute('/interview/challenge', {
+        method: 'POST',
         handler: async (c) => {
           const mastra = c.get('mastra')
           const logger = mastra.getLogger()
 
           try {
-            const payload = await parseAndValidateBody(c, ChallengeRequestSchema)
+            const rawBody = await c.req.text()
+            const payload = parseAndValidateBody(rawBody, ChallengeRequestSchema)
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
@@ -107,11 +109,12 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute("/interview/evaluate", {
-        method: "POST",
+      registerApiRoute('/interview/evaluate', {
+        method: 'POST',
         handler: async (c) => {
           try {
-            const payload = await parseAndValidateBody(c, EvaluationRequestSchema)
+            const rawBody = await c.req.text()
+            const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
@@ -131,7 +134,26 @@ export const mastra = new Mastra({
             return handleRequestError(c, error, 'Evaluation failed.')
           }
         },
-      })
+      }),
+      registerApiRoute('/interview/all-challenges', {
+        method: 'GET',
+        handler: async (c) => {
+          const mastra = c.get('mastra')
+          const logger = mastra.getLogger()
+          const query = JSON.stringify(c.req.query())
+
+          try {
+            const { start, completed } = parseAndValidateBody(query, AllChallengesRequestSchema)
+
+            const result = await listAllQuestions(start, completed, logger)
+            logger.info('All challenges', result.data[0])
+            return c.json(result)
+          } catch (error) {
+            logger.error('Unexpected challenge retrieval error', error)
+            return handleRequestError(c, error, 'Unexpected challenge retrieval error')
+          }
+        },
+      }),
     ],
   },
   deployer: new VercelDeployer()

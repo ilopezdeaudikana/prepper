@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Input } from '@/common/components/input'
-import { Button } from '@/common/components/button'
 import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
-import { Select, Switch, Checkbox, Divider, Drawer } from 'antd'
+import { Select, Switch, Checkbox, Divider, Drawer, Button } from 'antd'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
 import { RANDOM, Topic } from '@repo/shared-types'
 
@@ -79,13 +78,12 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
               disabled={configuration.randomMode}
             />
           </div>
-          <p className="mt-4">Or maybe you prefer random level and topics:</p>
 
           <div className="flex gap-4 align-center mt-2">
             <label
               htmlFor="random-mode"
             >
-              Random mode
+            <p>Or maybe you prefer random level and topics:</p>
             </label>
             <Switch
               id="random-mode"
@@ -108,7 +106,7 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
           </div>
           <Divider />
           <div className="flex flex-col w-[150px] self-center">
-            <Button type="submit" disabled={isSaveDisabled()}>Submit</Button>
+            <Button type="primary" htmlType="submit" disabled={isSaveDisabled()}>Submit</Button>
           </div>
         </div>
       </form>

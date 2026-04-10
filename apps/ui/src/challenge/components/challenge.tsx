@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   useQuery,
 } from '@tanstack/react-query'
@@ -6,34 +6,38 @@ import {
   MarkdownText
 } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
+import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration } from '@/store/configuration.store'
-import { Card } from '@/common/components/card'
+import { Card } from 'antd'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
+import { useChallenges } from '@/common/hooks/useChallenges'
 
 export const Challenge = () => {
 
   const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
   const [isDisabled, setIsDisabled] = useState(true)
   const [canContinue, setCanContinue] = useState(false)
-  const [localData, setLocalData] = useState<(Question & { error?: string, notice?: string }) | null>(null)
+  const [localData, setLocalData] = useState<(Question & Feedback & { error?: string, notice?: string }) | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const [showRestart, setShowRestart] = useState<boolean>(false)
   const { level, topic } = useConfiguration(state => state.configuration)
-
+  const setConfiguration = useConfiguration(state => state.setConfiguration)
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
   const addToReport = useReport(state => state.addToReport)
 
+  const currentChallenge = useRef<Question & Feedback>(null)
+  
+  useChallenges({ currentChallenge })
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
@@ -42,7 +46,7 @@ export const Challenge = () => {
       previousQuestions,
       sessionToken ?? undefined
     ),
-    enabled: !!topic && !!level,
+    enabled: !!topic && !!level && !currentChallenge.current,
     staleTime: Infinity,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
@@ -92,6 +96,7 @@ export const Challenge = () => {
     setFeedback(null)
     setRequestId((current) => current + 1)
     setCanContinue(false)
+    currentChallenge.current = null
   }
 
   const shouldShowForm = feedback === null && !loadingEvaluation
@@ -116,6 +121,19 @@ export const Challenge = () => {
     setLocalData(null)
   }, [])
 
+  useEffect(() => {
+    if (currentChallenge.current) {
+      const { topic, level, completed } = currentChallenge.current
+      setLocalData(currentChallenge.current)
+      if(completed) setFeedback(currentChallenge.current)
+      setConfiguration({
+        topic: topic ?? RANDOM, 
+        level: level ?? RANDOM, 
+        randomMode: !topic && !level
+      })
+    }
+  }, [currentChallenge.current])
+
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4">
       <ChallengeTopbar
@@ -130,7 +148,7 @@ export const Challenge = () => {
         <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
           <Card>
             {!requestErrorMessage && (!localData || isFetching) && (
-              <GenerationState isFetching={isFetching} isReady={!!topic || !!level}/>
+              <GenerationState isFetching={isFetching} isReady={!!topic || !!level} />
             )}
             {requestErrorMessage ? (
               <div><p>Error loading data</p>
