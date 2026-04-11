@@ -36,7 +36,7 @@ export const Challenge = () => {
   const addToReport = useReport(state => state.addToReport)
 
   const currentChallenge = useRef<Question & Feedback>(null)
-  
+
   useChallenges({ currentChallenge })
 
   const { data, isFetching, error } = useQuery({
@@ -125,10 +125,10 @@ export const Challenge = () => {
     if (currentChallenge.current) {
       const { topic, level, completed } = currentChallenge.current
       setLocalData(currentChallenge.current)
-      if(completed) setFeedback(currentChallenge.current)
+      if (completed) setFeedback(currentChallenge.current)
       setConfiguration({
-        topic: topic ?? RANDOM, 
-        level: level ?? RANDOM, 
+        topic: topic ?? RANDOM,
+        level: level ?? RANDOM,
         randomMode: !topic && !level
       })
     }
@@ -146,7 +146,10 @@ export const Challenge = () => {
       />
       <div className="flex align-self-center gap-4 h-full min-w-0">
         <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
-          <Card>
+          <Card 
+            className="flex flex-col flex-1 p-4 overflow-auto" 
+            styles={{ body: {display: 'flex', flexDirection: 'column', flexGrow: 1}}}
+          >
             {!requestErrorMessage && (!localData || isFetching) && (
               <GenerationState isFetching={isFetching} isReady={!!topic || !!level} />
             )}
@@ -176,12 +179,17 @@ export const Challenge = () => {
           </Card>
         </div>
         <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
-          <Card>
-            {loadingEvaluation && (
-              <div><p>Loading evaluation...</p></div>
-            )}
-            {feedback && (<ChallengeFeedback feedback={feedback} />)}
-            {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type} />}
+          <Card 
+            className="flex flex-col flex-1 p-4 overflow-auto"
+            styles={{ body: {display: 'flex', flexDirection: 'column', flexGrow: 1}}}
+          >
+            <div className="flex flex-col flex-1">
+              {loadingEvaluation && (
+                <div><p>Loading evaluation...</p></div>
+              )}
+              {feedback && (<ChallengeFeedback feedback={feedback} />)}
+              {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type} />}
+            </div>
           </Card>
         </div>
       </div>

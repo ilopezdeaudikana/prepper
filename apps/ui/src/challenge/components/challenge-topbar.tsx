@@ -47,7 +47,7 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
 
   return (
     <Card
-      className="h-[64px] flex-none"
+      className="p-4"
     >
       <div className="flex justify-between items-center">
         <Button type="primary" className="mr-2" onClick={() => navigate('/history')}>

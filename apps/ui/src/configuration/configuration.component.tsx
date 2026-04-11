@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Input } from '@/common/components/input'
 import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
-import { Select, Switch, Checkbox, Divider, Drawer, Button } from 'antd'
+import { Select, Switch, Checkbox, Divider, Drawer, Button, Input } from 'antd'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
 import { RANDOM, Topic } from '@repo/shared-types'
 
@@ -48,12 +47,11 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
         <div className="flex flex-col gap-8 m-4">
           <h2 className="text-xl mb-4">Choose a topic and a difficulty level to start the challenge.</h2>
           <div>
-            <label htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
+            <label className="block mb-4" htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
             <Input
               id="topic"
               name="topic"
               onChange={(e) => handleChange('topic', e.target.value)}
-              className="mb-2 mt-4"
               value={configuration.topic}
               disabled={configuration.randomMode}
             />

@@ -23,6 +23,17 @@ createRoot(document.getElementById('root')!).render(
             token: {
               colorBgBase: '#e5e7eb',
             },
+            components: {
+                Input: {
+                  colorBgContainer: '#fdfdfdff',
+                },
+                Select: {
+                  colorBgContainer: '#fdfdfdff',
+                },
+                Checkbox: {
+                  colorBgContainer: '#fdfdfdff',
+                },
+              },
           }}
         >
           <ToastProvider>
