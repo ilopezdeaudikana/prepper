@@ -1,15 +1,17 @@
 import { ChallengeService } from "@/services/challenge.service"
 import type { Feedback, Question } from "@repo/shared-types"
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from 'react-router-dom'
 
-interface UseChallengeProps { page?: string, completed?: string, currentChallenge?: React.RefObject<(Question & Feedback) | null> }
+interface UseChallengeProps { page?: string, completed?: string }
 
-export const useChallenges = ({ page, completed, currentChallenge }: UseChallengeProps) => {
+export const useChallenges = ({ page, completed }: UseChallengeProps) => {
 
   const [searchParams, _] = useSearchParams()
 
+  const currentChallenge = useRef<Question & Feedback>(null)
+  
   const [__, setTriggerRender] = useState(false)
 
   const [completedValue, setCompleted] = useState<string>()
@@ -30,7 +32,7 @@ export const useChallenges = ({ page, completed, currentChallenge }: UseChalleng
   useEffect(() => {
     const id = searchParams.get('id')
 
-    if (completedValue && pageValue) {
+    if (completedValue && pageValue && id) {
       const challenge = apiData?.data.find(item => item.id === id)
       if (challenge && currentChallenge) {
         currentChallenge.current = challenge
@@ -57,6 +59,6 @@ export const useChallenges = ({ page, completed, currentChallenge }: UseChalleng
   }, [completed, page])
 
   return {
-    apiData, isPending, error
+    apiData, isPending, error, currentChallenge
   }
 }

@@ -12,13 +12,14 @@ interface ChallengeTopbarProps {
   showRestart: boolean
   showFinish: boolean
   onLoadNextQuestion: () => void
+  onNavigate: () => void
 }
 
-export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart, onLoadNextQuestion, showFinish }: ChallengeTopbarProps) => {
+export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
 
   const [isConfigurationOpen, openConfiguration] = useState(false)
   const { topic, level } = useConfiguration(state => state.configuration)
-
+  const setConfiguration = useConfiguration(state => state.setConfiguration)
   const { score, stage } = useProgress(state => state.progress)
 
   const setProgress = useProgress(state => state.setProgress)
@@ -26,7 +27,11 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
   const navigate = useNavigate()
   
   const restart = () => {
+    setConfiguration({
+      topic: '', level: '', randomMode: false
+    })
     setProgress({ score: 0, stage: INITIAL_STAGE })
+    onNavigate()
   }
 
   const loadNextQuestion = async (args?: ({ skip: boolean } | undefined)) => {
@@ -43,14 +48,20 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
 
   const goToReport = () => {
     setProgress({ score, stage: FINAL_STAGE + 1 })
+    onNavigate()
   }
+
+const goToHistory = () => {
+  navigate('/history')
+  onNavigate()
+}
 
   return (
     <Card
       className="p-4"
     >
       <div className="flex justify-between items-center">
-        <Button type="primary" className="mr-2" onClick={() => navigate('/history')}>
+        <Button type="primary" className="mr-2" onClick={goToHistory}>
           Check previous challenges
         </Button>
 
@@ -58,14 +69,14 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart
         <>
           <p>Topic: {topic}, Level {level}</p>
           <div className='flex gap-4'>
-            {!showRestart && !showFinish && !isFetching && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
-            {!showRestart && !showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
+            {!showFinish && !isFetching && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
+            {!showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
               {isFetching ? 'Loading...' : 'Next question'}
             </Button>}
-            {(!showRestart || !showFinish) && <Button form="reply-form" htmlType="submit" type="primary" disabled={disabled}>Submit</Button>}
-            {(showRestart || showFinish) && <Button type="dashed" onClick={restart}>
+            {(!showFinish) && <Button form="reply-form" htmlType="submit" type="primary" disabled={disabled}>Submit</Button>}
+            <Button type="dashed" onClick={restart}>
               Restart
-            </Button>}
+            </Button>
             {showFinish && <Button type="primary" onClick={goToReport}>
               See evaluation report
             </Button>}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   useQuery,
 } from '@tanstack/react-query'
@@ -17,6 +17,7 @@ import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
 import { useChallenges } from '@/common/hooks/useChallenges'
+import { useSearchParams } from 'react-router-dom'
 
 export const Challenge = () => {
 
@@ -35,9 +36,11 @@ export const Challenge = () => {
   const setProgress = useProgress(state => state.setProgress)
   const addToReport = useReport(state => state.addToReport)
 
-  const currentChallenge = useRef<Question & Feedback>(null)
+  const { currentChallenge } = useChallenges({})
 
-  useChallenges({ currentChallenge })
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const idParam = searchParams.get('id')
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
@@ -46,7 +49,7 @@ export const Challenge = () => {
       previousQuestions,
       sessionToken ?? undefined
     ),
-    enabled: !!topic && !!level && !currentChallenge.current,
+    enabled: !!topic && !!level && !idParam,
     staleTime: Infinity,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
@@ -92,11 +95,16 @@ export const Challenge = () => {
   }
 
   const loadNextQuestion = async () => {
-    setLocalData(null)
-    setFeedback(null)
     setRequestId((current) => current + 1)
     setCanContinue(false)
+    reset()
+  }
+
+  const reset = () => {
+    setSearchParams({})
     currentChallenge.current = null
+    setLocalData(null)
+    setFeedback(null)
   }
 
   const shouldShowForm = feedback === null && !loadingEvaluation
@@ -122,7 +130,9 @@ export const Challenge = () => {
   }, [])
 
   useEffect(() => {
-    if (currentChallenge.current) {
+    let active = true
+
+    if (currentChallenge.current && active) {
       const { topic, level, completed } = currentChallenge.current
       setLocalData(currentChallenge.current)
       if (completed) setFeedback(currentChallenge.current)
@@ -131,6 +141,12 @@ export const Challenge = () => {
         level: level ?? RANDOM,
         randomMode: !topic && !level
       })
+    } else if(!currentChallenge.current && active) {
+      setLocalData(null)
+      setFeedback(null)
+    }
+    return () => { 
+      active = false
     }
   }, [currentChallenge.current])
 
@@ -143,12 +159,13 @@ export const Challenge = () => {
         showRestart={showRestart}
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
+        onNavigate={reset}
       />
       <div className="flex align-self-center gap-4 h-full min-w-0">
         <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
-          <Card 
-            className="flex flex-col flex-1 p-4 overflow-auto" 
-            styles={{ body: {display: 'flex', flexDirection: 'column', flexGrow: 1}}}
+          <Card
+            className="flex flex-col flex-1 p-4 overflow-auto"
+            styles={{ body: { display: 'flex', flexDirection: 'column', flexGrow: 1 } }}
           >
             {!requestErrorMessage && (!localData || isFetching) && (
               <GenerationState isFetching={isFetching} isReady={!!topic || !!level} />
@@ -179,9 +196,9 @@ export const Challenge = () => {
           </Card>
         </div>
         <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
-          <Card 
+          <Card
             className="flex flex-col flex-1 p-4 overflow-auto"
-            styles={{ body: {display: 'flex', flexDirection: 'column', flexGrow: 1}}}
+            styles={{ body: { display: 'flex', flexDirection: 'column', flexGrow: 1 } }}
           >
             <div className="flex flex-col flex-1">
               {loadingEvaluation && (

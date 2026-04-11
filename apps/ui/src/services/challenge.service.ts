@@ -1,6 +1,6 @@
 import type { EvaluationResponse, Feedback, Question } from "@repo/shared-types"
-import * as sample from '../sample.json'
-import * as responseSample from '../sample-response.json'
+// import * as sample from '../sample.json'
+// import * as responseSample from '../sample-response.json'
 import { useConfiguration } from "@/store/configuration.store"
 
 const MASTRA_API_URL = import.meta.env.VITE_MASTRA_API_URL
@@ -9,7 +9,7 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 
 export type ChallengeResponse = Question & { sessionToken?: string, notice?: string }
 
-let hasThrown = false
+// let hasThrown = false
 
 const parseResponse = async <T>(response: Response, fallbackMessage: string): Promise<T> => {
   const body = await response.json().catch(() => null) as { error?: string } | null
@@ -25,14 +25,14 @@ const parseResponse = async <T>(response: Response, fallbackMessage: string): Pr
 
 export const ChallengeService = {
   async getChallenge(options: { topic: string, level: string }, previousQuestions: string[] = [], sessionToken?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      if (!hasThrown) {
-        hasThrown = !hasThrown
-        return Promise.reject(new Error('Simulated error in development mode'))
-      } else {
-        return Promise.resolve(sample as ChallengeResponse)
-      }
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   if (!hasThrown) {
+    //     hasThrown = !hasThrown
+    //     return Promise.reject(new Error('Simulated error in development mode'))
+    //   } else {
+    //     return Promise.resolve(sample as ChallengeResponse)
+    //   }
+    // }
 
     const { storageMode } = useConfiguration.getState().configuration
 
@@ -64,9 +64,9 @@ export const ChallengeService = {
   },
 
   async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {
-    if (process.env.NODE_ENV === 'development') {
-      return Promise.resolve(responseSample as EvaluationResponse)
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   return Promise.resolve(responseSample as EvaluationResponse)
+    // }
     const response = await fetch(getApiUrl('interview/evaluate'), {
       method: 'POST',
       headers: {
