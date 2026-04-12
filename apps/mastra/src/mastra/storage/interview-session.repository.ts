@@ -15,6 +15,8 @@ type QuestionInsert = {
   question: string
   initial_code?: string | null
   type: Question['type']
+  topic: string
+  level: string
 }
 
 type QuestionRow = Question & {
@@ -143,6 +145,8 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
     question: question.question,
     initial_code: question.initialCode ?? null,
     type: question.type,
+    topic: question.topic,
+    level: question.level
   }
 
   const { data, error } = await supabase

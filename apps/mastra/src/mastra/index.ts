@@ -112,10 +112,13 @@ export const mastra = new Mastra({
       registerApiRoute('/interview/evaluate', {
         method: 'POST',
         handler: async (c) => {
+          const logger = mastra.getLogger()
           try {
             const rawBody = await c.req.text()
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
+            
+            logger.info(`Evaluation payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })

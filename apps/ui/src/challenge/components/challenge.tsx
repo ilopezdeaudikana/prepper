@@ -63,14 +63,27 @@ export const Challenge = () => {
     setIsDisabled(!reply)
   }
 
+  const extractQuestionFromLocalData = () => {
+    if (localData) {
+      const { question, initialCode, type, level, topic } = localData
+      return {
+        question,
+        initialCode,
+        type,
+        level: level ?? RANDOM,
+        topic: topic ?? RANDOM
+      }
+    }
+  }
   const handleSubmit = async (reply: string) => {
     if (!reply) return
 
     setLoadingEvaluation(true)
     setIsDisabled(true)
+
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
-        data as Question,
+        data as Question || extractQuestionFromLocalData(),
         reply,
         level,
         sessionToken ?? undefined
@@ -139,11 +152,11 @@ export const Challenge = () => {
         level: level ?? RANDOM,
         randomMode: !topic && !level
       })
-    } else if(!currentChallenge.current && active) {
+    } else if (!currentChallenge.current && active) {
       setLocalData(null)
       setFeedback(null)
     }
-    return () => { 
+    return () => {
       active = false
     }
   }, [currentChallenge.current])
