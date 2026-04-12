@@ -262,6 +262,7 @@ const generateFreshChallenge = async (params: {
       const questionId = await upsertQuestion(sessionId, lastGenerated)
       return {
         ...lastGenerated,
+        topic, level,
         id: lastGenerated.id ?? questionId,
         sessionToken,
       }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query'
 import {
   MarkdownText
@@ -35,6 +36,8 @@ export const Challenge = () => {
   const setProgress = useProgress(state => state.setProgress)
   const addToReport = useReport(state => state.addToReport)
 
+  const queryClient = useQueryClient()
+  
   const { currentChallenge } = useChallenges({})
 
   const [searchParams, setSearchParams] = useSearchParams()
@@ -97,6 +100,8 @@ export const Challenge = () => {
         const { question, initialCode, type } = localData
         addToReport({ challenge: { question, initialCode, type }, reply, evaluation: result })
       }
+      queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
+
     } catch (error: any) {
       setFeedback({ error: error?.error ?? error?.message ?? 'Evaluation failed.' } as Feedback)
     } finally {

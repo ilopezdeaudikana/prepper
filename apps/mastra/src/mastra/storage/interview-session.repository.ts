@@ -145,8 +145,8 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
     question: question.question,
     initial_code: question.initialCode ?? null,
     type: question.type,
-    topic: question.topic,
-    level: question.level
+    topic: question.topic ?? '',
+    level: question.level ?? ''
   }
 
   const { data, error } = await supabase
