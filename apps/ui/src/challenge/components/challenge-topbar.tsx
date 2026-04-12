@@ -9,13 +9,12 @@ interface ChallengeTopbarProps {
   canContinue: boolean
   isFetching: boolean
   disabled: boolean
-  showRestart: boolean
   showFinish: boolean
   onLoadNextQuestion: () => void
   onNavigate: () => void
 }
 
-export const ChallengeTopbar = ({ canContinue, isFetching, disabled, showRestart, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
+export const ChallengeTopbar = ({ canContinue, isFetching, disabled, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
 
   const [isConfigurationOpen, openConfiguration] = useState(false)
   const { topic, level } = useConfiguration(state => state.configuration)

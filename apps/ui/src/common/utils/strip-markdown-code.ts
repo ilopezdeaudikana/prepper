@@ -1,0 +1,1 @@
+export const stripMarkdownCode = (code: string) => code.replace(/```\w*\n?([\s\S]*?)```/g, '$1')

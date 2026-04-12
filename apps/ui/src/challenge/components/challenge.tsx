@@ -29,7 +29,6 @@ export const Challenge = () => {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
-  const [showRestart, setShowRestart] = useState<boolean>(false)
   const { level, topic } = useConfiguration(state => state.configuration)
   const setConfiguration = useConfiguration(state => state.setConfiguration)
   const { score, stage } = useProgress(state => state.progress)
@@ -87,7 +86,6 @@ export const Challenge = () => {
       }
     } catch (error: any) {
       setFeedback({ error: error?.error ?? error?.message ?? 'Evaluation failed.' } as Feedback)
-      setShowRestart(true)
     } finally {
       setLoadingEvaluation(false)
       setCanContinue(true)
@@ -156,7 +154,6 @@ export const Challenge = () => {
         isFetching={isFetching}
         canContinue={canContinue}
         disabled={isDisabled}
-        showRestart={showRestart}
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}

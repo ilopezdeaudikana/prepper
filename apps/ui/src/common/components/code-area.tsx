@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type JSX } from 'react'
 import Editor, { DiffEditor } from '@monaco-editor/react'
 import { shikiToMonaco } from '@shikijs/monaco'
 import { getHighlighter, themes } from '../utils/shiki-engine'
+import { stripMarkdownCode } from '@/common/utils/strip-markdown-code'
 
 export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
   value?: string,
@@ -36,15 +37,17 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
     setCanLoad(true)
   }
 
+  const cleanCode = stripMarkdownCode(value ?? '')
+
   const editorOptions = {
     defaultLanguage: 'typescript',
     height: height ?? '100%',
     theme: themes[0],
-    value: isDiff ? undefined : value,
+    value: isDiff ? undefined : cleanCode,
     onChange: onChange,
     beforeMount: handleEditorWillMount,
     path: `${id}.tsx`,
-    original: isDiff ? value : undefined,
+    original: isDiff ? cleanCode : undefined,
     modified,
     options: {
       minimap: { enabled: false },
