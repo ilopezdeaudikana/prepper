@@ -223,24 +223,27 @@ export const listAllQuestions = async (start: string, completed: string, logger:
 
   const query = supabase
     .from(Tables.Questions)
-    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback}!inner(critique, score, missed_points, improved_code)`, {
+    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
       count: "exact"
     })
     .eq('completed', completed === 'true')
     .order('created_at', { ascending: false })
-    .range(offset, pageSize + offset)
+    .order('id', { ascending: false })
+    .range(0, 10)
 
 
   const { data, error, count } = await query
 
   logger.info(`Count ${count?.toString() ?? ''}`)
+  
 
   if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
   return { 
     data: (data ?? []).map((row: any) => {
-    const feedback = row.interview_feedback?.[0]
+    const feedback = row.interview_feedback?.[0] ?? {}
     const { question, initial_code: initialCode, type, completed, id, level, topic } = row
+    logger.info(`Topic ${id} - ${topic}`)
     return {
       question,
       initialCode,
