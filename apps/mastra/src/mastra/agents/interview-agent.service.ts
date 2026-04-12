@@ -30,6 +30,7 @@ const formatReusableQuestion = async (
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
     sessionToken,
+    topic: reusableQuestion.topic , level: reusableQuestion.level,
     notice,
   }
 }
@@ -234,7 +235,7 @@ const generateFreshChallenge = async (params: {
     })
 
 
-  const generatedQuestion = generationResponse.object
+  const generatedQuestion = { ...generationResponse.object, topic, level }
   if (!generatedQuestion) {
     const rawText = generationResponse.text ?? ''
     logger?.error('INTERVIEW_AGENT: missing structured output for challenge', {
@@ -262,7 +263,6 @@ const generateFreshChallenge = async (params: {
       const questionId = await upsertQuestion(sessionId, lastGenerated)
       return {
         ...lastGenerated,
-        topic, level,
         id: lastGenerated.id ?? questionId,
         sessionToken,
       }

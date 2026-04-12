@@ -44,9 +44,11 @@ export const findReusableQuestion = async (params: {
     limit: 30,
   })
 
-  return reusableQuestions.find(
+  const question = reusableQuestions.find(
     (question) =>
       !previousQuestions.includes(question.question) &&
       !isTooSimilar(question.question, previousQuestions)
   )
+
+  return question ? { ...question, topic, level } : undefined
 }
