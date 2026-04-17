@@ -445,10 +445,11 @@ export const submitAnswer = async (
     }
   } catch (error) {
     logger.error(`Error upserting question, feedback or score`)
+    throw new Error('Error upserting')
   }
 
   return {
     ...parsedFeedback?.data,
-    sessionToken: session.sessionToken,
+    sessionToken: session?.sessionToken,
   }
 }

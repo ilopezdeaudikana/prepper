@@ -8,6 +8,8 @@ import { createStep, createWorkflow } from '@mastra/core/workflows'
 import { getChallenge, submitAnswer } from '../agents/interview-agent.service'
 import { Logger } from '../logger.service'
 
+import { z } from 'zod'
+
 const generateChallengeStep = createStep({
   id: 'generate-challenge-step',
   inputSchema: ChallengeRequestSchema,
@@ -53,8 +55,8 @@ export const generateChallengeWorkflow = createWorkflow({
 
 export const evaluateAnswerWorkflow = createWorkflow({
   id: 'evaluate-answer-workflow',
-  inputSchema: EvaluationRequestSchema,
-  outputSchema: EvaluationResponseSchema,
+  inputSchema: z.any(), // EvaluationRequestSchema,
+  outputSchema: z.any() // EvaluationResponseSchema,
 })
   .then(evaluateAnswerStep)
   .commit()
