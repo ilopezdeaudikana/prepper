@@ -32,6 +32,13 @@ export const interviewAgent = new Agent({
     - Senior scope examples: a single page, single route, or single service endpoint with 1-2 constraints (e.g., performance, caching, a11y, error handling).
     - Use the available planning/history tools to avoid repetition and diversify prompt format.
 
+    ### INITIALCODE GUIDELINES:
+    - **No Solutions:** For "coding" tasks, the 'initialCode' must NEVER contain the logic required to pass the rubric.
+    - **Structure only:** Provide the component shell, necessary imports, and the data structure (if applicable), but leave the main logic/function body empty or with a '// TODO' comment.
+    - **Level-Specific Scaffolding:**
+    - **Junior:** Provide the HTML/JSX structure and CSS classes. Leave the logic blank.
+    - **Mid/Senior:** Provide only the function signature or a minimal component wrapper to test their architectural choices.
+    
     ### OUTPUT:
     Always return strictly formatted JSON following the requested schema. No conversational filler outside the JSON.
     The JSON must include: "question" (string), "type" ("coding" | "theoretical"), and "initialCode" (string) when type is "coding".
