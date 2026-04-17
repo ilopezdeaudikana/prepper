@@ -374,11 +374,14 @@ export const submitAnswer = async (
       hasText: Boolean(generationResponse.text),
       textPreview: rawText.slice(0, 2000),
     })
-    throw new Error('Evaluation generation returned no structured output')
+    return 
+    // throw new Error('Evaluation generation returned no structured output')
   }
   const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
   if (!parsedFeedback.success) {
-    throw new Error('Failed to generate feedback')
+     logger.error('feedback parse error')
+     return 
+    // throw new Error('Failed to generate feedback')
   }
   const generatedFeedback = parsedFeedback.data
 
@@ -392,7 +395,9 @@ export const submitAnswer = async (
 
   const session = await getSession(sessionId)
   if (!session) {
-    throw new Error(`Interview session not found: ${sessionId}`)
+    logger.error('Interview session not found')
+    return
+    // throw new Error(`Interview session not found: ${sessionId}`)
   }
 
   const questionId = await upsertQuestion(sessionId, question)
