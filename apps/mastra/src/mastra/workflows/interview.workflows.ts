@@ -36,11 +36,11 @@ const evaluateAnswerStep = createStep({
     const logger = Logger(mastra.getLogger())
     logger.info('submitAnswer starts')
     return submitAnswer(
-      inputData.question,
-      inputData.answer,
-      inputData.level,
+      inputData?.question,
+      inputData?.answer,
+      inputData?.level,
       logger,
-      inputData.sessionToken
+      inputData?.sessionToken
     )
   },
 })
