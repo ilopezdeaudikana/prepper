@@ -340,6 +340,7 @@ export const submitAnswer = async (
   sessionToken?: string
 ) => {
 
+  console.log('YOOO')
   logger.info('submitted', {
     question: !!question, userAnswer: !!userAnswer,
     level: !!level,
@@ -391,20 +392,20 @@ export const submitAnswer = async (
         },
       }
     )
-    if (!generationResponse.object) {
-      const rawText = generationResponse.text ?? ''
-      logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
-        level,
-        hasText: Boolean(generationResponse.text),
-        textPreview: rawText.slice(0, 2000),
-      })
-      throw new Error('Evaluation generation returned no structured output')
-    }
-    parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
-    if (!parsedFeedback.success) {
-      logger.error('feedback parse error')
-      throw new Error('Failed to generate feedback')
-    }
+    // if (!generationResponse.object) {
+    //   const rawText = generationResponse.text ?? ''
+    //   logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+    //     level,
+    //     hasText: Boolean(generationResponse.text),
+    //     textPreview: rawText.slice(0, 2000),
+    //   })
+    //   throw new Error('Evaluation generation returned no structured output')
+    // }
+    // parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+    // if (!parsedFeedback.success) {
+    //   logger.error('feedback parse error')
+    //   throw new Error('Failed to generate feedback')
+    // }
   } catch (error) {
     logger.error('Error in feedback generation step')
     throw new Error('Error in feedback generation step')
