@@ -123,6 +123,7 @@ export const mastra = new Mastra({
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
 
+            logger.info(`Evaluation result ${JSON.stringify(result)}`)
             if (result.status !== 'success') {
               return c.json(
                 {
@@ -134,6 +135,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
+             logger.error(`Evaluation error ${JSON.stringify(error)}`)
             return handleRequestError(c, error, 'Evaluation failed.')
           }
         },
