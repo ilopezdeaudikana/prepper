@@ -1,4 +1,4 @@
-import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE } from '@repo/shared-types'
+import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE, Feedback } from '@repo/shared-types'
 import {
   createFeedback,
   createSession,
@@ -16,8 +16,16 @@ import {
 import { ILogger } from '../logger.service'
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
-import { ZodSafeParseResult } from 'zod'
 
+type ChallengeOptions = { skipReuse?: boolean, forceReuse?: boolean }
+
+type ChallengeSessionContext = {
+  session: Awaited<ReturnType<typeof createSession>>
+  persistedQuestions: string[]
+  allPreviousQuestions: string[]
+}
+
+// GET CHALLENGE HELPERS
 const formatReusableQuestion = async (
   sessionId: string,
   sessionToken: string,
@@ -34,14 +42,6 @@ const formatReusableQuestion = async (
     topic: reusableQuestion.topic, level: reusableQuestion.level,
     notice,
   }
-}
-
-type ChallengeOptions = { skipReuse?: boolean, forceReuse?: boolean }
-
-type ChallengeSessionContext = {
-  session: Awaited<ReturnType<typeof createSession>>
-  persistedQuestions: string[]
-  allPreviousQuestions: string[]
 }
 
 const resolveChallengeSession = async (
@@ -280,6 +280,9 @@ const generateFreshChallenge = async (params: {
   throw new Error('Challenge generation did not produce a usable question')
 }
 
+// END GET CHALLENGE HELPERS
+
+
 export const getChallenge = async (
   topic: string,
   level: string,
@@ -332,29 +335,9 @@ export const getChallenge = async (
   })
 }
 
-export const submitAnswer = async (
-  question: Question,
-  userAnswer: string,
-  level: string,
-  sessionToken?: string
-) => {
 
-  let parsedFeedback: ZodSafeParseResult<{
-    score?: number | undefined
-    critique?: string | undefined
-    missedPoints?: string[] | undefined
-    improvedCode?: string | undefined
-  }> | null = null
-
-  let sessionId: string | undefined = undefined
-
-  let session: {
-    sessionToken: string
-    id: string
-    topic: string
-    level: string
-    created_at: string
-  } | null = null
+// SUBMIT CHALLENGE HELPERS
+const generateReply = async (level: string, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
   try {
     const generationResponse = await interviewAgent.generate(
       `Level: ${level}
@@ -393,61 +376,74 @@ export const submitAnswer = async (
       })
       throw new Error('Evaluation generation returned no structured output')
     }
-    parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+    const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
     if (!parsedFeedback.success) {
       console.error('feedback parse error')
       throw new Error('Failed to generate feedback')
     }
+    return parsedFeedback.data
   } catch (error) {
     console.error('Error in feedback generation step', JSON.stringify(error))
-    throw new Error('Error in feedback generation step')
+    throw error
   }
+}
 
+const findSession = async (sessionToken: string) => {
   try {
-    sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
+    const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
     if (!sessionId) {
-      return {
-        ...parsedFeedback?.data,
-        sessionToken,
-      }
+      return
     }
-
-    session = await getSession(sessionId)
-    if (!session) {
-      console.error('Interview session not found')
-      throw new Error(`Interview session not found: ${sessionId}`)
-    }
+    return await getSession(sessionId)
   } catch (error) {
-    logger.error('Error dealing with sessions')
-    throw new Error('Error dealing with sessions')
+    console.error('Error dealing with sessions')
+    throw error
   }
+}
 
+const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback) => {
   try {
     const questionId = await upsertQuestion(sessionId, question)
     await createFeedback({
-      sessionId: sessionId,
-      questionId,
-      answer: userAnswer,
-      level,
-      feedback: parsedFeedback?.data,
+      sessionId, questionId, answer, level, feedback
     })
 
-    logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
+    console.info(`Score ${feedback.score} for questionId ${questionId}`)
 
-    if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
-      try {
-        await completeQuestion(questionId, parsedFeedback?.data)
-      } catch (error) {
-        logger.error(`Error completing challenge ${JSON.stringify(error)}`)
-      }
+    if (feedback.score && feedback.score > MINIMUM_SCORE) {
+      await completeQuestion(questionId, feedback)
     }
   } catch (error) {
-    logger.error(`Error upserting question, feedback or score`)
-    throw new Error('Error upserting')
+    console.error(`Error upserting question, feedback or score`)
+    throw error
+  }
+}
+// END SUBMIT CHALLENGE HELPERS
+
+
+export const submitAnswer = async (
+  challenge: Question,
+  userAnswer: string,
+  level: string,
+  sessionToken?: string
+) => {
+  try {
+    const { question, topic, initialCode, type } = challenge
+
+    const feedback = await generateReply(level, { question, topic, initialCode, type }, userAnswer)
+
+    const session = await findSession(sessionToken ?? '')
+
+    if (session?.id) {
+      await storeFeedback(session?.id, challenge, userAnswer, level, feedback)
+    }
+
+    return {
+      ...feedback,
+      sessionToken: session?.sessionToken,
+    }
+  } catch (error) {
+    console.log(JSON.stringify(error))
   }
 
-  return {
-    ...parsedFeedback?.data,
-    sessionToken: session?.sessionToken,
-  }
 }
