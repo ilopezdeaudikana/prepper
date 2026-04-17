@@ -118,7 +118,7 @@ export const mastra = new Mastra({
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
             
-            logger.info(`Evaluation payload ${JSON.stringify(payload)}`)
+            // logger.info(`Evaluation payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
@@ -151,7 +151,7 @@ export const mastra = new Mastra({
             const { start, completed } = parseAndValidateBody(query, AllChallengesRequestSchema)
 
             const result = await listAllQuestions(start, completed, logger)
-            logger.info('All challenges', result.data[0])
+            // logger.info('All challenges', result.data[0])
             return c.json(result)
           } catch (error) {
             logger.error('Unexpected challenge retrieval error', error)

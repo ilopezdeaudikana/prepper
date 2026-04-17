@@ -256,7 +256,7 @@ const generateFreshChallenge = async (params: {
   }
 
 
-  logger?.info('', JSON.stringify(lastGenerated))
+  // logger?.info('', JSON.stringify(lastGenerated))
 
   if (lastGenerated) {
     if (!isTooSimilar(lastGenerated.question, allPreviousQuestions)) {
@@ -267,13 +267,6 @@ const generateFreshChallenge = async (params: {
         sessionToken,
       }
     }
-
-    logger?.info('INTERVIEW_AGENT: skipped generated challenge because it was too similar', {
-      topic,
-      level,
-      sessionId,
-      generatedQuestion: lastGenerated.question,
-    })
 
     return getRandomStoredChallenge({
       sessionId,
