@@ -211,15 +211,14 @@ export const createFeedback = async (params: {
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }
 
-export const listAllQuestions = async (start: string, completed: string, logger: IMastraLogger)
+export const listAllQuestions = async (start: string, completed: string, _?: IMastraLogger)
   : Promise<{ data: Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[], count: number }> => {
+
   const supabase = getSupabaseClient()
 
   const pageSize = 10
   
   const offset =  Number(start) * pageSize
-
-  logger.info(`Start ${start?.toString() ?? ''}`)
 
   const query = supabase
     .from(Tables.Questions)
@@ -229,12 +228,10 @@ export const listAllQuestions = async (start: string, completed: string, logger:
     .eq('completed', completed === 'true')
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
-    .range(0, 10)
+    .range(offset, offset + pageSize)
 
 
   const { data, error, count } = await query
-
-  logger.info(`Count ${count?.toString() ?? ''}`)
   
 
   if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
@@ -243,7 +240,7 @@ export const listAllQuestions = async (start: string, completed: string, logger:
     data: (data ?? []).map((row: any) => {
     const feedback = row.interview_feedback?.[0] ?? {}
     const { question, initial_code: initialCode, type, completed, id, level, topic } = row
-    logger.info(`Topic ${id} - ${topic}`)
+  
     return {
       question,
       initialCode,
