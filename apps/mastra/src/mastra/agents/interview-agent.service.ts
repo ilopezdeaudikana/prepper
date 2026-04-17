@@ -340,116 +340,124 @@ export const submitAnswer = async (
   sessionToken?: string
 ) => {
 
-  let parsedFeedback: ZodSafeParseResult<{
-    score?: number | undefined
-    critique?: string | undefined
-    missedPoints?: string[] | undefined
-    improvedCode?: string | undefined
-  }> | null = null
+  logger.info('submitted', {
+    question: !!question, userAnswer: !!userAnswer,
+    level: !!level,
+    sessionToken: !!sessionToken
+  })
 
-  let sessionId: string | undefined = undefined
+  return {}
 
-  let session: {
-    sessionToken: string
-    id: string
-    topic: string
-    level: string
-    created_at: string
-  } | null = null
-  try {
-    const generationResponse = await interviewAgent.generate(
-      `Level: ${level}
-     Question: ${JSON.stringify(question)}
-     User Answer: ${userAnswer}
+  // let parsedFeedback: ZodSafeParseResult<{
+  //   score?: number | undefined
+  //   critique?: string | undefined
+  //   missedPoints?: string[] | undefined
+  //   improvedCode?: string | undefined
+  // }> | null = null
 
-     Evaluate based on the rubric.
-     Use rubric-guidance-tool to build deterministic must-check criteria before scoring.
-     Write critique in direct, helpful prose that explains the main reason the answer passed or failed.
-     Do not give vague feedback like "missing a11y" or "did not handle edge cases" unless you immediately explain what accessible implementation or edge-case handling was expected here.
-     For critique:
-     - keep it shorter than missedPoints,
-     - summarize the answer quality and the main reasons for the score,
-     - treat it as "you passed/failed mainly because of this".
-     For missedPoints:
-     - do not return terse bullet fragments,
-     - each item must explain what was expected,
-     - explain why that expectation matters for this specific question,
-     - explain what the candidate should have mentioned, implemented, or justified,
-     - treat this as the "this is what you should have done" section.
-     Prefer concrete examples of expected behavior, code, or reasoning over labels.
-     Keep the tone constructive and specific.`,
-      {
-        structuredOutput: {
-          schema: FeedbackSchema,
-          jsonPromptInjection: true,
-        },
-      }
-    )
-    if (!generationResponse.object) {
-      const rawText = generationResponse.text ?? ''
-      logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
-        level,
-        hasText: Boolean(generationResponse.text),
-        textPreview: rawText.slice(0, 2000),
-      })
-      throw new Error('Evaluation generation returned no structured output')
-    }
-    parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
-    if (!parsedFeedback.success) {
-      logger.error('feedback parse error')
-      throw new Error('Failed to generate feedback')
-    }
-  } catch (error) {
-    logger.error('Error in feedback generation step')
-    throw new Error('Error in feedback generation step')
-  }
+  // let sessionId: string | undefined = undefined
+
+  // let session: {
+  //   sessionToken: string
+  //   id: string
+  //   topic: string
+  //   level: string
+  //   created_at: string
+  // } | null = null
+  // try {
+  //   const generationResponse = await interviewAgent.generate(
+  //     `Level: ${level}
+  //    Question: ${JSON.stringify(question)}
+  //    User Answer: ${userAnswer}
+
+  //    Evaluate based on the rubric.
+  //    Use rubric-guidance-tool to build deterministic must-check criteria before scoring.
+  //    Write critique in direct, helpful prose that explains the main reason the answer passed or failed.
+  //    Do not give vague feedback like "missing a11y" or "did not handle edge cases" unless you immediately explain what accessible implementation or edge-case handling was expected here.
+  //    For critique:
+  //    - keep it shorter than missedPoints,
+  //    - summarize the answer quality and the main reasons for the score,
+  //    - treat it as "you passed/failed mainly because of this".
+  //    For missedPoints:
+  //    - do not return terse bullet fragments,
+  //    - each item must explain what was expected,
+  //    - explain why that expectation matters for this specific question,
+  //    - explain what the candidate should have mentioned, implemented, or justified,
+  //    - treat this as the "this is what you should have done" section.
+  //    Prefer concrete examples of expected behavior, code, or reasoning over labels.
+  //    Keep the tone constructive and specific.`,
+  //     {
+  //       structuredOutput: {
+  //         schema: FeedbackSchema,
+  //         jsonPromptInjection: true,
+  //       },
+  //     }
+  //   )
+  //   if (!generationResponse.object) {
+  //     const rawText = generationResponse.text ?? ''
+  //     logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+  //       level,
+  //       hasText: Boolean(generationResponse.text),
+  //       textPreview: rawText.slice(0, 2000),
+  //     })
+  //     throw new Error('Evaluation generation returned no structured output')
+  //   }
+  //   parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+  //   if (!parsedFeedback.success) {
+  //     logger.error('feedback parse error')
+  //     throw new Error('Failed to generate feedback')
+  //   }
+  // } catch (error) {
+  //   logger.error('Error in feedback generation step')
+  //   throw new Error('Error in feedback generation step')
+  // }
 
 
-  try {
-    sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
-    if (!sessionId) {
-      return {
-        ...parsedFeedback?.data,
-        sessionToken,
-      }
-    }
+  // try {
+  //   sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
+  //   if (!sessionId) {
+  //     return {
+  //       ...parsedFeedback?.data,
+  //       sessionToken,
+  //     }
+  //   }
 
-    session = await getSession(sessionId)
-    if (!session) {
-      logger.error('Interview session not found')
-      throw new Error(`Interview session not found: ${sessionId}`)
-    }
-  } catch (error) {
-    logger.error('Error dealing with sessions')
-    throw new Error('Error dealing with sessions')
-  }
+  //   session = await getSession(sessionId)
+  //   if (!session) {
+  //     logger.error('Interview session not found')
+  //     throw new Error(`Interview session not found: ${sessionId}`)
+  //   }
+  // } catch (error) {
+  //   logger.error('Error dealing with sessions')
+  //   throw new Error('Error dealing with sessions')
+  // }
 
-  try {
-    const questionId = await upsertQuestion(sessionId, question)
-    await createFeedback({
-      sessionId: sessionId,
-      questionId,
-      answer: userAnswer,
-      level,
-      feedback: parsedFeedback?.data,
-    })
+  // try {
+  //   const questionId = await upsertQuestion(sessionId, question)
+  //   await createFeedback({
+  //     sessionId: sessionId,
+  //     questionId,
+  //     answer: userAnswer,
+  //     level,
+  //     feedback: parsedFeedback?.data,
+  //   })
 
-    logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
+  //   logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
 
-    if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
-      try {
-        await completeQuestion(questionId, parsedFeedback?.data)
-      } catch (error) {
-        logger.error(`Error completing challenge ${JSON.stringify(error)}`)
-      }
-    }
-  } catch (error) {
-    logger.error(`Error upserting question, feedback or score`)
-    throw new Error('Error upserting')
-  }
+  //   if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
+  //     try {
+  //       await completeQuestion(questionId, parsedFeedback?.data)
+  //     } catch (error) {
+  //       logger.error(`Error completing challenge ${JSON.stringify(error)}`)
+  //     }
+  //   }
+  // } catch (error) {
+  //   logger.error(`Error upserting question, feedback or score`)
+  //   throw new Error('Error upserting')
+  // }
 
-  return {
-    ...parsedFeedback?.data,
-    sessionToken: session?.sessionToken,
-  }
+  // return {
+  //   ...parsedFeedback?.data,
+  //   sessionToken: session?.sessionToken,
+  // }
 }
