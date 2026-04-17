@@ -39,7 +39,6 @@ const evaluateAnswerStep = createStep({
       inputData?.question,
       inputData?.answer,
       inputData?.level,
-      logger,
       inputData?.sessionToken
     )
   },

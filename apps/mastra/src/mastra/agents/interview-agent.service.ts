@@ -336,16 +336,8 @@ export const submitAnswer = async (
   question: Question,
   userAnswer: string,
   level: string,
-  logger: ILogger,
   sessionToken?: string
 ) => {
-
-  console.log('YOOO')
-  logger.info('submitted', {
-    question: !!question, userAnswer: !!userAnswer,
-    level: !!level,
-    sessionToken: !!sessionToken
-  })
 
   let parsedFeedback: ZodSafeParseResult<{
     score?: number | undefined
@@ -407,8 +399,9 @@ export const submitAnswer = async (
     //   throw new Error('Failed to generate feedback')
     // }
   } catch (error) {
-    logger.error('Error in feedback generation step')
-    throw new Error('Error in feedback generation step')
+    console.error('Error in feedback generation step', JSON.stringify(error))
+    // throw new Error('Error in feedback generation step')
+    return {}
   }
 
     return {}
