@@ -16,6 +16,7 @@ import {
 import { ILogger } from '../logger.service'
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
+import { ZodSafeParseResult } from 'zod'
 
 const formatReusableQuestion = async (
   sessionId: string,
@@ -30,7 +31,7 @@ const formatReusableQuestion = async (
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
     sessionToken,
-    topic: reusableQuestion.topic , level: reusableQuestion.level,
+    topic: reusableQuestion.topic, level: reusableQuestion.level,
     notice,
   }
 }
@@ -339,8 +340,25 @@ export const submitAnswer = async (
   sessionToken?: string
 ) => {
 
-  const generationResponse = await interviewAgent.generate(
-    `Level: ${level}
+  let parsedFeedback: ZodSafeParseResult<{
+    score?: number | undefined
+    critique?: string | undefined
+    missedPoints?: string[] | undefined
+    improvedCode?: string | undefined
+  }> | null = null
+
+  let sessionId: string | undefined = undefined
+
+  let session: {
+    sessionToken: string
+    id: string
+    topic: string
+    level: string
+    created_at: string
+  } | null = null
+  try {
+    const generationResponse = await interviewAgent.generate(
+      `Level: ${level}
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer}
 
@@ -360,66 +378,77 @@ export const submitAnswer = async (
      - treat this as the "this is what you should have done" section.
      Prefer concrete examples of expected behavior, code, or reasoning over labels.
      Keep the tone constructive and specific.`,
-    {
-      structuredOutput: {
-        schema: FeedbackSchema,
-        jsonPromptInjection: true,
-      },
+      {
+        structuredOutput: {
+          schema: FeedbackSchema,
+          jsonPromptInjection: true,
+        },
+      }
+    )
+    if (!generationResponse.object) {
+      const rawText = generationResponse.text ?? ''
+      logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+        level,
+        hasText: Boolean(generationResponse.text),
+        textPreview: rawText.slice(0, 2000),
+      })
+      throw new Error('Evaluation generation returned no structured output')
     }
-  )
-  if (!generationResponse.object) {
-    const rawText = generationResponse.text ?? ''
-    logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+    parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+    if (!parsedFeedback.success) {
+      logger.error('feedback parse error')
+      throw new Error('Failed to generate feedback')
+    }
+  } catch (error) {
+    logger.error('Error in feedback generation step')
+    throw new Error('Error in feedback generation step')
+  }
+
+
+  try {
+    sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
+    if (!sessionId) {
+      return {
+        ...parsedFeedback?.data,
+        sessionToken,
+      }
+    }
+
+    session = await getSession(sessionId)
+    if (!session) {
+      logger.error('Interview session not found')
+      throw new Error(`Interview session not found: ${sessionId}`)
+    }
+  } catch (error) {
+    logger.error('Error dealing with sessions')
+    throw new Error('Error dealing with sessions')
+  }
+
+  try {
+    const questionId = await upsertQuestion(sessionId, question)
+    await createFeedback({
+      sessionId: sessionId,
+      questionId,
+      answer: userAnswer,
       level,
-      hasText: Boolean(generationResponse.text),
-      textPreview: rawText.slice(0, 2000),
+      feedback: parsedFeedback?.data,
     })
-    return 
-    // throw new Error('Evaluation generation returned no structured output')
-  }
-  const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
-  if (!parsedFeedback.success) {
-     logger.error('feedback parse error')
-     return 
-    // throw new Error('Failed to generate feedback')
-  }
-  const generatedFeedback = parsedFeedback.data
 
-  const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
-  if (!sessionId) {
-    return {
-      ...generatedFeedback,
-      sessionToken,
+    logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
+
+    if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
+      try {
+        await completeQuestion(questionId, parsedFeedback?.data)
+      } catch (error) {
+        logger.error(`Error completing challenge ${JSON.stringify(error)}`)
+      }
     }
+  } catch (error) {
+    logger.error(`Error upserting question, feedback or score`)
   }
 
-  const session = await getSession(sessionId)
-  if (!session) {
-    logger.error('Interview session not found')
-    return
-    // throw new Error(`Interview session not found: ${sessionId}`)
-  }
-
-  const questionId = await upsertQuestion(sessionId, question)
-  await createFeedback({
-    sessionId: sessionId,
-    questionId,
-    answer: userAnswer,
-    level,
-    feedback: generatedFeedback,
-  })
-
-  logger.info(`Score ${generatedFeedback.score} for questionId ${questionId}`)
-
-  if (generatedFeedback?.score && generatedFeedback?.score > MINIMUM_SCORE) {
-    try {
-      await completeQuestion(questionId, generatedFeedback)
-    } catch (error) {
-      logger.error(`Error completing challenge ${JSON.stringify(error)}`)
-    }
-  }
   return {
-    ...generatedFeedback,
+    ...parsedFeedback?.data,
     sessionToken: session.sessionToken,
   }
 }
