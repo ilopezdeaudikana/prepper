@@ -384,73 +384,70 @@ export const submitAnswer = async (
         },
       }
     )
-    // if (!generationResponse.object) {
-    //   const rawText = generationResponse.text ?? ''
-    //   logger.error('INTERVIEW_AGENT: missing structured output for evaluation', {
-    //     level,
-    //     hasText: Boolean(generationResponse.text),
-    //     textPreview: rawText.slice(0, 2000),
-    //   })
-    //   throw new Error('Evaluation generation returned no structured output')
-    // }
-    // parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
-    // if (!parsedFeedback.success) {
-    //   logger.error('feedback parse error')
-    //   throw new Error('Failed to generate feedback')
-    // }
+    if (!generationResponse.object) {
+      const rawText = generationResponse.text ?? ''
+      console.error('INTERVIEW_AGENT: missing structured output for evaluation', {
+        level,
+        hasText: Boolean(generationResponse.text),
+        textPreview: rawText.slice(0, 2000),
+      })
+      throw new Error('Evaluation generation returned no structured output')
+    }
+    parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
+    if (!parsedFeedback.success) {
+      console.error('feedback parse error')
+      throw new Error('Failed to generate feedback')
+    }
   } catch (error) {
     console.error('Error in feedback generation step', JSON.stringify(error))
-    // throw new Error('Error in feedback generation step')
-    return {}
+    throw new Error('Error in feedback generation step')
   }
 
-    return {}
+  try {
+    sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
+    if (!sessionId) {
+      return {
+        ...parsedFeedback?.data,
+        sessionToken,
+      }
+    }
 
-  // try {
-  //   sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
-  //   if (!sessionId) {
-  //     return {
-  //       ...parsedFeedback?.data,
-  //       sessionToken,
-  //     }
-  //   }
+    session = await getSession(sessionId)
+    if (!session) {
+      console.error('Interview session not found')
+      throw new Error(`Interview session not found: ${sessionId}`)
+    }
+  } catch (error) {
+    logger.error('Error dealing with sessions')
+    throw new Error('Error dealing with sessions')
+  }
 
-  //   session = await getSession(sessionId)
-  //   if (!session) {
-  //     logger.error('Interview session not found')
-  //     throw new Error(`Interview session not found: ${sessionId}`)
-  //   }
-  // } catch (error) {
-  //   logger.error('Error dealing with sessions')
-  //   throw new Error('Error dealing with sessions')
-  // }
+  try {
+    const questionId = await upsertQuestion(sessionId, question)
+    await createFeedback({
+      sessionId: sessionId,
+      questionId,
+      answer: userAnswer,
+      level,
+      feedback: parsedFeedback?.data,
+    })
 
-  // try {
-  //   const questionId = await upsertQuestion(sessionId, question)
-  //   await createFeedback({
-  //     sessionId: sessionId,
-  //     questionId,
-  //     answer: userAnswer,
-  //     level,
-  //     feedback: parsedFeedback?.data,
-  //   })
+    logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
 
-  //   logger.info(`Score ${parsedFeedback?.data.score} for questionId ${questionId}`)
+    if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
+      try {
+        await completeQuestion(questionId, parsedFeedback?.data)
+      } catch (error) {
+        logger.error(`Error completing challenge ${JSON.stringify(error)}`)
+      }
+    }
+  } catch (error) {
+    logger.error(`Error upserting question, feedback or score`)
+    throw new Error('Error upserting')
+  }
 
-  //   if (parsedFeedback?.data?.score && parsedFeedback?.data?.score > MINIMUM_SCORE) {
-  //     try {
-  //       await completeQuestion(questionId, parsedFeedback?.data)
-  //     } catch (error) {
-  //       logger.error(`Error completing challenge ${JSON.stringify(error)}`)
-  //     }
-  //   }
-  // } catch (error) {
-  //   logger.error(`Error upserting question, feedback or score`)
-  //   throw new Error('Error upserting')
-  // }
-
-  // return {
-  //   ...parsedFeedback?.data,
-  //   sessionToken: session?.sessionToken,
-  // }
+  return {
+    ...parsedFeedback?.data,
+    sessionToken: session?.sessionToken,
+  }
 }
