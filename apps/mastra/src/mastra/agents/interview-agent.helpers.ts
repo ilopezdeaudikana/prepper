@@ -33,13 +33,15 @@ export const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
 export const findReusableQuestion = async (params: {
   topic: string
   level: string
+  user: string
   excludeSessionToken?: string
   previousQuestions: string[]
 }) => {
-  const { topic, level, excludeSessionToken, previousQuestions } = params
+  const { topic, level, excludeSessionToken, previousQuestions, user } = params
   const reusableQuestions = await listReusableQuestions({
     topic,
     level,
+    user,
     excludeSessionToken,
     limit: 30,
   })

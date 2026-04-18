@@ -4,11 +4,11 @@ import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } fr
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 import { LibSQLStore } from '@mastra/libsql'
-import { listAllQuestions } from './storage/interview-session.repository'
+import { listAllQuestions, findUser } from './storage/interview-session.repository'
 
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
@@ -117,7 +117,7 @@ export const mastra = new Mastra({
             const rawBody = await c.req.text()
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
-            
+
             // logger.info(`Evaluation payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
@@ -135,7 +135,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
-             logger.error(`Evaluation error ${JSON.stringify(error)}`)
+            logger.error(`Evaluation error ${JSON.stringify(error)}`)
             return handleRequestError(c, error, 'Evaluation failed.')
           }
         },
@@ -148,14 +148,32 @@ export const mastra = new Mastra({
           const query = JSON.stringify(c.req.query())
 
           try {
-            const { start, completed } = parseAndValidateBody(query, AllChallengesRequestSchema)
+            const { start, completed, user } = parseAndValidateBody(query, AllChallengesRequestSchema)
 
-            const result = await listAllQuestions(start, completed, logger)
+            const result = await listAllQuestions(start, completed, user)
             // logger.info('All challenges', result.data[0])
             return c.json(result)
           } catch (error) {
             logger.error('Unexpected challenge retrieval error', error)
             return handleRequestError(c, error, 'Unexpected challenge retrieval error')
+          }
+        },
+      }),
+      registerApiRoute('/interview/users', {
+        method: 'POST',
+        handler: async (c) => {
+          const mastra = c.get('mastra')
+          const logger = mastra.getLogger()
+          const rawBody = await c.req.text()
+
+          try {
+            const { user, isNewUser } = parseAndValidateBody(rawBody, UserRequestSchema)
+
+            const result = await findUser(user, isNewUser)
+            return c.json(result)
+          } catch (error) {
+            logger.error('Unexpected user retrieval error', error)
+            return handleRequestError(c, error, 'Unexpected user retrieval error')
           }
         },
       }),

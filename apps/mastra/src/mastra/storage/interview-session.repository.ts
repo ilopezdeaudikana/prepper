@@ -17,6 +17,7 @@ type QuestionInsert = {
   type: Question['type']
   topic: string
   level: string
+  user_id: string
 }
 
 type QuestionRow = Question & {
@@ -29,6 +30,7 @@ const Tables = {
   Sessions: 'interview_sessions',
   Questions: 'interview_questions',
   Feedback: 'interview_feedback',
+  Users: 'users'
 } as const
 
 export const createSession = async (topic: string, level: string) => {
@@ -73,11 +75,12 @@ export const listQuestionTexts = async (sessionId: string) => {
 export const listReusableQuestions = async (params: {
   topic?: string
   level?: string
+  user: string
   excludeSessionToken?: string
   limit?: number
 }) => {
   const supabase = getSupabaseClient()
-  const { topic, level, excludeSessionToken, limit = 20 } = params
+  const { topic, level, excludeSessionToken, limit = 20, user } = params
 
   const pageSize = limit
   const batchSize = pageSize * 3
@@ -95,6 +98,7 @@ export const listReusableQuestions = async (params: {
       .from(Tables.Questions)
       .select(`id, session_id, question, initial_code, type, created_at${innerJoin}`)
       .eq('completed', false)
+      .eq('user_id', user)
       .lt('created_at', getYesterdayTimestamp())
       .order('created_at', { ascending: false })
       .range(offset, offset + batchSize - 1)
@@ -137,7 +141,7 @@ export const listReusableQuestions = async (params: {
   return results
 }
 
-export const upsertQuestion = async (sessionId: string, question: Question) => {
+export const upsertQuestion = async (sessionId: string, question: Question, user: string) => {
   const supabase = getSupabaseClient()
 
   const insertPayload: QuestionInsert = {
@@ -146,7 +150,8 @@ export const upsertQuestion = async (sessionId: string, question: Question) => {
     initial_code: question.initialCode ?? null,
     type: question.type,
     topic: question.topic ?? '',
-    level: question.level ?? ''
+    level: question.level ?? '',
+    user_id: user
   }
 
   const { data, error } = await supabase
@@ -211,14 +216,14 @@ export const createFeedback = async (params: {
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }
 
-export const listAllQuestions = async (start: string, completed: string, _?: IMastraLogger)
+export const listAllQuestions = async (start: string, completed: string, user: string)
   : Promise<{ data: Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[], count: number }> => {
 
   const supabase = getSupabaseClient()
 
   const pageSize = 10
-  
-  const offset =  Number(start) * pageSize
+
+  const offset = Number(start) * pageSize
 
   const query = supabase
     .from(Tables.Questions)
@@ -226,35 +231,69 @@ export const listAllQuestions = async (start: string, completed: string, _?: IMa
       count: "exact"
     })
     .eq('completed', completed === 'true')
+    .eq('user_id', user)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .range(offset, offset + pageSize)
 
 
   const { data, error, count } = await query
-  
+
 
   if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
-  return { 
+  return {
     data: (data ?? []).map((row: any) => {
-    const feedback = row.interview_feedback?.[0] ?? {}
-    const { question, initial_code: initialCode, type, completed, id, level, topic } = row
-  
+      const feedback = row.interview_feedback?.[0] ?? {}
+      const { question, initial_code: initialCode, type, completed, id, level, topic } = row
+
+      return {
+        question,
+        initialCode,
+        type,
+        completed,
+        id,
+        topic,
+        level,
+        score: feedback.score,
+        critique: feedback.critique,
+        missedPoints: feedback.missed_points,
+        improvedCode: feedback.improved_code
+      }
+    }),
+    count: count ?? 0
+  }
+}
+
+export const findUser = async (user: string, isNewUser: boolean)
+  : Promise<{ id: string | null }> => {
+
+  const supabase = getSupabaseClient()
+
+  if (isNewUser) {
+    const { data, error } = await supabase
+      .from(Tables.Users)
+      .upsert({ username: user })
+      .select('id')
+      .single<{ id: string }>()
+
+    if (error) throw new Error(`Failed to persist user: ${error.message}`)
+
     return {
-      question,
-      initialCode,
-      type,
-      completed,
-      id,
-      topic, 
-      level,
-      score: feedback.score,
-      critique: feedback.critique,
-      missedPoints: feedback.missed_points,
-      improvedCode: feedback.improved_code
+      id: data.id
     }
-  }),
-  count: count ?? 0
- }
+  } else {
+    const query = supabase
+      .from(Tables.Users)
+      .select('id')
+      .eq('username', user)
+
+    const { data, error } = await query
+
+    if (error) throw new Error(`Failed to load user: ${error.message}`)
+
+    return {
+      id: data[0]?.id ?? null
+    }
+  }
 }

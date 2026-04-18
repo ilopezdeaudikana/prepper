@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import sanitizeHtml from 'sanitize-html'
 
 export const ChallengeType = {
   Coding: 'coding',
@@ -15,6 +16,7 @@ export const QuestionSchema = z.object({
   completed: z.boolean().optional(),
   level: z.string().optional(),
   topic: z.string().optional(),
+  user: z.string()
 })
 
 export const FeedbackSchema = z.object({
@@ -40,6 +42,7 @@ export const ChallengeRequestSchema = z.object({
   level: z.string().min(1),
   previousQuestions: z.array(z.string()).default([]),
   sessionToken: z.string().min(1).optional(),
+  user: z.string(),
   options: z.object({
     skipReuse: z.boolean().optional(),
     forceReuse: z.boolean().optional(),
@@ -47,8 +50,19 @@ export const ChallengeRequestSchema = z.object({
 })
 
 export const AllChallengesRequestSchema = z.object({
+  user: z.string(),
   completed: z.string(),
   start: z.string()
+})
+
+export const UserRequestSchema = z.object({
+  user: z.string().transform((val) => 
+  sanitizeHtml(val)),
+  isNewUser: z.boolean()
+})
+
+export const UserResponseSchema = z.object({
+  id: z.string()
 })
 
 export const ChallengeResponseSchema = QuestionSchema.extend({
@@ -57,6 +71,7 @@ export const ChallengeResponseSchema = QuestionSchema.extend({
 })
 
 export const EvaluationRequestSchema = z.object({
+  user: z.string(),
   question: QuestionSchema,
   answer: z.string().min(1),
   level: z.string().min(1),
@@ -73,6 +88,7 @@ export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
 export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
 export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
 export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
+export type UserResponse = z.infer<typeof UserResponseSchema>
 
 export const Topic = {
   React: 'react',

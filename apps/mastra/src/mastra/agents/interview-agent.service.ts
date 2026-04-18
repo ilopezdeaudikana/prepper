@@ -13,7 +13,6 @@ import {
   findReusableQuestion,
   isTooSimilar,
 } from './interview-agent.helpers'
-import { ILogger } from '../logger.service'
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
 
@@ -77,6 +76,7 @@ const tryReuseChallenge = async (params: {
   sessionToken: string
   existingSessionToken?: string
   previousQuestions: string[]
+  user: string
   skipReuse?: boolean
 }) => {
   const {
@@ -87,6 +87,7 @@ const tryReuseChallenge = async (params: {
     existingSessionToken,
     previousQuestions,
     skipReuse,
+    user
   } = params
 
   if (skipReuse) {
@@ -96,6 +97,7 @@ const tryReuseChallenge = async (params: {
   const reusableQuestion = await findReusableQuestion({
     topic,
     level,
+    user,
     excludeSessionToken: existingSessionToken ?? sessionToken,
     previousQuestions,
   })
@@ -114,13 +116,15 @@ const forceReuseChallenge = async (params: {
   sessionToken: string
   previousQuestions: string[]
   persistedQuestions: string[]
+  user: string
 }) => {
-  const { topic, level, sessionId, sessionToken, previousQuestions, persistedQuestions } = params
+  const { topic, level, sessionId, sessionToken, previousQuestions, persistedQuestions, user } = params
   // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
   const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
   const fallbackReusable = await findReusableQuestion({
     topic,
     level,
+    user,
     previousQuestions: latestQuestion ? [latestQuestion] : [],
   })
 
@@ -136,9 +140,11 @@ const getRandomStoredChallenge = async (params: {
   sessionToken: string
   previousQuestions: string[]
   notice: string
+  user: string
 }) => {
-  const { sessionId, sessionToken, previousQuestions, notice } = params
+  const { sessionId, sessionToken, previousQuestions, notice, user } = params
   const reusableQuestions = await listReusableQuestions({
+    user,
     excludeSessionToken: sessionToken,
     limit: 30,
   })
@@ -214,9 +220,9 @@ const generateFreshChallenge = async (params: {
   sessionId: string
   sessionToken: string
   allPreviousQuestions: string[]
-  logger?: ILogger
+  user: string
 }) => {
-  const { topic, level, sessionId, sessionToken, allPreviousQuestions, logger } = params
+  const { topic, level, sessionId, sessionToken, allPreviousQuestions, user } = params
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   const exclusions = formatQuestionExclusions(allPreviousQuestions)
   let lastGenerated: Question | null = null
@@ -239,7 +245,7 @@ const generateFreshChallenge = async (params: {
   const generatedQuestion = { ...generationResponse.object, topic, level }
   if (!generatedQuestion) {
     const rawText = generationResponse.text ?? ''
-    logger?.error('INTERVIEW_AGENT: missing structured output for challenge', {
+    console.error('INTERVIEW_AGENT: missing structured output for challenge', {
       topic,
       level,
       hasText: Boolean(generationResponse.text),
@@ -257,11 +263,11 @@ const generateFreshChallenge = async (params: {
   }
 
 
-  // logger?.info('', JSON.stringify(lastGenerated))
+  // console.info('', JSON.stringify(lastGenerated))
 
   if (lastGenerated) {
     if (!isTooSimilar(lastGenerated.question, allPreviousQuestions)) {
-      const questionId = await upsertQuestion(sessionId, lastGenerated)
+      const questionId = await upsertQuestion(sessionId, lastGenerated, user)
       return {
         ...lastGenerated,
         id: lastGenerated.id ?? questionId,
@@ -287,7 +293,7 @@ export const getChallenge = async (
   topic: string,
   level: string,
   previousQuestions: string[] = [],
-  logger: ILogger | undefined,
+  user: string,
   sessionToken?: string,
   options?: ChallengeOptions,
 ) => {
@@ -307,6 +313,7 @@ export const getChallenge = async (
     sessionToken: session.sessionToken,
     existingSessionToken: sessionToken,
     previousQuestions: allPreviousQuestions,
+    user,
     skipReuse,
   })
 
@@ -322,6 +329,7 @@ export const getChallenge = async (
       sessionToken: session.sessionToken,
       previousQuestions,
       persistedQuestions,
+      user
     })
   }
 
@@ -401,9 +409,9 @@ const findSession = async (sessionToken: string) => {
   }
 }
 
-const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback) => {
+const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
   try {
-    const questionId = await upsertQuestion(sessionId, question)
+    const questionId = await upsertQuestion(sessionId, question, user)
     await createFeedback({
       sessionId, questionId, answer, level, feedback
     })
@@ -425,6 +433,7 @@ export const submitAnswer = async (
   challenge: Question,
   userAnswer: string,
   level: string,
+  user: string,
   sessionToken?: string
 ) => {
   try {
@@ -435,7 +444,7 @@ export const submitAnswer = async (
     const session = await findSession(sessionToken ?? '')
 
     if (session?.id) {
-      await storeFeedback(session?.id, challenge, userAnswer, level, feedback)
+      await storeFeedback(session?.id, challenge, userAnswer, level, feedback, user)
     }
 
     return {
@@ -444,6 +453,7 @@ export const submitAnswer = async (
     }
   } catch (error) {
     console.log(JSON.stringify(error))
+    throw error
   }
 
 }

@@ -6,22 +6,22 @@ import {
 } from '@repo/shared-types'
 import { createStep, createWorkflow } from '@mastra/core/workflows'
 import { getChallenge, submitAnswer } from '../agents/interview-agent.service'
-import { Logger } from '../logger.service'
 
 const generateChallengeStep = createStep({
   id: 'generate-challenge-step',
   inputSchema: ChallengeRequestSchema,
   outputSchema: ChallengeResponseSchema,
   execute: async ({ inputData, mastra }) => {
-    const logger = Logger(mastra.getLogger())
+    const logger = mastra.getLogger()
     logger.info('getChallenge starts')
     return getChallenge(
       inputData.topic,
       inputData.level,
       inputData.previousQuestions,
-      logger,
+      inputData.user,
       inputData.sessionToken,
       inputData.options,
+
     )
   },
 })
@@ -31,12 +31,13 @@ const evaluateAnswerStep = createStep({
   inputSchema: EvaluationRequestSchema,
   outputSchema: EvaluationResponseSchema,
   execute: async ({ inputData, mastra }) => {
-    const logger = Logger(mastra.getLogger())
+    const logger = mastra.getLogger()
     logger.info('submitAnswer starts')
     return submitAnswer(
       inputData?.question,
       inputData?.answer,
       inputData?.level,
+      inputData?.user,
       inputData?.sessionToken
     )
   },
