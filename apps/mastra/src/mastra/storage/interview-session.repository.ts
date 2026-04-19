@@ -1,7 +1,6 @@
 import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp } from './utils'
-import { IMastraLogger } from '@mastra/core/logger'
 
 type InterviewSession = {
   id: string
@@ -96,7 +95,7 @@ export const listReusableQuestions = async (params: {
     const offset = batchIndex * batchSize
     let query = supabase
       .from(Tables.Questions)
-      .select(`id, session_id, question, initial_code, type, created_at${innerJoin}`)
+      .select(`id, session_id, question, initial_code, type, user_id, created_at${innerJoin}`)
       .eq('completed', false)
       .eq('user_id', user)
       .lt('created_at', getYesterdayTimestamp())
@@ -123,7 +122,8 @@ export const listReusableQuestions = async (params: {
       type: row.type as Question['type'],
       createdAt: row.created_at as string,
       sessionToken: createSessionToken(process.env.HASH_SECRET!, row.session_id as string),
-      completed: row.completed
+      completed: row.completed,
+      user: row.user_id
     }))
 
     const filtered = excludeSessionToken
@@ -143,6 +143,8 @@ export const listReusableQuestions = async (params: {
 
 export const upsertQuestion = async (sessionId: string, question: Question, user: string) => {
   const supabase = getSupabaseClient()
+
+  console.log('USER on upsertQuestion', user)
 
   const insertPayload: QuestionInsert = {
     session_id: sessionId,
@@ -164,16 +166,11 @@ export const upsertQuestion = async (sessionId: string, question: Question, user
   return data.id
 }
 
-export const completeQuestion = async (questionId: string, solution: Feedback) => {
+export const completeQuestion = async (questionId: string) => {
   const supabase = getSupabaseClient()
 
-  const { improvedCode, critique, score, missedPoints } = solution
   const insertPayload = {
     completed: true,
-    improved_code: improvedCode,
-    critique,
-    score,
-    missed_points: missedPoints
   }
 
   const { data, error } = await supabase
@@ -183,7 +180,7 @@ export const completeQuestion = async (questionId: string, solution: Feedback) =
     .select('id')
     .single<{ id: string }>()
 
-  if (error) throw new Error(`Failed to update question: ${questionId}`)
+  if (error) throw new Error(`Failed to update question: ${JSON.stringify(error)}`)
   else if (!data) {
     throw new Error(`No row matched ${questionId}`)
   }

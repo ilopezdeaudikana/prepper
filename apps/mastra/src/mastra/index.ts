@@ -4,12 +4,12 @@ import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } fr
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 import { LibSQLStore } from '@mastra/libsql'
 import { listAllQuestions, findUser } from './storage/interview-session.repository'
-
+import { UserRequestSchema } from '../types/user-request-schema'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
@@ -74,6 +74,10 @@ export const mastra = new Mastra({
         spanOutputProcessors: [
           new SensitiveDataFilter(), // Redacts sensitive data like passwords, tokens, keys
         ],
+        logging: {
+          enabled: true, // set to false to disable log forwarding
+          level: 'info', // minimum level: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+        },
       },
     },
   }),
@@ -118,12 +122,11 @@ export const mastra = new Mastra({
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
 
-            // logger.info(`Evaluation payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
 
-            logger.info(`Evaluation result ${JSON.stringify(result)}`)
+            // logger.info(`Evaluation result ${JSON.stringify(result)}`)
             if (result.status !== 'success') {
               return c.json(
                 {

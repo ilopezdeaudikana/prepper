@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import sanitizeHtml from 'sanitize-html'
 
 export const ChallengeType = {
   Coding: 'coding',
@@ -42,7 +41,7 @@ export const ChallengeRequestSchema = z.object({
   level: z.string().min(1),
   previousQuestions: z.array(z.string()).default([]),
   sessionToken: z.string().min(1).optional(),
-  user: z.string(),
+  user: z.uuid(),
   options: z.object({
     skipReuse: z.boolean().optional(),
     forceReuse: z.boolean().optional(),
@@ -50,15 +49,9 @@ export const ChallengeRequestSchema = z.object({
 })
 
 export const AllChallengesRequestSchema = z.object({
-  user: z.string(),
+  user: z.uuid(),
   completed: z.string(),
   start: z.string()
-})
-
-export const UserRequestSchema = z.object({
-  user: z.string().transform((val) => 
-  sanitizeHtml(val)),
-  isNewUser: z.boolean()
 })
 
 export const UserResponseSchema = z.object({
@@ -71,7 +64,6 @@ export const ChallengeResponseSchema = QuestionSchema.extend({
 })
 
 export const EvaluationRequestSchema = z.object({
-  user: z.string(),
   question: QuestionSchema,
   answer: z.string().min(1),
   level: z.string().min(1),

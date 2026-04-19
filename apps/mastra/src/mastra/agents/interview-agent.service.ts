@@ -29,9 +29,10 @@ const formatReusableQuestion = async (
   sessionId: string,
   sessionToken: string,
   reusableQuestion: Question,
+  user: string,
   notice?: string,
 ) => {
-  const questionId = await upsertQuestion(sessionId, reusableQuestion)
+  const questionId = await upsertQuestion(sessionId, reusableQuestion, user)
   return {
     id: reusableQuestion.id ?? questionId,
     question: reusableQuestion.question,
@@ -106,7 +107,7 @@ const tryReuseChallenge = async (params: {
     return null
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, reusableQuestion)
+  return formatReusableQuestion(sessionId, sessionToken, reusableQuestion, user)
 }
 
 const forceReuseChallenge = async (params: {
@@ -132,7 +133,7 @@ const forceReuseChallenge = async (params: {
     throw new Error(`No reusable challenge found for topic '${topic}' at level '${level}'`)
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, fallbackReusable)
+  return formatReusableQuestion(sessionId, sessionToken, fallbackReusable, user)
 }
 
 const getRandomStoredChallenge = async (params: {
@@ -159,7 +160,7 @@ const getRandomStoredChallenge = async (params: {
     throw new Error('Skipped generated challenge, but no stored fallback exists')
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, randomQuestion, notice)
+  return formatReusableQuestion(sessionId, sessionToken, randomQuestion, user, notice)
 }
 
 const formatQuestionExclusions = (questions: string[]) =>
@@ -280,6 +281,7 @@ const generateFreshChallenge = async (params: {
       sessionToken,
       previousQuestions: allPreviousQuestions,
       notice: 'We skipped a too-similar generated question and loaded a random stored challenge instead.',
+      user
     })
   }
 
@@ -339,7 +341,7 @@ export const getChallenge = async (
     sessionId: session.id,
     sessionToken: session.sessionToken,
     allPreviousQuestions,
-    logger,
+    user
   })
 }
 
@@ -416,10 +418,10 @@ const storeFeedback = async (sessionId: string, question: Question, answer: stri
       sessionId, questionId, answer, level, feedback
     })
 
-    console.info(`Score ${feedback.score} for questionId ${questionId}`)
+    console.error(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
 
     if (feedback.score && feedback.score > MINIMUM_SCORE) {
-      await completeQuestion(questionId, feedback)
+      await completeQuestion(questionId)
     }
   } catch (error) {
     console.error(`Error upserting question, feedback or score`)
@@ -436,6 +438,7 @@ export const submitAnswer = async (
   user: string,
   sessionToken?: string
 ) => {
+
   try {
     const { question, topic, initialCode, type } = challenge
 

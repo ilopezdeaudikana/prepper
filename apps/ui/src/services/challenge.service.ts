@@ -55,7 +55,7 @@ export const ChallengeService = {
       }
     })
     
-  return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge generation failed.')
+  return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge retrieval failed.')
 
   },
 
@@ -70,7 +70,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question, answer, level, sessionToken, user }),
+      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken }),
     })
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   }

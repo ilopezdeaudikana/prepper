@@ -42,17 +42,21 @@ export const Identification: React.FC = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         confirmLoading={confirmLoading}
+        closable={false}
+        cancelButtonProps={{ style: { display: 'none' } }}
+        okButtonProps={{ disabled:  !localUser }}
+        mask={{ closable: false }}
       >
-        <Flex vertical gap={8}>
-          <label htmlFor="username">Your user name:</label>
-          <Input id="username" onChange={(e) => setLocalUser(e.target.value)} />
-          <Flex gap={8}>
-            <label htmlFor="resuse">Add new user</label>
-            <Checkbox id="reuse" value={isNewUser} onChange={(e) => setIsNewUser(e.target.checked)} />
-          </Flex>
-          {error && <Typography.Paragraph>{error}</Typography.Paragraph>}
+      <Flex vertical gap={8}>
+        <label htmlFor="username">Your user name:</label>
+        <Input id="username" onChange={(e) => setLocalUser(e.target.value)} />
+        <Flex gap={8}>
+          <label htmlFor="resuse">Add new user</label>
+          <Checkbox id="reuse" checked={isNewUser} onChange={(e) => setIsNewUser(e.target.checked)} />
         </Flex>
-      </Modal>
+        {error && <Typography.Paragraph>{error}</Typography.Paragraph>}
+      </Flex>
+    </Modal >
     </>
   )
 }
