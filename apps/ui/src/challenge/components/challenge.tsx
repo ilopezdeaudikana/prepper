@@ -89,6 +89,7 @@ export const Challenge = () => {
         data as Question || extractQuestionFromLocalData(),
         reply,
         level,
+        localData?.sessionId,
         sessionToken ?? undefined
       )
 

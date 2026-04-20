@@ -15,6 +15,7 @@ import {
 } from './interview-agent.helpers'
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
+import { IMastraLogger } from '@mastra/core/logger'
 
 type ChallengeOptions = { skipReuse?: boolean, forceReuse?: boolean }
 
@@ -41,10 +42,12 @@ const formatReusableQuestion = async (
     sessionToken,
     topic: reusableQuestion.topic, level: reusableQuestion.level,
     notice,
+    user,
   }
 }
 
 const resolveChallengeSession = async (
+  logger: IMastraLogger,
   topic: string,
   level: string,
   previousQuestions: string[] = [],
@@ -52,7 +55,7 @@ const resolveChallengeSession = async (
 ): Promise<ChallengeSessionContext> => {
   const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
   const existingSession = sessionId
-    ? await getSession(sessionId)
+    ? await getSession(logger, sessionId)
     : null
 
   if (sessionId && !existingSession) {
@@ -243,7 +246,7 @@ const generateFreshChallenge = async (params: {
     })
 
 
-  const generatedQuestion = { ...generationResponse.object, topic, level }
+  const generatedQuestion = { ...generationResponse.object, topic, level, user }
   if (!generatedQuestion) {
     const rawText = generationResponse.text ?? ''
     console.error('INTERVIEW_AGENT: missing structured output for challenge', {
@@ -290,8 +293,8 @@ const generateFreshChallenge = async (params: {
 
 // END GET CHALLENGE HELPERS
 
-
 export const getChallenge = async (
+  logger: IMastraLogger,
   topic: string,
   level: string,
   previousQuestions: string[] = [],
@@ -302,6 +305,7 @@ export const getChallenge = async (
   const { forceReuse, skipReuse } = options ?? {}
 
   const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
+    logger,
     topic,
     level,
     previousQuestions,
@@ -398,33 +402,36 @@ const generateReply = async (level: string, question: Pick<Question, 'question' 
   }
 }
 
-const findSession = async (sessionToken: string) => {
+const findSession = async (logger: IMastraLogger, sessionToken: string) => {
   try {
     const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
+    logger.info(`Found sessionId from token, ${sessionId}`)
     if (!sessionId) {
       return
     }
-    return await getSession(sessionId)
+    return await getSession(logger, sessionId)
   } catch (error) {
     console.error('Error dealing with sessions')
     throw error
   }
 }
 
-const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
+const storeFeedback = async (logger: IMastraLogger, sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
+  logger.info(`storeFeedback:sessionId:${sessionId}`)
   try {
     const questionId = await upsertQuestion(sessionId, question, user)
     await createFeedback({
       sessionId, questionId, answer, level, feedback
     })
 
-    console.error(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
+    logger.info(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
 
     if (feedback.score && feedback.score > MINIMUM_SCORE) {
+
       await completeQuestion(questionId)
     }
   } catch (error) {
-    console.error(`Error upserting question, feedback or score`)
+    logger.error(`Error upserting question, feedback or score`)
     throw error
   }
 }
@@ -432,30 +439,32 @@ const storeFeedback = async (sessionId: string, question: Question, answer: stri
 
 
 export const submitAnswer = async (
+  logger: IMastraLogger,
   challenge: Question,
   userAnswer: string,
   level: string,
   user: string,
+  sessionId?: string,
   sessionToken?: string
 ) => {
-
+  logger.info(`Session Token ${sessionToken}`)
   try {
     const { question, topic, initialCode, type } = challenge
 
     const feedback = await generateReply(level, { question, topic, initialCode, type }, userAnswer)
 
-    const session = await findSession(sessionToken ?? '')
+    const session = await findSession(logger, sessionToken ?? '')
 
-    if (session?.id) {
-      await storeFeedback(session?.id, challenge, userAnswer, level, feedback, user)
-    }
-
+    logger.info(`Session ID ${session} or ${sessionId}`)
+    
+    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, level, feedback, user)
+    
     return {
       ...feedback,
       sessionToken: session?.sessionToken,
     }
   } catch (error) {
-    console.log(JSON.stringify(error))
+    logger.error(JSON.stringify(error))
     throw error
   }
 

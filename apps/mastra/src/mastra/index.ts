@@ -10,6 +10,8 @@ import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/i
 import { LibSQLStore } from '@mastra/libsql'
 import { listAllQuestions, findUser } from './storage/interview-session.repository'
 import { UserRequestSchema } from '../types/user-request-schema'
+import * as z from 'zod/v4/core'
+import { IMastraLogger } from '@mastra/core/logger'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
@@ -17,20 +19,27 @@ function createRequestError(message: string, status = 400): Error & { status: nu
   return err
 }
 
-function parseAndValidateBody<T>(rawBody: string, schema: { parse: (v: unknown) => T }): T {
+function parseAndValidateBody<T extends z.$ZodType>(logger: IMastraLogger, rawBody: string, schema: T): z.output<T> {
 
   if (!rawBody || !rawBody.trim()) {
     throw createRequestError('Empty request body. Expected JSON.', 400)
   }
 
-  let parsedBody: unknown
+  let parsedBody: T
   try {
     parsedBody = JSON.parse(rawBody)
   } catch {
     throw createRequestError('Invalid JSON in request body.', 400)
   }
 
-  return schema.parse(parsedBody)
+  logger.info(`ParsedBody: ${(parsedBody as any).sessionId}`)
+
+  const { success, data } = z.safeParse(schema, parsedBody)
+
+  logger.info(`Parsed data: ${(data as any).sessionId}`)
+
+   if (success) return data
+   else throw('Zod parsing error')
 }
 
 function handleRequestError(c: any, error: unknown, fallbackMessage: string) {
@@ -91,7 +100,7 @@ export const mastra = new Mastra({
 
           try {
             const rawBody = await c.req.text()
-            const payload = parseAndValidateBody(rawBody, ChallengeRequestSchema)
+            const payload = parseAndValidateBody(logger, rawBody, ChallengeRequestSchema)
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
@@ -119,9 +128,11 @@ export const mastra = new Mastra({
           const logger = mastra.getLogger()
           try {
             const rawBody = await c.req.text()
-            const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
+            
+            const payload = parseAndValidateBody(logger, rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
 
+            logger.error(`payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
@@ -151,10 +162,10 @@ export const mastra = new Mastra({
           const query = JSON.stringify(c.req.query())
 
           try {
-            const { start, completed, user } = parseAndValidateBody(query, AllChallengesRequestSchema)
+            const { start, completed, user } = parseAndValidateBody(logger, query, AllChallengesRequestSchema)
 
             const result = await listAllQuestions(start, completed, user)
-            // logger.info('All challenges', result.data[0])
+            logger.info('All challenges', result.data[0])
             return c.json(result)
           } catch (error) {
             logger.error('Unexpected challenge retrieval error', error)
@@ -170,7 +181,7 @@ export const mastra = new Mastra({
           const rawBody = await c.req.text()
 
           try {
-            const { user, isNewUser } = parseAndValidateBody(rawBody, UserRequestSchema)
+            const { user, isNewUser } = parseAndValidateBody(logger, rawBody, UserRequestSchema)
 
             const result = await findUser(user, isNewUser)
             return c.json(result)

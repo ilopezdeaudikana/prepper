@@ -1,6 +1,7 @@
 import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp } from './utils'
+import { IMastraLogger } from '@mastra/core/logger'
 
 type InterviewSession = {
   id: string
@@ -45,7 +46,7 @@ export const createSession = async (topic: string, level: string) => {
   return { ...data, sessionToken }
 }
 
-export const getSession = async (sessionId: string) => {
+export const getSession = async (logger: IMastraLogger, sessionId: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from(Tables.Sessions)
@@ -53,6 +54,7 @@ export const getSession = async (sessionId: string) => {
     .eq('id', sessionId)
     .maybeSingle<InterviewSession>()
 
+  logger.info(`Session data ${data?.id}`)  
   if (error) throw new Error(`Failed to fetch session: ${error.message}`)
   if (!data) return null
   const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
@@ -214,7 +216,7 @@ export const createFeedback = async (params: {
 }
 
 export const listAllQuestions = async (start: string, completed: string, user: string)
-  : Promise<{ data: Omit<QuestionRow, 'sessionId' | 'sessionToken' | 'createdAt'>[], count: number }> => {
+  : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt'>[], count: number }> => {
 
   const supabase = getSupabaseClient()
 
@@ -224,7 +226,7 @@ export const listAllQuestions = async (start: string, completed: string, user: s
 
   const query = supabase
     .from(Tables.Questions)
-    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
+    .select(`id, question, initial_code, type, completed, topic, level, session_id, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
       count: "exact"
     })
     .eq('completed', completed === 'true')
@@ -242,7 +244,7 @@ export const listAllQuestions = async (start: string, completed: string, user: s
   return {
     data: (data ?? []).map((row: any) => {
       const feedback = row.interview_feedback?.[0] ?? {}
-      const { question, initial_code: initialCode, type, completed, id, level, topic } = row
+      const { question, initial_code: initialCode, type, completed, id, level, topic, session_id: sessionId } = row
 
       return {
         question,
@@ -252,6 +254,8 @@ export const listAllQuestions = async (start: string, completed: string, user: s
         id,
         topic,
         level,
+        user,
+        sessionId,
         score: feedback.score,
         critique: feedback.critique,
         missedPoints: feedback.missed_points,

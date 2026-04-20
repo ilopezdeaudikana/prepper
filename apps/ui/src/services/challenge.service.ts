@@ -59,7 +59,7 @@ export const ChallengeService = {
 
   },
 
-  async submitAnswer(question: Question, answer: string, level: string, sessionToken?: string) {
+  async submitAnswer(question: Question, answer: string, level: string, sessionId?: string, sessionToken?: string) {
     // if (process.env.NODE_ENV === 'development') {
     //   return Promise.resolve(responseSample as EvaluationResponse)
     // }
@@ -70,7 +70,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken }),
+      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken, sessionId }),
     })
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   }

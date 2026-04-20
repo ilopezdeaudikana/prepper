@@ -21,7 +21,6 @@ export const HistoryTable = ({ data, onNextPage, total, page, completed, onChang
   }
 
   const selectChallenge = (id: string) => {
-    // setCurrentCallenge(row)
     navigate(`/?id=${id}&page=${page}&completed=${completed.toString()}`)
   }
 

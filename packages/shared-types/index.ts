@@ -9,6 +9,7 @@ export type ChallengeKey = (typeof ChallengeType)[keyof typeof ChallengeType]
 
 export const QuestionSchema = z.object({
   id: z.uuid().optional(),
+  sessionId: z.uuid().optional(),
   question: z.string(),
   initialCode: z.string().optional(),
   type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical]).optional(),
@@ -68,6 +69,7 @@ export const EvaluationRequestSchema = z.object({
   answer: z.string().min(1),
   level: z.string().min(1),
   sessionToken: z.string().min(1).optional(),
+  sessionId: z.uuid().optional(),
 })
 
 export const EvaluationResponseSchema = FeedbackSchema.extend({
