@@ -28,7 +28,8 @@ export const useChallenges = ({ page, completed }: UseChallengeProps) => {
       count
     }),
     staleTime: 2 * 1000 * 60,
-    enabled: !!pageValue && !!completedValue
+    enabled: !!pageValue && !!completedValue,
+    retry: false
   })
 
   useEffect(() => {
