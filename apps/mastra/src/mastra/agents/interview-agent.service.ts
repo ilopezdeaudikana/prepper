@@ -304,6 +304,8 @@ export const getChallenge = async (
 ) => {
   const { forceReuse, skipReuse } = options ?? {}
 
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
+
   const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
     logger,
     topic,
@@ -319,7 +321,7 @@ export const getChallenge = async (
     sessionToken: session.sessionToken,
     existingSessionToken: sessionToken,
     previousQuestions: allPreviousQuestions,
-    user,
+    user: userId,
     skipReuse,
   })
 
@@ -335,7 +337,7 @@ export const getChallenge = async (
       sessionToken: session.sessionToken,
       previousQuestions,
       persistedQuestions,
-      user
+      user: userId
     })
   }
 
@@ -345,7 +347,7 @@ export const getChallenge = async (
     sessionId: session.id,
     sessionToken: session.sessionToken,
     allPreviousQuestions,
-    user
+    user: userId
   })
 }
 
@@ -449,15 +451,17 @@ export const submitAnswer = async (
 ) => {
   logger.info(`Session Token ${sessionToken}`)
   try {
+    const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
+
     const { question, topic, initialCode, type } = challenge
 
     const feedback = await generateReply(level, { question, topic, initialCode, type }, userAnswer)
 
     const session = await findSession(logger, sessionToken ?? '')
 
-    logger.info(`Session ID ${session} or ${sessionId}`)
+    logger.info(`Session ID ${JSON.stringify(session)} or ${sessionId}`)
     
-    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, level, feedback, user)
+    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, level, feedback, userId)
     
     return {
       ...feedback,

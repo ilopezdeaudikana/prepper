@@ -8,7 +8,7 @@ export const ChallengeType = {
 export type ChallengeKey = (typeof ChallengeType)[keyof typeof ChallengeType]
 
 export const QuestionSchema = z.object({
-  id: z.uuid().optional(),
+  id: z.string().optional(),
   sessionId: z.uuid().optional(),
   question: z.string(),
   initialCode: z.string().optional(),
@@ -16,7 +16,7 @@ export const QuestionSchema = z.object({
   completed: z.boolean().optional(),
   level: z.string().optional(),
   topic: z.string().optional(),
-  user: z.string()
+  user: z.string().min(1)
 })
 
 export const FeedbackSchema = z.object({
@@ -42,7 +42,7 @@ export const ChallengeRequestSchema = z.object({
   level: z.string().min(1),
   previousQuestions: z.array(z.string()).default([]),
   sessionToken: z.string().min(1).optional(),
-  user: z.uuid(),
+  user: z.string().min(1),
   options: z.object({
     skipReuse: z.boolean().optional(),
     forceReuse: z.boolean().optional(),
@@ -50,7 +50,7 @@ export const ChallengeRequestSchema = z.object({
 })
 
 export const AllChallengesRequestSchema = z.object({
-  user: z.uuid(),
+  user: z.string().min(1),
   completed: z.string(),
   start: z.string()
 })

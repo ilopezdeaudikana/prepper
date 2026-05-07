@@ -31,14 +31,14 @@ function parseAndValidateBody<T extends z.$ZodType>(logger: IMastraLogger, rawBo
     throw createRequestError('Invalid JSON in request body.', 400)
   }
 
-  logger.info(`ParsedBody: ${(parsedBody as any).sessionId}`)
+  const { success, data, error } = z.safeParse(schema, parsedBody)
 
-  const { success, data } = z.safeParse(schema, parsedBody)
-
-  logger.info(`Parsed data: ${(data as any).sessionId}`)
 
    if (success) return data
-   else throw('Zod parsing error')
+   else {
+    logger.error(JSON.stringify(error))
+    throw('Zod parsing error')
+   }
 }
 
 function handleRequestError(c: any, error: unknown, fallbackMessage: string) {
@@ -116,7 +116,7 @@ export const mastra = new Mastra({
 
             return c.json(result.result)
           } catch (error) {
-            logger.error('Unexpected challenge generation error')
+            logger.error('Unexpected challenge generation error', String(error).toString())
             return handleRequestError(c, error, 'Challenge generation failed. Unexpected error')
           }
         },

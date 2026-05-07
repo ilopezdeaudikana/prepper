@@ -1,6 +1,6 @@
 import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
-import { createSessionToken, getYesterdayTimestamp } from './utils'
+import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { IMastraLogger } from '@mastra/core/logger'
 
 type InterviewSession = {
@@ -217,6 +217,8 @@ export const createFeedback = async (params: {
 
 export const listAllQuestions = async (start: string, completed: string, user: string)
   : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt'>[], count: number }> => {
+  
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
   const supabase = getSupabaseClient()
 
@@ -230,7 +232,7 @@ export const listAllQuestions = async (start: string, completed: string, user: s
       count: "exact"
     })
     .eq('completed', completed === 'true')
-    .eq('user_id', user)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .range(offset, offset + pageSize)
@@ -281,7 +283,7 @@ export const findUser = async (user: string, isNewUser: boolean)
     if (error) throw new Error(`Failed to persist user: ${error.message}`)
 
     return {
-      id: data.id
+      id: createSessionToken(process.env.HASH_SECRET!, data.id)
     }
   } else {
     const query = supabase
@@ -294,7 +296,7 @@ export const findUser = async (user: string, isNewUser: boolean)
     if (error) throw new Error(`Failed to load user: ${error.message}`)
 
     return {
-      id: data[0]?.id ?? null
+      id: createSessionToken(process.env.HASH_SECRET!, data[0]?.id ?? null)
     }
   }
 }
