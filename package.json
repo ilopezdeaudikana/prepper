@@ -7,7 +7,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "@types/sanitize-html": "^2.16.1",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "sass-embedded": "^1.97.3",

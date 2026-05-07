@@ -4,12 +4,11 @@ import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } fr
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
 import { LibSQLStore } from '@mastra/libsql'
 import { listAllQuestions, findUser } from './storage/interview-session.repository'
-import { UserRequestSchema } from '../types/user-request-schema'
 import * as z from 'zod/v4/core'
 import { IMastraLogger } from '@mastra/core/logger'
 

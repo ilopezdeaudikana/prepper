@@ -55,6 +55,15 @@ export const AllChallengesRequestSchema = z.object({
   start: z.string()
 })
 
+export const UserRequestSchema = z.object({
+  user: z.string()
+    .trim()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_-]+$/),
+  isNewUser: z.boolean(),
+})
+
 export const UserResponseSchema = z.object({
   id: z.string()
 })
