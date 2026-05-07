@@ -19,6 +19,7 @@ import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
 import { useChallenges } from '@/common/hooks/useChallenges'
 import { useSearchParams } from 'react-router-dom'
+import { ChallengeEmpty } from './challenge-empty'
 
 export const Challenge = () => {
 
@@ -205,10 +206,11 @@ export const Challenge = () => {
               <>
                 <MarkdownText content={localData?.question} />
                 <div className='grow min-h-0 relative mt-4'>
-                  <CodeArea value={localData?.initialCode ?? ''} id="initial-code" />
+                  <CodeArea value={localData?.initialCode ?? ''} readOnly={false} id="initial-code" />
                 </div>
               </>
             )}
+            {!topic && !level && <ChallengeEmpty isQuestion={true}/>}
           </Card>
         </div>
         <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
@@ -222,6 +224,7 @@ export const Challenge = () => {
               )}
               {feedback && (<ChallengeFeedback feedback={feedback} />)}
               {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type} />}
+              {!topic && !level && <ChallengeEmpty isQuestion={false}/>}
             </div>
           </Card>
         </div>

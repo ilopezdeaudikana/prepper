@@ -32,7 +32,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
       )}
       {feedback.improvedCode && (
         <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
-          <CodeArea value={feedback.improvedCode} id="improved-code" />
+          <CodeArea value={feedback.improvedCode} readOnly={true} id="improved-code" />
         </div>
       )}
 

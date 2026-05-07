@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Modal, Input, Checkbox, Flex, Typography } from 'antd'
 import { useUser } from '@/store/user.store'
 import { UserService } from '@/services/user.service'
 
-export const Identification: React.FC = () => {
+export const Identification = () => {
   const [open, setOpen] = useState(true)
   const [isNewUser, setIsNewUser] = useState(false)
   const [localUser, setLocalUser] = useState('')

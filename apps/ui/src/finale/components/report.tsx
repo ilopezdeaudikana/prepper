@@ -29,6 +29,7 @@ export const Report = () => {
                 modified={row.evaluation.improvedCode ?? row.reply}
                 height={500}
                 isDiff={true}
+                readOnly={true}
                 id={`diff-${index}`}
               />
             </>

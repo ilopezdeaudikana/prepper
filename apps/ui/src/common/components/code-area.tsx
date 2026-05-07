@@ -4,10 +4,11 @@ import { shikiToMonaco } from '@shikijs/monaco'
 import { getHighlighter, themes } from '../utils/shiki-engine'
 import { stripMarkdownCode } from '@/common/utils/strip-markdown-code'
 
-export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
+export const CodeArea = ({ value, onChange, height, id, isDiff, modified, readOnly }: {
   value?: string,
   modified?: string,
   height?: number
+  readOnly: boolean
   onChange?: (code?: string) => void
   id: string,
   isDiff?: boolean
@@ -59,7 +60,8 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified }: {
       lineNumbersMinChars: 2,
       folding: isDiff ? false : true,
       indentation: 2,
-      tabSize: 2
+      tabSize: 2,
+      readOnly: readOnly
     }
   }
 
