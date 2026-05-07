@@ -1,3 +1,4 @@
+import { Badge, Card } from 'antd'
 import { CodeArea } from '../../common/components/code-area'
 
 const helloCode = `
@@ -43,14 +44,16 @@ function doubleNumbers(numbers: number[]): number[] {
 `
 export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
   return (
-    <div className="flex flex-col gap-2 overflow-auto min-h-full">
+    <div className="flex flex-col gap-2 overflow-auto min-h-full p-2">
       {isQuestion && (
-        <p>
-          Welcome to your personalized coding environment. Below you will find a
-          code challenge tailored to the topic and level selected in the
-          configuration panel. To begin, click on{' '}
-          <strong>Configure new challenge</strong> button to generate your first task.
-        </p>
+        <Badge.Ribbon text="Start">
+          <Card title="" size="small" classNames={{ body:"bg-orange-200 opacity-90"}}>
+            Welcome to your personalized coding environment. 
+            To begin, select <strong>Configure new challenge</strong> or <strong>Review previous challenges</strong>. 
+            Once the environment loads, use the editor on the right-hand panel to write your solution. 
+            You can submit your work using the <strong>Submit</strong> button located in the top navigation bar.
+          </Card>
+        </Badge.Ribbon>
       )}
       <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
         <CodeArea

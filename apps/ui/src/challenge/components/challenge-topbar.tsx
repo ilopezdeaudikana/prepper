@@ -61,7 +61,7 @@ const goToHistory = () => {
     >
       <div className="flex justify-between items-center">
         <Button type="primary" className="mr-2" onClick={goToHistory}>
-          Check previous challenges
+          Review previous challenges
         </Button>
 
         {topic && level ? 
