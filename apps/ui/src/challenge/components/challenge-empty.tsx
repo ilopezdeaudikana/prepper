@@ -43,12 +43,12 @@ function doubleNumbers(numbers: number[]): number[] {
 // console.log(result); // [20, 40, 60]
 `
 export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
+  const cardStyles = { body:'bg-orange-200 opacity-90', title: 'font-thin'}
   return (
     <div className="flex flex-col gap-2 overflow-auto min-h-full p-2">
       {isQuestion && (
         <Badge.Ribbon text="Start">
-          <Card title="" size="small" classNames={{ body:"bg-orange-200 opacity-90"}}>
-            Welcome to your personalized coding environment. 
+          <Card title="Welcome to your personalized coding challenge" size="small" classNames={cardStyles} styles={{header:{background: 'var(--color-orange-100)'}}}>
             To begin, select <strong>Configure new challenge</strong> or <strong>Review previous challenges</strong>. 
             Once the environment loads, use the editor on the right-hand panel to write your solution. 
             You can submit your work using the <strong>Submit</strong> button located in the top navigation bar.
