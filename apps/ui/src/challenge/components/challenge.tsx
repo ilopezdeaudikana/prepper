@@ -26,7 +26,7 @@ export const Challenge = () => {
   const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
   const [isDisabled, setIsDisabled] = useState(true)
   const [canContinue, setCanContinue] = useState(false)
-  const [localData, setLocalData] = useState<(Question & Feedback & { error?: string, notice?: string }) | null>(null)
+  const [challenge, setChallenge] = useState<(Question & Feedback & { error?: string, notice?: string }) | null>(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
@@ -39,7 +39,7 @@ export const Challenge = () => {
 
   const queryClient = useQueryClient()
   
-  const { currentChallenge } = useChallenges({})
+  const { challengeFromHistory } = useChallenges({})
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -60,7 +60,7 @@ export const Challenge = () => {
   })
 
   const requestErrorMessage =
-    localData?.error ??
+    challenge?.error ??
     (error instanceof Error ? error.message : error ? JSON.stringify(error, null, 2) : null)
 
   const handleInputChange = (reply?: string) => {
@@ -68,8 +68,8 @@ export const Challenge = () => {
   }
 
   const extractQuestionFromLocalData = () => {
-    if (localData) {
-      const { question, initialCode, type, level, topic } = localData
+    if (challenge) {
+      const { question, initialCode, type, level, topic } = challenge
       return {
         question,
         initialCode,
@@ -90,7 +90,7 @@ export const Challenge = () => {
         data as Question || extractQuestionFromLocalData(),
         reply,
         level,
-        localData?.sessionId,
+        challenge?.sessionId,
         sessionToken ?? undefined
       )
 
@@ -98,8 +98,8 @@ export const Challenge = () => {
 
       setProgress({ score: score + (result.score ?? 0), stage: stage + 1 })
 
-      if (localData) {
-        const { question, initialCode, type } = localData
+      if (challenge) {
+        const { question, initialCode, type } = challenge
         addToReport({ challenge: { question, initialCode, type }, reply, evaluation: result })
       }
       queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
@@ -120,8 +120,8 @@ export const Challenge = () => {
 
   const reset = () => {
     setSearchParams({})
-    currentChallenge.current = null
-    setLocalData(null)
+    challengeFromHistory.current = null
+    setChallenge(null)
     setFeedback(null)
   }
 
@@ -137,36 +137,36 @@ export const Challenge = () => {
       current.includes(data.question) ? current : [...current, data.question]
     )
 
-    setLocalData(data ?? null)
+    setChallenge(data ?? null)
   }, [data])
 
   useEffect(() => {
     setSessionToken(null)
     setPreviousQuestions([])
     setFeedback(null)
-    setLocalData(null)
+    setChallenge(null)
   }, [])
 
   useEffect(() => {
     let active = true
 
-    if (currentChallenge.current && active) {
-      const { topic, level, completed } = currentChallenge.current
-      setLocalData(currentChallenge.current)
-      if (completed) setFeedback(currentChallenge.current)
+    if (challengeFromHistory.current && active) {
+      const { topic, level, completed } = challengeFromHistory.current
+      setChallenge(challengeFromHistory.current)
+      if (completed) setFeedback(challengeFromHistory.current)
       setConfiguration({
         topic: topic ?? RANDOM,
         level: level ?? RANDOM,
         randomMode: !topic && !level
       })
-    } else if (!currentChallenge.current && active) {
-      setLocalData(null)
+    } else if (!challengeFromHistory.current && active) {
+      setChallenge(null)
       setFeedback(null)
     }
     return () => {
       active = false
     }
-  }, [currentChallenge.current])
+  }, [challengeFromHistory.current])
 
   return (
     <div className="flex flex-col h-screen p-4 align-self-center gap-4">
@@ -184,7 +184,7 @@ export const Challenge = () => {
             className="flex flex-col flex-1 p-4 overflow-auto"
             styles={{ body: { display: 'flex', flexDirection: 'column', flexGrow: 1 } }}
           >
-            {!requestErrorMessage && (!localData || isFetching) && (
+            {!requestErrorMessage && (!challenge || isFetching) && (
               <GenerationState isFetching={isFetching} isReady={!!topic || !!level} />
             )}
             {requestErrorMessage ? (
@@ -194,19 +194,19 @@ export const Challenge = () => {
                 </pre>
               </div>
             ) : null}
-            {localData?.notice ? (
+            {challenge?.notice ? (
               <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                {localData.notice}
+                {challenge.notice}
               </div>
             ) : null}
-            {localData?.type === ChallengeType.Theoretical && (
-              <MarkdownText content={localData?.question} />
+            {challenge?.type === ChallengeType.Theoretical && (
+              <MarkdownText content={challenge?.question} />
             )}
-            {localData?.type === ChallengeType.Coding && (
+            {challenge?.type === ChallengeType.Coding && (
               <>
-                <MarkdownText content={localData?.question} />
+                <MarkdownText content={challenge?.question} />
                 <div className='grow min-h-0 relative mt-4'>
-                  <CodeArea value={localData?.initialCode ?? ''} readOnly={false} id="initial-code" />
+                  <CodeArea value={challenge?.initialCode ?? ''} readOnly={false} id="initial-code" />
                 </div>
               </>
             )}
@@ -223,7 +223,7 @@ export const Challenge = () => {
                 <div><p>Loading evaluation...</p></div>
               )}
               {feedback && (<ChallengeFeedback feedback={feedback} />)}
-              {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={localData?.type} />}
+              {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={challenge?.type} />}
               {!topic && !level && <ChallengeEmpty isQuestion={false}/>}
             </div>
           </Card>

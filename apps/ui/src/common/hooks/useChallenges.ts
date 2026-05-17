@@ -12,7 +12,7 @@ export const useChallenges = ({ page, completed }: UseChallengeProps) => {
 
   const navigate = useNavigate()
 
-  const currentChallenge = useRef<Question & Feedback>(null)
+  const challengeFromHistory = useRef<Question & Feedback>(null)
   
   const [__, setTriggerRender] = useState(false)
 
@@ -37,8 +37,8 @@ export const useChallenges = ({ page, completed }: UseChallengeProps) => {
 
     if (completedValue && pageValue && id) {
       const challenge = apiData?.data.find(item => item.id === id)
-      if (challenge && currentChallenge) {
-        currentChallenge.current = challenge
+      if (challenge && challengeFromHistory) {
+        challengeFromHistory.current = challenge
         setTriggerRender(true)
       }
     }
@@ -69,6 +69,6 @@ export const useChallenges = ({ page, completed }: UseChallengeProps) => {
   }, [error])
 
   return {
-    apiData, isPending, error, currentChallenge
+    apiData, isPending, error, challengeFromHistory
   }
 }
