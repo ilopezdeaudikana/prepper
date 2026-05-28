@@ -153,7 +153,10 @@ export const Challenge = () => {
     if (challengeFromHistory.current && active) {
       const { topic, level, completed } = challengeFromHistory.current
       setChallenge(challengeFromHistory.current)
-      if (completed) setFeedback(challengeFromHistory.current)
+      if (completed) {
+        setFeedback(challengeFromHistory.current)
+        setCanContinue(false)
+      }
       setConfiguration({
         topic: topic ?? RANDOM,
         level: level ?? RANDOM,
