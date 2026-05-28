@@ -17,7 +17,7 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
-    "@mastra/core": "^1.25.0",
+    "@mastra/core": "^1.36.0",
     "@supabase/supabase-js": "^2.57.4",
     "@mastra/evals": "^1.2.1",
     "@mastra/libsql": "^1.8.1",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.2",
-    "mastra":"^1.6.0",
+    "mastra": "^1.10.0",
     "typescript": "^5.9.3"
   }
 }
