@@ -38,8 +38,9 @@ export const FeedbackSchema = z.object({
 })
 
 export const ChallengeRequestSchema = z.object({
-  topic: z.string().min(1),
-  level: z.string().min(1),
+  // optional topic and level for backwards compatibility
+  topic: z.string().optional(),
+  level: z.string().optional(),
   previousQuestions: z.array(z.string()).default([]),
   sessionToken: z.string().min(1).optional(),
   user: z.string().min(1),
@@ -76,7 +77,7 @@ export const ChallengeResponseSchema = QuestionSchema.extend({
 export const EvaluationRequestSchema = z.object({
   question: QuestionSchema,
   answer: z.string().min(1),
-  level: z.string().min(1),
+  level: z.string().optional(),
   sessionToken: z.string().min(1).optional(),
   sessionId: z.uuid().optional(),
 })

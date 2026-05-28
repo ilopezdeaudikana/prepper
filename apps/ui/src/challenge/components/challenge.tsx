@@ -174,6 +174,7 @@ export const Challenge = () => {
         isFetching={isFetching}
         canContinue={canContinue}
         disabled={isDisabled}
+        idParam={idParam}
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}
@@ -210,7 +211,7 @@ export const Challenge = () => {
                 </div>
               </>
             )}
-            {!topic && !level && <ChallengeEmpty isQuestion={true}/>}
+            {!topic && !level && !idParam &&<ChallengeEmpty isQuestion={true}/>}
           </Card>
         </div>
         <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
@@ -224,7 +225,7 @@ export const Challenge = () => {
               )}
               {feedback && (<ChallengeFeedback feedback={feedback} />)}
               {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={challenge?.type} />}
-              {!topic && !level && <ChallengeEmpty isQuestion={false}/>}
+              {!topic && !level && !idParam && <ChallengeEmpty isQuestion={false}/>}
             </div>
           </Card>
         </div>

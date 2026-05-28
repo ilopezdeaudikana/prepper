@@ -10,11 +10,12 @@ interface ChallengeTopbarProps {
   isFetching: boolean
   disabled: boolean
   showFinish: boolean
+  idParam: string | null
   onLoadNextQuestion: () => void
   onNavigate: () => void
 }
 
-export const ChallengeTopbar = ({ canContinue, isFetching, disabled, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
+export const ChallengeTopbar = ({ canContinue, isFetching, disabled, idParam, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
 
   const [isConfigurationOpen, openConfiguration] = useState(false)
   const { topic, level } = useConfiguration(state => state.configuration)
@@ -64,9 +65,9 @@ const goToHistory = () => {
           Review previous challenges
         </Button>
 
-        {topic && level ? 
+        {topic && level || idParam ? 
         <>
-          <p>Topic: {topic}, Level {level}</p>
+          <p>Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}</p>
           <div className='flex gap-4'>
             {!showFinish && !isFetching && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
             {!showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
