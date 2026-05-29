@@ -114,7 +114,7 @@ export const listReusableQuestions = async (params: {
       query = query.eq(`${Tables.Sessions}.level`, level)
     }
 
-    if (type && type !== ChallengeType.Mixed && !isRandomMode) {
+    if (type && type !== ChallengeType.Mixed) {
       query = query.eq('type', type)
     }
 

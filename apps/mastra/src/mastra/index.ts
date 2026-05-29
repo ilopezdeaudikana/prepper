@@ -71,7 +71,6 @@ export const mastra = new Mastra({
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
             
-            console.error('RESULT', JSON.stringify(result))
             if (result.status !== 'success') {
               console.error('Challenge generation failed', JSON.stringify(result))
               return c.json(

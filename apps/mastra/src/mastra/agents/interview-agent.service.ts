@@ -1,4 +1,4 @@
-import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE, Feedback, LevelType, RANDOM } from '@repo/shared-types'
+import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE, Feedback, Level, LevelType, RANDOM } from '@repo/shared-types'
 import {
   createFeedback,
   createSession,
@@ -147,13 +147,15 @@ const forceReuseChallenge = async (params: {
 const getRandomStoredChallenge = async (params: {
   sessionId: string
   sessionToken: string
+  type: ChallengeType | undefined
   previousQuestions: string[]
   notice: string
   user: string
 }) => {
-  const { sessionId, sessionToken, previousQuestions, notice, user } = params
+  const { sessionId, sessionToken, type, previousQuestions, notice, user } = params
   const reusableQuestions = await listReusableQuestions({
     user,
+    type,
     excludeSessionToken: sessionToken,
     limit: 30,
   })
@@ -187,9 +189,16 @@ const buildChallengePrompt = (params: {
   const { topic, level, type, variationToken, sessionId, exclusions } = params
   
   const finalType = type && type !== ChallengeType.Mixed ? type : `${ChallengeType.Coding} or ${ChallengeType.Theoretical}`
+  const typeInstruction = type && type !== ChallengeType.Mixed
+    ? `- The returned JSON "type" must be "${type}".`
+    : `- Choose exactly one returned JSON "type": "${ChallengeType.Coding}" or "${ChallengeType.Theoretical}".`
+
   return `Generate one ${level}-level frontend interview challenge about ${topic} of ${finalType} type.
       Requirements:
       - Return exactly one challenge.
+      ${typeInstruction}
+      - For theoretical challenges, ask a conceptual/tradeoff question and omit "initialCode".
+      - For coding challenges, include starter "initialCode".
       - The challenge must be meaningfully different from previous ones.
       - Avoid repeating the same underlying task (e.g., counters, toggles, CRUD list variants).
       - Vary both the subtopic and the format (debugging, refactor, feature extension, architecture decision).
@@ -227,13 +236,14 @@ const normalizeGeneratedQuestion = (generatedQuestion: unknown) => {
 
 const generateFreshChallenge = async (params: {
   topic: string
-  level: string
+  level: LevelType
+  type: ChallengeType
   sessionId: string
   sessionToken: string
   allPreviousQuestions: string[]
   user: string
 }) => {
-  const { topic, level, sessionId, sessionToken, allPreviousQuestions, user } = params
+  const { topic, level, type, sessionId, sessionToken, allPreviousQuestions, user } = params
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   const exclusions = formatQuestionExclusions(allPreviousQuestions)
   let lastGenerated: Question | null = null
@@ -241,6 +251,7 @@ const generateFreshChallenge = async (params: {
   const generationResponse = await interviewAgent.generate(buildChallengePrompt({
     topic,
     level,
+    type,
     variationToken,
     sessionId,
     exclusions,
@@ -253,7 +264,13 @@ const generateFreshChallenge = async (params: {
     })
 
 
-  const generatedQuestion = { ...generationResponse.object, topic, level, user }
+  const generatedQuestion = {
+    ...generationResponse.object,
+    topic,
+    level,
+    type: type === ChallengeType.Mixed ? generationResponse.object?.type : type,
+    user,
+  }
   if (!generatedQuestion) {
     const rawText = generationResponse.text ?? ''
     console.error('INTERVIEW_AGENT: missing structured output for challenge', {
@@ -289,6 +306,7 @@ const generateFreshChallenge = async (params: {
     return getRandomStoredChallenge({
       sessionId,
       sessionToken,
+      type,
       previousQuestions: allPreviousQuestions,
       notice: 'We skipped a too-similar generated question and loaded a random stored challenge instead.',
       user
@@ -314,19 +332,21 @@ export const getChallenge = async (
   const { forceReuse, skipReuse } = options ?? {}
 
   const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
+  const effectiveLevel = level ?? Level.Mid
+  const effectiveType = type ?? ChallengeType.Mixed
 
   const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
     logger,
     topic,
-    level,
+    effectiveLevel,
     previousQuestions,
     sessionToken,
   )
 
   const reusedChallenge = await tryReuseChallenge({
     topic,
-    level,
-    type,
+    level: effectiveLevel,
+    type: effectiveType,
     sessionId: session.id,
     sessionToken: session.sessionToken,
     existingSessionToken: sessionToken,
@@ -342,7 +362,8 @@ export const getChallenge = async (
   if (forceReuse) {
     return forceReuseChallenge({
       topic,
-      level,
+      level: effectiveLevel,
+      type: effectiveType,
       sessionId: session.id,
       sessionToken: session.sessionToken,
       previousQuestions,
@@ -353,7 +374,8 @@ export const getChallenge = async (
 
   return generateFreshChallenge({
     topic,
-    level,
+    level: effectiveLevel,
+    type: effectiveType,
     sessionId: session.id,
     sessionToken: session.sessionToken,
     allPreviousQuestions,
@@ -465,13 +487,14 @@ export const submitAnswer = async (
 
     const { question, topic, initialCode, type } = challenge
 
-    const feedback = await generateReply(level, { question, topic, initialCode, type }, userAnswer)
+    const effectiveLevel = level ?? challenge.level ?? Level.Mid
+    const feedback = await generateReply(effectiveLevel, { question, topic, initialCode, type }, userAnswer)
 
     const session = await findSession(logger, sessionToken ?? '')
 
     logger.info(`Session ID ${JSON.stringify(session)} or ${sessionId}`)
     
-    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, level, feedback, userId)
+    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, effectiveLevel, feedback, userId)
     
     return {
       ...feedback,
