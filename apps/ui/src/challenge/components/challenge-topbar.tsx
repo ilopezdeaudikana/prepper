@@ -4,6 +4,7 @@ import { Configuration } from '@/configuration/configuration.component'
 import { useConfiguration } from '@/store/configuration.store'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ChallengeType } from '@repo/shared-types'
 
 interface ChallengeTopbarProps {
   canContinue: boolean
@@ -28,7 +29,7 @@ export const ChallengeTopbar = ({ canContinue, isFetching, disabled, idParam, on
   
   const restart = () => {
     setConfiguration({
-      topic: '', level: '', randomMode: false
+      topic: '', level: undefined, type: ChallengeType.Mixed, randomMode: false
     })
     setProgress({ score: 0, stage: INITIAL_STAGE })
     onNavigate()

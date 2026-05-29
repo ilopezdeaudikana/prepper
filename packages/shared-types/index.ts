@@ -2,19 +2,26 @@ import { z } from 'zod'
 
 export const ChallengeType = {
   Coding: 'coding',
-  Theoretical: 'theoretical'
+  Theoretical: 'theoretical',
+  Mixed: 'mixed'
 } as const
+export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType]
 
-export type ChallengeKey = (typeof ChallengeType)[keyof typeof ChallengeType]
+export const Level = {
+  Junior: 'junior',
+  Mid: 'mid',
+  Senior: 'senior'
+} as const
+export type LevelType = (typeof Level)[keyof typeof Level]
 
 export const QuestionSchema = z.object({
   id: z.string().optional(),
   sessionId: z.uuid().optional(),
   question: z.string(),
   initialCode: z.string().optional(),
-  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical]).optional(),
+  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical, ChallengeType.Mixed]).optional(),
   completed: z.boolean().optional(),
-  level: z.string().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional(),
   topic: z.string().optional(),
   user: z.string().min(1)
 })
@@ -40,7 +47,8 @@ export const FeedbackSchema = z.object({
 export const ChallengeRequestSchema = z.object({
   // optional topic and level for backwards compatibility
   topic: z.string().optional(),
-  level: z.string().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional(),
+  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical, ChallengeType.Mixed]).optional(),
   previousQuestions: z.array(z.string()).default([]),
   sessionToken: z.string().min(1).optional(),
   user: z.string().min(1),
@@ -104,14 +112,6 @@ export const Topic = {
 } as const
 
 export type TopicKey = (typeof Topic)[keyof typeof Topic]
-
-export const Level = {
-  Junior: 'junior',
-  Mid: 'mid',
-  Senior: 'senior'
-} as const
-
-export type LevelKey = (typeof Level)[keyof typeof Level]
 
 export const MINIMUM_SCORE = 7
 

@@ -31,7 +31,7 @@ export const Challenge = () => {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
-  const { level, topic } = useConfiguration(state => state.configuration)
+  const { level, topic, type } = useConfiguration(state => state.configuration)
   const setConfiguration = useConfiguration(state => state.setConfiguration)
   const { score, stage } = useProgress(state => state.progress)
   const setProgress = useProgress(state => state.setProgress)
@@ -48,7 +48,7 @@ export const Challenge = () => {
   const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () => ChallengeService.getChallenge(
-      { topic, level },
+      { topic, level, type },
       previousQuestions,
       sessionToken ?? undefined
     ),
@@ -74,7 +74,7 @@ export const Challenge = () => {
         question,
         initialCode,
         type,
-        level: level ?? RANDOM,
+        level,
         topic: topic ?? RANDOM
       }
     }
@@ -159,7 +159,8 @@ export const Challenge = () => {
       }
       setConfiguration({
         topic: topic ?? RANDOM,
-        level: level ?? RANDOM,
+        level,
+        type,
         randomMode: !topic && !level
       })
     } else if (!challengeFromHistory.current && active) {

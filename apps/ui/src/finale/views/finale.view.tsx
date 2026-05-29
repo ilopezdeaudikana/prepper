@@ -5,16 +5,16 @@ import { Redirector } from '@/common/components/redirector'
 
 export default function FinaleView() {
 
-  const { level, topic, randomMode } = useConfiguration(state => state.configuration)
+  const configuration = useConfiguration(state => state.configuration)
 
   const { stage } = useProgress(state => state.progress)
 
-  const shouldRedirect = () => ((!level || !topic) && !randomMode) || stage !== FINAL_STAGE + 1
+  const shouldRedirect = () => ((!configuration.level || !configuration.topic) && !configuration.randomMode) || stage !== FINAL_STAGE + 1
 
   return (
     <div>
       <Redirector condition={shouldRedirect}>
-        <Finale topic={topic} level={level} randomMode={randomMode}/>
+        <Finale {...configuration }/>
       </Redirector>
     </div>
   )

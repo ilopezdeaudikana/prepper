@@ -1,8 +1,10 @@
 import { create } from 'zustand'
+import { ChallengeType, type LevelType } from '@repo/shared-types'
 
 export interface ConfigurationState {
   topic: string
-  level: string
+  level?: LevelType
+  type: ChallengeType
   randomMode: boolean
   storageMode?: boolean
 }
@@ -16,9 +18,10 @@ export interface ConfigurationStore {
 export const useConfiguration = create<ConfigurationStore>((set) => ({
   configuration: {
     topic: '',
-    level: '',
+    level: undefined,
+    type: 'mixed',
     randomMode: false
   },
   setConfiguration: (newConfig: ConfigurationState) => set({ configuration: newConfig }),
-  resetConfiguration: () => set({ configuration: { topic: '', level: '', randomMode: false } })
+  resetConfiguration: () => set({ configuration: { topic: '', type: 'mixed', level: undefined, randomMode: false } })
 }))

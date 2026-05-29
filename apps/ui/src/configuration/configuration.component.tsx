@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
 import { Select, Switch, Checkbox, Divider, Drawer, Button, Input } from 'antd'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
-import { RANDOM, Topic } from '@repo/shared-types'
+import { RANDOM, Topic, ChallengeType, Level } from '@repo/shared-types'
 
 interface ConfigurationProps {
   open: boolean,
@@ -10,7 +10,7 @@ interface ConfigurationProps {
 }
 export const Configuration = ({ open, onClose }: ConfigurationProps) => {
 
-  const [configuration, setLocalConfiguration] = useState<ConfigurationState>({ topic: '', level: '', randomMode: false })
+  const [configuration, setLocalConfiguration] = useState<ConfigurationState>({ topic: '', level: undefined, type: ChallengeType.Mixed, randomMode: false })
 
   const setConfiguration = useConfiguration((state: ConfigurationStore) => state.setConfiguration)
 
@@ -21,10 +21,11 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
   }
 
   const handleSubmit = async () => {
-    const { topic, level, randomMode, storageMode } = configuration
+    const { topic, level, randomMode, storageMode, type } = configuration
     setConfiguration({
       topic: randomMode ? RANDOM : topic.trim(),
-      level: randomMode ? RANDOM : level.trim(),
+      level,
+      type,
       randomMode,
       storageMode
     })
@@ -45,7 +46,21 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
     >
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
         <div className="flex flex-col gap-8 m-4">
-          <h2 className="text-xl mb-4">Choose a topic and a difficulty level to start the challenge.</h2>
+          <h2 className="text-xl mb-4">Choose type, topic and a difficulty level to start the challenge.</h2>
+          <div>
+            <label className="block mb-4" htmlFor="type">Type</label>
+            <Select
+              style={{ width: 150 }}
+              onChange={(e) => handleChange('type', e)}
+              placeholder="Select type"
+              options={[
+                { value: ChallengeType.Theoretical, label: 'Theoretical' },
+                { value: ChallengeType.Coding, label: 'Coding' },
+                { value: ChallengeType.Mixed, label: 'Mixed' }
+              ]}
+              disabled={configuration.randomMode}
+            />
+          </div>
           <div>
             <label className="block mb-4" htmlFor="topic">Topic <small>(optimized for {Object.values(Topic).join(', ')})</small></label>
             <Input
@@ -69,9 +84,9 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
               onChange={(e) => handleChange('level', e)}
               placeholder="Select level"
               options={[
-                { value: 'junior', label: 'Junior' },
-                { value: 'mid', label: 'Mid' },
-                { value: 'senior', label: 'Senior' }
+                { value: Level.Junior, label: 'Junior' },
+                { value: Level.Mid, label: 'Mid' },
+                { value: Level.Senior, label: 'Senior' }
               ]}
               disabled={configuration.randomMode}
             />
@@ -81,7 +96,7 @@ export const Configuration = ({ open, onClose }: ConfigurationProps) => {
             <label
               htmlFor="random-mode"
             >
-            <p>Or maybe you prefer random level and topics:</p>
+            <p>Or maybe you prefer random type, level and topics:</p>
             </label>
             <Switch
               id="random-mode"

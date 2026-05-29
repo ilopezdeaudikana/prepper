@@ -1,4 +1,4 @@
-import type { EvaluationResponse, Feedback, Question } from "@repo/shared-types"
+import type { ChallengeType, EvaluationResponse, Feedback, LevelType, Question } from "@repo/shared-types"
 // import * as sample from '../sample.json'
 // import * as responseSample from '../sample-response.json'
 import { useConfiguration } from "@/store/configuration.store"
@@ -14,7 +14,7 @@ export type ChallengeResponse = Question & { sessionToken?: string, notice?: str
 // let hasThrown = false
 
 export const ChallengeService = {
-  async getChallenge(options: { topic: string, level: string }, previousQuestions: string[] = [], sessionToken?: string) {
+  async getChallenge(options: { topic: string, level?:LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
     // if (process.env.NODE_ENV === 'development') {
     //   if (!hasThrown) {
     //     hasThrown = !hasThrown
@@ -28,14 +28,14 @@ export const ChallengeService = {
 
     const { user } = useUser.getState()
 
-    const { topic, level } = options
+    const { topic, level, type } = options
 
     const response = await fetch(getApiUrl('interview/challenge'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level, previousQuestions, sessionToken, user, options: { forceReuse: storageMode } }),
+      body: JSON.stringify({ topic, level, type, previousQuestions, sessionToken, user, options: { forceReuse: storageMode } }),
     })
     return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
   },
@@ -59,7 +59,7 @@ export const ChallengeService = {
 
   },
 
-  async submitAnswer(question: Question, answer: string, level: string, sessionId?: string, sessionToken?: string) {
+  async submitAnswer(question: Question, answer: string, level?: LevelType, sessionId?: string, sessionToken?: string) {
     // if (process.env.NODE_ENV === 'development') {
     //   return Promise.resolve(responseSample as EvaluationResponse)
     // }
