@@ -1,4 +1,4 @@
-import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE, Feedback } from '@repo/shared-types'
+import { type Question, QuestionSchema, FeedbackSchema, ChallengeType, MINIMUM_SCORE, Feedback, LevelType, RANDOM } from '@repo/shared-types'
 import {
   createFeedback,
   createSession,
@@ -49,7 +49,7 @@ const formatReusableQuestion = async (
 const resolveChallengeSession = async (
   logger: IMastraLogger,
   topic: string,
-  level: string,
+  level: LevelType | undefined,
   previousQuestions: string[] = [],
   sessionToken?: string,
 ): Promise<ChallengeSessionContext> => {
@@ -62,7 +62,7 @@ const resolveChallengeSession = async (
     throw new Error(`Interview session not found: ${sessionId}`)
   }
 
-  const session = existingSession ?? await createSession(topic, level)
+  const session = existingSession ?? await createSession(topic, level ?? RANDOM)
   const persistedQuestions = await listQuestionTexts(session.id)
   const allPreviousQuestions = dedupeQuestions([...persistedQuestions, ...previousQuestions])
 
@@ -75,7 +75,8 @@ const resolveChallengeSession = async (
 
 const tryReuseChallenge = async (params: {
   topic: string
-  level: string
+  level: LevelType | undefined,
+  type: ChallengeType | undefined,
   sessionId: string
   sessionToken: string
   existingSessionToken?: string
@@ -86,6 +87,7 @@ const tryReuseChallenge = async (params: {
   const {
     topic,
     level,
+    type,
     sessionId,
     sessionToken,
     existingSessionToken,
@@ -101,6 +103,7 @@ const tryReuseChallenge = async (params: {
   const reusableQuestion = await findReusableQuestion({
     topic,
     level,
+    type,
     user,
     excludeSessionToken: existingSessionToken ?? sessionToken,
     previousQuestions,
@@ -115,19 +118,21 @@ const tryReuseChallenge = async (params: {
 
 const forceReuseChallenge = async (params: {
   topic: string
-  level: string
+  level: LevelType,
+  type: ChallengeType,
   sessionId: string
   sessionToken: string
   previousQuestions: string[]
   persistedQuestions: string[]
   user: string
 }) => {
-  const { topic, level, sessionId, sessionToken, previousQuestions, persistedQuestions, user } = params
+  const { topic, level, type, sessionId, sessionToken, previousQuestions, persistedQuestions, user } = params
   // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
   const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
   const fallbackReusable = await findReusableQuestion({
     topic,
     level,
+    type,
     user,
     previousQuestions: latestQuestion ? [latestQuestion] : [],
   })
@@ -173,14 +178,16 @@ const formatQuestionExclusions = (questions: string[]) =>
 
 const buildChallengePrompt = (params: {
   topic: string
-  level: string
+  level: LevelType,
+  type: ChallengeType,
   variationToken: string
   sessionId: string
   exclusions: string
 }) => {
-  const { topic, level, variationToken, sessionId, exclusions } = params
-
-  return `Generate one ${level}-level frontend interview challenge about ${topic}.
+  const { topic, level, type, variationToken, sessionId, exclusions } = params
+  
+  const finalType = type && type !== ChallengeType.Mixed ? type : `${ChallengeType.Coding} or ${ChallengeType.Theoretical}`
+  return `Generate one ${level}-level frontend interview challenge about ${topic} of ${finalType} type.
       Requirements:
       - Return exactly one challenge.
       - The challenge must be meaningfully different from previous ones.
@@ -296,11 +303,13 @@ const generateFreshChallenge = async (params: {
 export const getChallenge = async (
   logger: IMastraLogger,
   topic: string,
-  level: string,
+  level: LevelType | undefined,
+  type: ChallengeType | undefined,
   previousQuestions: string[] = [],
   user: string,
   sessionToken?: string,
-  options?: ChallengeOptions,
+  options?: ChallengeOptions
+
 ) => {
   const { forceReuse, skipReuse } = options ?? {}
 
@@ -317,6 +326,7 @@ export const getChallenge = async (
   const reusedChallenge = await tryReuseChallenge({
     topic,
     level,
+    type,
     sessionId: session.id,
     sessionToken: session.sessionToken,
     existingSessionToken: sessionToken,
@@ -353,7 +363,7 @@ export const getChallenge = async (
 
 
 // SUBMIT CHALLENGE HELPERS
-const generateReply = async (level: string, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
+const generateReply = async (level: LevelType, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
   try {
     const generationResponse = await interviewAgent.generate(
       `Level: ${level}
@@ -444,7 +454,7 @@ export const submitAnswer = async (
   logger: IMastraLogger,
   challenge: Question,
   userAnswer: string,
-  level: string,
+  level: LevelType | undefined,
   user: string,
   sessionId?: string,
   sessionToken?: string

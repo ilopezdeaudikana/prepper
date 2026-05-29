@@ -1,3 +1,4 @@
+import { ChallengeType, LevelType } from '@repo/shared-types'
 import { listReusableQuestions } from "../storage/interview-session.repository"
 
 const normalize = (text: string) =>
@@ -32,15 +33,17 @@ export const isTooSimilar = (candidate: string, previousQuestions: string[]) =>
 
 export const findReusableQuestion = async (params: {
   topic: string
-  level: string
+  level: LevelType | undefined,
+  type: ChallengeType | undefined,
   user: string
   excludeSessionToken?: string
   previousQuestions: string[]
 }) => {
-  const { topic, level, excludeSessionToken, previousQuestions, user } = params
+  const { topic, level, type, excludeSessionToken, previousQuestions, user } = params
   const reusableQuestions = await listReusableQuestions({
     topic,
     level,
+    type,
     user,
     excludeSessionToken,
     limit: 30,

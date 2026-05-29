@@ -17,19 +17,19 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
-    "@mastra/core": "^1.36.0",
+    "@mastra/core": "^1.37.1",
     "@supabase/supabase-js": "^2.57.4",
-    "@mastra/evals": "^1.2.1",
-    "@mastra/libsql": "^1.8.1",
+    "@mastra/evals": "^1.2.3",
+    "@mastra/libsql": "^1.11.1",
     "@mastra/loggers": "^1.1.1",
-    "@mastra/memory": "^1.15.1",
-    "@mastra/observability": "^1.9.1",
-    "@mastra/deployer-vercel": "^1.1.17",
+    "@mastra/memory": "^1.20.0",
+    "@mastra/observability": "^1.14.0",
+    "@mastra/deployer-vercel": "^1.1.32",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.3.2",
-    "mastra": "^1.10.0",
+    "mastra": "^1.10.2",
     "typescript": "^5.9.3"
   }
 }

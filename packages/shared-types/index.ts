@@ -85,7 +85,7 @@ export const ChallengeResponseSchema = QuestionSchema.extend({
 export const EvaluationRequestSchema = z.object({
   question: QuestionSchema,
   answer: z.string().min(1),
-  level: z.string().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional(),
   sessionToken: z.string().min(1).optional(),
   sessionId: z.uuid().optional(),
 })

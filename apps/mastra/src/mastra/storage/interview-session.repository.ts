@@ -1,4 +1,4 @@
-import { RANDOM, type Feedback, type Question } from '@repo/shared-types'
+import { ChallengeType, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { IMastraLogger } from '@mastra/core/logger'
@@ -54,7 +54,7 @@ export const getSession = async (logger: IMastraLogger, sessionId: string) => {
     .eq('id', sessionId)
     .maybeSingle<InterviewSession>()
 
-  logger.info(`Session data ${data?.id}`)  
+  logger.info(`Session data ${data?.id}`)
   if (error) throw new Error(`Failed to fetch session: ${error.message}`)
   if (!data) return null
   const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
@@ -75,13 +75,15 @@ export const listQuestionTexts = async (sessionId: string) => {
 
 export const listReusableQuestions = async (params: {
   topic?: string
-  level?: string
+  level?: LevelType,
+  type?: ChallengeType,
   user: string
   excludeSessionToken?: string
   limit?: number
 }) => {
+
   const supabase = getSupabaseClient()
-  const { topic, level, excludeSessionToken, limit = 20, user } = params
+  const { topic, level, type, excludeSessionToken, limit = 20, user } = params
 
   const pageSize = limit
   const batchSize = pageSize * 3
@@ -105,11 +107,15 @@ export const listReusableQuestions = async (params: {
       .range(offset, offset + batchSize - 1)
 
     if (topic && !isRandomMode) {
-      query = query.eq('interview_sessions.topic', topic)
+      query = query.eq(`${Tables.Sessions}.topic`, topic)
     }
 
     if (level && !isRandomMode) {
-      query = query.eq('interview_sessions.level', level)
+      query = query.eq(`${Tables.Sessions}.level`, level)
+    }
+
+    if (type && type !== ChallengeType.Mixed && !isRandomMode) {
+      query = query.eq('type', type)
     }
 
     const { data, error } = await query
@@ -217,7 +223,7 @@ export const createFeedback = async (params: {
 
 export const listAllQuestions = async (start: string, completed: string, user: string)
   : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt'>[], count: number }> => {
-  
+
   const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
   const supabase = getSupabaseClient()

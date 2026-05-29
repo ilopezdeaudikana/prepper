@@ -3,6 +3,7 @@ import {
   ChallengeResponseSchema,
   EvaluationRequestSchema,
   EvaluationResponseSchema,
+  RANDOM,
 } from '@repo/shared-types'
 import { createStep, createWorkflow } from '@mastra/core/workflows'
 import { getChallenge, submitAnswer } from '../agents/interview-agent.service'
@@ -16,13 +17,13 @@ const generateChallengeStep = createStep({
     logger.info('getChallenge starts')
     return getChallenge(
       logger,
-      inputData.topic,
+      inputData.topic ?? RANDOM,
       inputData.level,
+      inputData.type,
       inputData.previousQuestions,
       inputData.user,
       inputData.sessionToken,
-      inputData.options,
-
+      inputData.options
     )
   },
 })
