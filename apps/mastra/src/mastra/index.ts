@@ -98,7 +98,6 @@ export const mastra = new Mastra({
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
 
-            console.error(`payload ${JSON.stringify(payload)}`)
             const workflow = mastra.getWorkflow('evaluateAnswerWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
@@ -117,6 +116,36 @@ export const mastra = new Mastra({
           } catch (error) {
             console.error(`Evaluation error ${JSON.stringify(error)}`)
             return handleRequestError(c, error, 'Evaluation failed.')
+          }
+        },
+      }),
+        registerApiRoute('/interview/hint', {
+        method: 'POST',
+        handler: async (c) => {
+      
+          try {
+            const rawBody = await c.req.text()
+            
+            const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
+            const mastra = c.get('mastra')
+
+            const workflow = mastra.getWorkflow('hintWorkflow')
+            const run = await workflow.createRun()
+            const result = await run.start({ inputData: payload })
+
+            if (result.status !== 'success') {
+              return c.json(
+                {
+                  error: 'Hint generation failed.',
+                },
+                500
+              )
+            }
+
+            return c.json(result.result)
+          } catch (error) {
+            console.error(`Hint generation error ${JSON.stringify(error)}`)
+            return handleRequestError(c, error, 'Hint generation failed.')
           }
         },
       }),

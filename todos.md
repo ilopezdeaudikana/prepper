@@ -1,6 +1,3 @@
-Challenge Type Selection
-Add coding | theoretical | mixed to configuration, pass it into challenge generation, and store it with the question.
-
 Hints
 Add a “Hint” action before submission. The backend can generate one constrained hint from the current challenge without giving away the answer. Track hintUsed so feedback/reporting can say the attempt used help.
 

@@ -6,7 +6,9 @@ import {
   RANDOM,
 } from '@repo/shared-types'
 import { createStep, createWorkflow } from '@mastra/core/workflows'
-import { getChallenge, submitAnswer } from '../agents/interview-agent.service'
+import { getChallenge } from '../agents/challenge.service'
+import { submitAnswer } from '../agents/evaluate.service'
+import { submitHint } from '../agents/hint.service'
 
 const generateChallengeStep = createStep({
   id: 'generate-challenge-step',
@@ -47,6 +49,22 @@ const evaluateAnswerStep = createStep({
   },
 })
 
+const hintStep = createStep({
+  id: 'hint-step',
+  inputSchema: EvaluationRequestSchema,
+  outputSchema: EvaluationResponseSchema,
+  execute: async ({ inputData, mastra }) => {
+    const logger = mastra.getLogger()
+    logger.info(`submitAnswer starts ${inputData?.sessionId}`)
+    return submitHint(
+      logger,
+      inputData?.question,
+      inputData?.answer,
+      inputData?.level
+    )
+  },
+})
+
 export const generateChallengeWorkflow = createWorkflow({
   id: 'generate-challenge-workflow',
   inputSchema: ChallengeRequestSchema,
@@ -61,4 +79,12 @@ export const evaluateAnswerWorkflow = createWorkflow({
   outputSchema: EvaluationResponseSchema,
 })
   .then(evaluateAnswerStep)
+  .commit()
+
+export const hintWorkflow = createWorkflow({
+  id: 'hint-workflow',
+  inputSchema: EvaluationRequestSchema,
+  outputSchema: EvaluationResponseSchema,
+})
+  .then(hintStep)
   .commit()
