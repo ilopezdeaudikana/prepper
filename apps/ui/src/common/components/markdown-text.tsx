@@ -17,7 +17,7 @@ export const MarkdownText = ({ content }: { content: string }) => {
     const parts = content.split(/`(.+?)`/g)
 
     return (
-      <p className="grow min-h-0 relative">
+      <p className="min-h-0 relative">
         {parts.map((part, index) => {
           const isCode = index % 2 !== 0 // Odd indices are the captured groups (code)
 

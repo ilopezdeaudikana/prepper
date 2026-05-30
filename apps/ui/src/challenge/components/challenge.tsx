@@ -162,6 +162,8 @@ export const Challenge = () => {
     challengeFromHistory.current = null
     setChallenge(null)
     setFeedback(null)
+    setHint('')
+    setReply('')
   }
 
   const shouldShowForm = feedback === null && !loadingEvaluation
