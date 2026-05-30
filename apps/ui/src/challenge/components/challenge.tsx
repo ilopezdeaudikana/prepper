@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react'
-import {
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
-import {
-  MarkdownText
-} from '@/common/components/markdown-text'
+import { useEffect, useState, type MouseEventHandler } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { MarkdownText } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
-import { type Feedback, type Question, ChallengeType, RANDOM } from '@repo/shared-types'
+import {
+  type Feedback,
+  type Question,
+  ChallengeType,
+  RANDOM,
+} from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration } from '@/store/configuration.store'
-import { Card } from 'antd'
+import { Button, Card } from 'antd'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
@@ -20,25 +20,33 @@ import { useReport } from '@/store/report.store'
 import { useChallenges } from '@/common/hooks/useChallenges'
 import { useSearchParams } from 'react-router-dom'
 import { ChallengeEmpty } from './challenge-empty'
+import { ChallengeHint } from './challenge-hint'
 
 export const Challenge = () => {
-
-  const [feedback, setFeedback] = useState<Feedback & { error?: string } | null>(null)
+  const [feedback, setFeedback] = useState<
+    (Feedback & { error?: string }) | null
+  >(null)
   const [isDisabled, setIsDisabled] = useState(true)
+  const [reply, setReply] = useState('')
+  const [hint, setHint] = useState('')
   const [canContinue, setCanContinue] = useState(false)
-  const [challenge, setChallenge] = useState<(Question & Feedback & { error?: string, notice?: string }) | null>(null)
+  const [challenge, setChallenge] = useState<
+    (Question & Feedback & { error?: string; notice?: string }) | null
+  >(null)
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
-  const { level, topic, type } = useConfiguration(state => state.configuration)
-  const setConfiguration = useConfiguration(state => state.setConfiguration)
-  const { score, stage } = useProgress(state => state.progress)
-  const setProgress = useProgress(state => state.setProgress)
-  const addToReport = useReport(state => state.addToReport)
+  const { level, topic, type } = useConfiguration(
+    (state) => state.configuration,
+  )
+  const setConfiguration = useConfiguration((state) => state.setConfiguration)
+  const { score, stage } = useProgress((state) => state.progress)
+  const setProgress = useProgress((state) => state.setProgress)
+  const addToReport = useReport((state) => state.addToReport)
 
   const queryClient = useQueryClient()
-  
+
   const { challengeFromHistory } = useChallenges({})
 
   const [searchParams, setSearchParams] = useSearchParams()
@@ -47,24 +55,30 @@ export const Challenge = () => {
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
-    queryFn: () => ChallengeService.getChallenge(
-      { topic, level, type },
-      previousQuestions,
-      sessionToken ?? undefined
-    ),
+    queryFn: () =>
+      ChallengeService.getChallenge(
+        { topic, level, type },
+        previousQuestions,
+        sessionToken ?? undefined,
+      ),
     enabled: !!topic && !!level && !idParam,
     staleTime: Infinity,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
   })
 
   const requestErrorMessage =
     challenge?.error ??
-    (error instanceof Error ? error.message : error ? JSON.stringify(error, null, 2) : null)
+    (error instanceof Error
+      ? error.message
+      : error
+        ? JSON.stringify(error, null, 2)
+        : null)
 
   const handleInputChange = (reply?: string) => {
     setIsDisabled(!reply)
+    setReply(reply ?? '')
   }
 
   const extractQuestionFromLocalData = () => {
@@ -75,11 +89,31 @@ export const Challenge = () => {
         initialCode,
         type,
         level,
-        topic: topic ?? RANDOM
+        topic: topic ?? RANDOM,
       }
     }
   }
-  const handleSubmit = async (reply: string) => {
+
+  const getHint: MouseEventHandler<HTMLElement> = async (e) => {
+    e.stopPropagation()
+
+    try {
+      const result: { text: string } = await ChallengeService.getHint(
+        (data as Question) || extractQuestionFromLocalData(),
+        reply,
+        level,
+      )
+
+      setHint(result.text)
+    } catch (error: any) {
+      setFeedback({
+        error: error?.error ?? error?.message ?? 'Hint generation failed.',
+      } as Feedback)
+    } finally {
+    }
+  }
+
+  const handleSubmit = async () => {
     if (!reply) return
 
     setLoadingEvaluation(true)
@@ -87,11 +121,11 @@ export const Challenge = () => {
 
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
-        data as Question || extractQuestionFromLocalData(),
+        (data as Question) || extractQuestionFromLocalData(),
         reply,
         level,
         challenge?.sessionId,
-        sessionToken ?? undefined
+        sessionToken ?? undefined,
       )
 
       setFeedback(result)
@@ -100,12 +134,17 @@ export const Challenge = () => {
 
       if (challenge) {
         const { question, initialCode, type } = challenge
-        addToReport({ challenge: { question, initialCode, type }, reply, evaluation: result })
+        addToReport({
+          challenge: { question, initialCode, type },
+          reply,
+          evaluation: result,
+        })
       }
       queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
-
     } catch (error: any) {
-      setFeedback({ error: error?.error ?? error?.message ?? 'Evaluation failed.' } as Feedback)
+      setFeedback({
+        error: error?.error ?? error?.message ?? 'Evaluation failed.',
+      } as Feedback)
     } finally {
       setLoadingEvaluation(false)
       setCanContinue(true)
@@ -134,7 +173,7 @@ export const Challenge = () => {
 
     if (!data?.question) return
     setPreviousQuestions((current) =>
-      current.includes(data.question) ? current : [...current, data.question]
+      current.includes(data.question) ? current : [...current, data.question],
     )
 
     setChallenge(data ?? null)
@@ -161,7 +200,7 @@ export const Challenge = () => {
         topic: topic ?? RANDOM,
         level,
         type,
-        randomMode: !topic && !level
+        randomMode: !topic && !level,
       })
     } else if (!challengeFromHistory.current && active) {
       setChallenge(null)
@@ -173,7 +212,7 @@ export const Challenge = () => {
   }, [challengeFromHistory.current])
 
   return (
-    <div className="flex flex-col h-screen p-4 align-self-center gap-4">
+    <div className="flex h-screen min-h-0 flex-col gap-4 overflow-hidden p-4 align-self-center">
       <ChallengeTopbar
         isFetching={isFetching}
         canContinue={canContinue}
@@ -183,20 +222,40 @@ export const Challenge = () => {
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}
       />
-      <div className="flex align-self-center gap-4 h-full min-w-0">
-        <div className="flex min-w-0 flex-1 basis-1/2 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 align-self-center gap-4 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col">
           <Card
-            className="flex flex-col flex-1 p-4 overflow-auto"
-            styles={{ body: { display: 'flex', flexDirection: 'column', flexGrow: 1 } }}
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
+            styles={{
+              body: {
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                maxHeight: '100%',
+                minHeight: 0,
+                minWidth: 0,
+                overflow: 'auto',
+              },
+            }}
           >
+            {challenge && !hint && !challengeFromHistory.current?.completed &&(
+              <Button type="primary" className="mr-2 mb-2 w-24 self-end" onClick={getHint}>
+                Need help?
+              </Button>
+            )}
+            {hint && (
+              <ChallengeHint hint={hint} />
+            )}
             {!requestErrorMessage && (!challenge || isFetching) && (
-              <GenerationState isFetching={isFetching} isReady={!!topic || !!level} />
+              <GenerationState
+                isFetching={isFetching}
+                isReady={!!topic || !!level}
+              />
             )}
             {requestErrorMessage ? (
-              <div><p>Error loading data</p>
-                <pre className="whitespace-pre-wrap">
-                  {requestErrorMessage}
-                </pre>
+              <div>
+                <p>Error loading data</p>
+                <pre className="whitespace-pre-wrap">{requestErrorMessage}</pre>
               </div>
             ) : null}
             {challenge?.notice ? (
@@ -210,26 +269,51 @@ export const Challenge = () => {
             {challenge?.type === ChallengeType.Coding && (
               <>
                 <MarkdownText content={challenge?.question} />
-                <div className='grow min-h-0 relative mt-4'>
-                  <CodeArea value={challenge?.initialCode ?? ''} readOnly={false} id="initial-code" />
+                <div className="grow min-h-0 relative mt-4">
+                  <CodeArea
+                    value={challenge?.initialCode ?? ''}
+                    readOnly={false}
+                    id="initial-code"
+                  />
                 </div>
               </>
             )}
-            {!topic && !level && !idParam &&<ChallengeEmpty isQuestion={true}/>}
+            {!topic && !level && !idParam && (
+              <ChallengeEmpty isQuestion={true} />
+            )}
           </Card>
         </div>
-        <div className="flex min-w-0 basis-1/2 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
           <Card
-            className="flex flex-col flex-1 p-4 overflow-auto"
-            styles={{ body: { display: 'flex', flexDirection: 'column', flexGrow: 1 } }}
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
+            styles={{
+              body: {
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                minHeight: 0,
+                minWidth: 0,
+                overflow: 'auto',
+              },
+            }}
           >
-            <div className="flex flex-col flex-1">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {loadingEvaluation && (
-                <div><p>Loading evaluation...</p></div>
+                <div>
+                  <p>Loading evaluation...</p>
+                </div>
               )}
-              {feedback && (<ChallengeFeedback feedback={feedback} />)}
-              {shouldShowForm && <ChallengeReply onInputChange={handleInputChange} onSubmit={handleSubmit} type={challenge?.type} />}
-              {!topic && !level && !idParam && <ChallengeEmpty isQuestion={false}/>}
+              {feedback && <ChallengeFeedback feedback={feedback} />}
+              {shouldShowForm && (
+                <ChallengeReply
+                  onInputChange={handleInputChange}
+                  onSubmit={handleSubmit}
+                  type={challenge?.type}
+                />
+              )}
+              {!topic && !level && !idParam && (
+                <ChallengeEmpty isQuestion={false} />
+              )}
             </div>
           </Card>
         </div>

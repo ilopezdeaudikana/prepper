@@ -9,21 +9,26 @@ interface InfoPanelProps {
 
 export const InfoPanel = ({ children, title, placement }: InfoPanelProps) => {
 
-  const [api, contextHolder] = notification.useNotification()
+  const [api, contextHolder] = notification.useNotification({  })
 
   const ref= useRef(true)
   
+  const closeNotification = () => {
+    localStorage.setItem('prepper-info', 'true')
+  }
+
   const openNotification = () => {
     api.open({
       title,
       description: children,
       placement: placement ?? 'bottomLeft',
       duration: 0,
+      onClose: closeNotification
     })
   }
 
   useEffect(() => {
-    if (ref.current) {
+    if (ref.current && !localStorage.getItem('prepper-info')) {
       openNotification()
     } 
       

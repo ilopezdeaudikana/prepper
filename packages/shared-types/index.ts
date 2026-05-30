@@ -26,6 +26,18 @@ export const QuestionSchema = z.object({
   user: z.string().min(1)
 })
 
+export const HintQuestionSchema = QuestionSchema.pick({
+  question: true,
+  initialCode: true,
+  type: true,
+  level: true,
+  topic: true
+})
+
+export const HintResponseSchema = z.object({
+  text: z.string()
+})
+
 export const FeedbackSchema = z.object({
   score: z.number().min(0).max(10).optional()
     .describe('Numeric interview score from 0 to 10.'),
@@ -90,16 +102,24 @@ export const EvaluationRequestSchema = z.object({
   sessionId: z.uuid().optional(),
 })
 
+export const HintRequestSchema = z.object({
+  question: HintQuestionSchema,
+  answer: z.string().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional()
+})
+
 export const EvaluationResponseSchema = FeedbackSchema.extend({
   sessionToken: z.string().min(1).optional(),
 })
 
 export type Question = z.infer<typeof QuestionSchema>
+export type Hint = z.infer<typeof HintQuestionSchema>
 export type Feedback = z.infer<typeof FeedbackSchema> & { error?: string }
 export type ChallengeRequest = z.infer<typeof ChallengeRequestSchema>
 export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>
 export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
 export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
+export type HintResponse = z.infer<typeof HintResponseSchema>
 export type UserResponse = z.infer<typeof UserResponseSchema>
 
 export const Topic = {

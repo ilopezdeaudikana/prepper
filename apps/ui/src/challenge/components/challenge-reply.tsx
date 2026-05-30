@@ -4,7 +4,7 @@ import { CodeArea } from '../../common/components/code-area'
 import { Input } from 'antd'
 
 interface ChallengeReplyProps {
-  onSubmit: (reply: string) => void
+  onSubmit: () => void
   onInputChange: (reply: string) => void
   type: Question['type']
 }
@@ -16,7 +16,7 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
   
   const submit = (e: React.SubmitEvent) => {
     e.preventDefault()
-    onSubmit(input)
+    onSubmit()
     setInput('')
   }
 

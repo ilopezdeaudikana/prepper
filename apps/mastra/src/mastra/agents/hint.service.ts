@@ -1,10 +1,14 @@
-import { type Question, FeedbackSchema, LevelType} from '@repo/shared-types'
+import { type Question, HintResponseSchema, Hint, LevelType} from '@repo/shared-types'
 
 import { interviewAgent } from "./interview-agent"
-import { IMastraLogger } from '@mastra/core/logger'
 
+const generateHint = async (
+  level: LevelType | undefined, 
+  question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, 
+  userAnswer: string | undefined
+) => {
+  console.log('Generate hint')
 
-const generateHint = async (level: LevelType | undefined, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
   try {
     const generationResponse = await interviewAgent.generate(
       `Level: ${level}
@@ -19,39 +23,34 @@ const generateHint = async (level: LevelType | undefined, question: Pick<Questio
      - return terse bullet fragments,
      - each item must explain what was expected,
      - explain why that expectation matters for this specific question,
-     Keep the tone constructive and specific.`,
+     Keep the tone constructive and specific. Be specific but concise, no more than 120 words`,
       {
         structuredOutput: {
-          schema: FeedbackSchema,
+          schema: HintResponseSchema,
           jsonPromptInjection: true,
         },
       }
     )
-    if (!generationResponse.object) {
-      const rawText = generationResponse.text ?? ''
-      console.error('INTERVIEW_AGENT: missing structured output for evaluation', {
-        level,
-        hasText: Boolean(generationResponse.text),
-        textPreview: rawText.slice(0, 2000),
-      })
-      throw new Error('Evaluation generation returned no structured output')
+
+    if (!generationResponse.text) {
+      throw new Error('Hint generation returned no structured output')
     }
-    const parsedFeedback = FeedbackSchema.safeParse(generationResponse.object)
-    if (!parsedFeedback.success) {
-      console.error('feedback parse error')
-      throw new Error('Failed to generate feedback')
+    const parsedHint = HintResponseSchema.safeParse(generationResponse.object)
+    if (!parsedHint.success) {
+      console.error('hint parse error')
+      throw new Error('Failed to generate hint')
     }
-    return parsedFeedback.data
+    return parsedHint.data
+
   } catch (error) {
-    console.error('Error in feedback generation step', JSON.stringify(error))
+    console.error('Error in hint generation step', JSON.stringify(error))
     throw error
   }
 }
 
 export const submitHint = async (
-  logger: IMastraLogger,
-  challenge: Question,
-  userAnswer: string,
+  challenge: Hint,
+  userAnswer: string | undefined,
   level: LevelType | undefined
 ) => {
 
@@ -59,13 +58,13 @@ export const submitHint = async (
 
     const { question, topic, initialCode, type } = challenge
 
-    const feedback = await generateHint(level, { question, topic, initialCode, type }, userAnswer)
+    const hint = await generateHint(level, { question, topic, initialCode, type }, userAnswer)
 
     return {
-      ...feedback,
+      ...hint,
     }
   } catch (error) {
-    logger.error(JSON.stringify(error))
+    console.error(JSON.stringify(error))
     throw error
   }
 

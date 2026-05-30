@@ -2,9 +2,9 @@ import { Mastra } from '@mastra/core/mastra'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
-import { evaluateAnswerWorkflow, generateChallengeWorkflow } from './workflows/interview.workflows'
+import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
 import { listAllQuestions, findUser } from './storage/interview-session.repository'
 import * as z from 'zod/v4/core'
 
@@ -30,11 +30,11 @@ function parseAndValidateBody<T extends z.$ZodType>(rawBody: string, schema: T):
   const { success, data, error } = z.safeParse(schema, parsedBody)
 
 
-   if (success) return data
-   else {
+  if (success) return data
+  else {
     console.error(JSON.stringify(error))
-    throw('Zod parsing error')
-   }
+    throw ('Zod parsing error')
+  }
 }
 
 function handleRequestError(c: any, error: unknown, fallbackMessage: string) {
@@ -55,6 +55,7 @@ export const mastra = new Mastra({
   workflows: {
     generateChallengeWorkflow,
     evaluateAnswerWorkflow,
+    hintWorkflow
   },
   server: {
     // Needs one set or logging can break
@@ -70,7 +71,7 @@ export const mastra = new Mastra({
             const workflow = mastra.getWorkflow('generateChallengeWorkflow')
             const run = await workflow.createRun()
             const result = await run.start({ inputData: payload })
-            
+
             if (result.status !== 'success') {
               console.error('Challenge generation failed', JSON.stringify(result))
               return c.json(
@@ -91,10 +92,10 @@ export const mastra = new Mastra({
       registerApiRoute('/interview/evaluate', {
         method: 'POST',
         handler: async (c) => {
-      
+
           try {
             const rawBody = await c.req.text()
-            
+
             const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
             const mastra = c.get('mastra')
 
@@ -119,24 +120,25 @@ export const mastra = new Mastra({
           }
         },
       }),
-        registerApiRoute('/interview/hint', {
+      registerApiRoute('/interview/hint', {
         method: 'POST',
         handler: async (c) => {
-      
+
           try {
             const rawBody = await c.req.text()
-            
-            const payload = parseAndValidateBody(rawBody, EvaluationRequestSchema)
+
+            const payload = parseAndValidateBody(rawBody, HintRequestSchema)
             const mastra = c.get('mastra')
 
             const workflow = mastra.getWorkflow('hintWorkflow')
             const run = await workflow.createRun()
-            const result = await run.start({ inputData: payload })
+            const result = await run.start({ inputData: payload 
+            })
 
             if (result.status !== 'success') {
               return c.json(
                 {
-                  error: 'Hint generation failed.',
+                  error: 'Hint generation status other than success.',
                 },
                 500
               )
@@ -158,7 +160,6 @@ export const mastra = new Mastra({
             const { start, completed, user } = parseAndValidateBody(query, AllChallengesRequestSchema)
 
             const result = await listAllQuestions(start, completed, user)
-            console.info('All challenges', result.data[0])
             return c.json(result)
           } catch (error) {
             console.error('Unexpected challenge retrieval error', error)

@@ -1,6 +1,4 @@
-import type { ChallengeType, EvaluationResponse, Feedback, LevelType, Question } from "@repo/shared-types"
-// import * as sample from '../sample.json'
-// import * as responseSample from '../sample-response.json'
+import type { ChallengeType, EvaluationResponse, Feedback, HintResponse, LevelType, Question } from "@repo/shared-types"
 import { useConfiguration } from "@/store/configuration.store"
 import { parseResponse } from "@/common/utils/parse-api-response"
 import { useUser } from "@/store/user.store"
@@ -11,18 +9,9 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 
 export type ChallengeResponse = Question & { sessionToken?: string, notice?: string }
 
-// let hasThrown = false
 
 export const ChallengeService = {
-  async getChallenge(options: { topic: string, level?:LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
-    // if (process.env.NODE_ENV === 'development') {
-    //   if (!hasThrown) {
-    //     hasThrown = !hasThrown
-    //     return Promise.reject(new Error('Simulated error in development mode'))
-    //   } else {
-    //     return Promise.resolve(sample as ChallengeResponse)
-    //   }
-    // }
+  async getChallenge(options: { topic: string, level?: LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
 
     const { storageMode } = useConfiguration.getState().configuration
 
@@ -41,7 +30,7 @@ export const ChallengeService = {
   },
 
   async getChallenges(start: string, completed: string) {
-    
+
     const { user } = useUser.getState()
     const url = new URL(getApiUrl('interview/all-challenges'))
     url.searchParams.append('start', start)
@@ -54,15 +43,12 @@ export const ChallengeService = {
         'Content-Type': 'application/json',
       }
     })
-    
-  return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge retrieval failed.')
+
+    return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge retrieval failed.')
 
   },
 
   async submitAnswer(question: Question, answer: string, level?: LevelType, sessionId?: string, sessionToken?: string) {
-    // if (process.env.NODE_ENV === 'development') {
-    //   return Promise.resolve(responseSample as EvaluationResponse)
-    // }
     const { user } = useUser.getState()
 
     const response = await fetch(getApiUrl('interview/evaluate'), {
@@ -73,5 +59,17 @@ export const ChallengeService = {
       body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken, sessionId }),
     })
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
+  },
+
+  async getHint(question: Question, answer: string, level?: LevelType) {
+
+    const response = await fetch(getApiUrl('interview/hint'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question: { ...question }, answer, level }),
+    })
+    return parseResponse<HintResponse>(response, 'Hint generation failed.')
   }
 }

@@ -3,6 +3,8 @@ import {
   ChallengeResponseSchema,
   EvaluationRequestSchema,
   EvaluationResponseSchema,
+  HintRequestSchema,
+  HintResponseSchema,
   RANDOM,
 } from '@repo/shared-types'
 import { createStep, createWorkflow } from '@mastra/core/workflows'
@@ -51,13 +53,11 @@ const evaluateAnswerStep = createStep({
 
 const hintStep = createStep({
   id: 'hint-step',
-  inputSchema: EvaluationRequestSchema,
-  outputSchema: EvaluationResponseSchema,
-  execute: async ({ inputData, mastra }) => {
-    const logger = mastra.getLogger()
-    logger.info(`submitAnswer starts ${inputData?.sessionId}`)
+  inputSchema: HintRequestSchema,
+  outputSchema: HintResponseSchema,
+  execute: async ({ inputData }) => {
+    console.log('hint submitted')
     return submitHint(
-      logger,
       inputData?.question,
       inputData?.answer,
       inputData?.level
@@ -83,7 +83,7 @@ export const evaluateAnswerWorkflow = createWorkflow({
 
 export const hintWorkflow = createWorkflow({
   id: 'hint-workflow',
-  inputSchema: EvaluationRequestSchema,
+  inputSchema: HintRequestSchema,
   outputSchema: EvaluationResponseSchema,
 })
   .then(hintStep)
