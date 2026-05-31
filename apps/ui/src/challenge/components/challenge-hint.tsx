@@ -17,13 +17,13 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
     e.stopPropagation()
 
     try {
-      const result: { text: string } = await ChallengeService.getHint(
+      const result = await ChallengeService.getHint(
         data,
         reply,
         level,
       )
 
-      setHint(result.text)
+      setHint(result.text ?? '')
     } catch (error: any) {
       setHintError(error?.error ?? error?.message ?? 'Hint generation failed.')
     }
@@ -69,7 +69,7 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
           </Badge.Ribbon>
         </div>
       )}
-      {hintError && <p>{hintError}</p>}
+      {hintError && <p className="text-red-500">{hintError}</p>}
     </>
   )
 }
