@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEventHandler } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MarkdownText } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
@@ -12,7 +12,7 @@ import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration } from '@/store/configuration.store'
-import { Button, Card } from 'antd'
+import { Card } from 'antd'
 import { ChallengeTopbar } from './challenge-topbar'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
@@ -28,7 +28,6 @@ export const Challenge = () => {
   >(null)
   const [isDisabled, setIsDisabled] = useState(true)
   const [reply, setReply] = useState('')
-  const [hint, setHint] = useState('')
   const [canContinue, setCanContinue] = useState(false)
   const [challenge, setChallenge] = useState<
     (Question & Feedback & { error?: string; notice?: string }) | null
@@ -94,25 +93,6 @@ export const Challenge = () => {
     }
   }
 
-  const getHint: MouseEventHandler<HTMLElement> = async (e) => {
-    e.stopPropagation()
-
-    try {
-      const result: { text: string } = await ChallengeService.getHint(
-        (data as Question) || extractQuestionFromLocalData(),
-        reply,
-        level,
-      )
-
-      setHint(result.text)
-    } catch (error: any) {
-      setFeedback({
-        error: error?.error ?? error?.message ?? 'Hint generation failed.',
-      } as Feedback)
-    } finally {
-    }
-  }
-
   const handleSubmit = async () => {
     if (!reply) return
 
@@ -162,7 +142,6 @@ export const Challenge = () => {
     challengeFromHistory.current = null
     setChallenge(null)
     setFeedback(null)
-    setHint('')
     setReply('')
   }
 
@@ -240,14 +219,13 @@ export const Challenge = () => {
               },
             }}
           >
-            {challenge && !hint && !challengeFromHistory.current?.completed &&(
-              <Button type="primary" className="mr-2 mb-2 w-24 self-end" onClick={getHint}>
-                Need help?
-              </Button>
-            )}
-            {hint && (
-              <ChallengeHint hint={hint} />
-            )}
+            {challenge && !challengeFromHistory.current?.completed && 
+              <ChallengeHint 
+                data={data as Question || extractQuestionFromLocalData()}
+                level={level}
+                reply={reply} 
+            />}
+          
             {!requestErrorMessage && (!challenge || isFetching) && (
               <GenerationState
                 isFetching={isFetching}
@@ -274,7 +252,7 @@ export const Challenge = () => {
                 <div className="grow min-h-0 relative mt-4">
                   <CodeArea
                     value={challenge?.initialCode ?? ''}
-                    readOnly={false}
+                    readOnly={true}
                     id="initial-code"
                   />
                 </div>

@@ -58,12 +58,8 @@ const generateHint = async (
       },
     )
 
-    if (!generationResponse.object) {
-      throw new Error('Hint generation returned no structured output')
-    }
     const parsedHint = HintResponseSchema.safeParse(generationResponse.object)
     if (!parsedHint.success) {
-      console.error('hint parse error')
       throw new Error('Failed to generate hint')
     }
     return parsedHint.data
