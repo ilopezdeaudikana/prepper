@@ -202,7 +202,7 @@ export const Challenge = () => {
         onNavigate={reset}
       />
       <div className="flex min-h-0 min-w-0 flex-1 align-self-center gap-4">
-        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col transition-all duration-500 ease-in-out">
           <Card
             className="flex flex-col flex-1"
             styles={{
@@ -272,9 +272,9 @@ export const Challenge = () => {
           </Card>
         </div>
         {!shouldShowForm && (
-          <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col transition-all duration-500 ease-in-out">
             <Card
-              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
+              className="flex min-h-0 min-w-0 flex-1 flex-col p-4"
               styles={{
                 body: {
                   display: 'flex',
@@ -282,7 +282,7 @@ export const Challenge = () => {
                   flexGrow: 1,
                   minHeight: 0,
                   minWidth: 0,
-                  overflow: 'auto',
+                  overflow: 'hidden',
                 },
               }}
             >
