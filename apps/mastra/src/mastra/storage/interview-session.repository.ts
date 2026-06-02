@@ -22,6 +22,7 @@ type QuestionInsert = {
 type QuestionGet = {
   id: string
   question: string
+  session_id: string
   initial_code?: string
   type: Question['type']
   topic: string
@@ -165,8 +166,6 @@ export const listReusableQuestions = async (params: {
 export const upsertQuestion = async (sessionId: string, question: Question, user: string) => {
   const supabase = getSupabaseClient()
 
-  console.log('USER on upsertQuestion', user)
-
   const insertPayload: QuestionInsert = {
     session_id: sessionId,
     question: question.question,
@@ -183,7 +182,10 @@ export const upsertQuestion = async (sessionId: string, question: Question, user
     .select('id')
     .single<{ id: string }>()
 
-  if (error) throw new Error(`Failed to persist question: ${error.message}`)
+  if (error) {
+    console.log('upsertQuestion error', error.message)
+    throw new Error(`Failed to persist question: ${error.message}`)
+  }
   return data.id
 }
 
@@ -293,7 +295,7 @@ export const listAllQuestions = async (start: string, filters: Filters, user: st
 }
 
 export const getQuestion = async (id: string)
-  : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt' | 'sessionId' | 'user'> }> => {
+  : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt' | 'user'> }> => {
 
   const supabase = getSupabaseClient()
 
@@ -308,12 +310,16 @@ export const getQuestion = async (id: string)
 
   if (error) throw new Error(`Failed to get challenge: ${error.message}`)
 
+
+  const sessionId = !data.session_id ? (await createSession(data.topic, data.level ?? RANDOM)).id : data.session_id
+  
   return {
     data: {
       ...data,
       initialCode: data.initial_code,
       missedPoints: data.missed_points,
-      improvedCode: data.improved_code
+      improvedCode: data.improved_code,
+      sessionId
     }
   }
 }
