@@ -10,7 +10,6 @@ import {
 } from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
-import { CodeArea } from '../../common/components/code-area'
 import { useConfiguration } from '@/store/configuration.store'
 import { Card } from 'antd'
 import { ChallengeTopbar } from './challenge-topbar'
