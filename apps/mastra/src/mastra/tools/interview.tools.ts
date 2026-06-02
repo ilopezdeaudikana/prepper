@@ -39,6 +39,23 @@ const isTopicExpansionKey = (value: string): value is TopicKey => value in topic
 const normalizeLevel = (level: string) => level.trim().toLowerCase()
 const normalizeTopic = (topic: string) => topic.trim().toLowerCase()
 
+export const getRubricGuidance = (level: string, questionType: ChallengeType) => {
+  const normalizedLevel = normalizeLevel(level)
+  const levelConfig = levelGuide[normalizedLevel] ?? {
+    focus: ['Correctness', 'Communication', 'Tradeoffs'],
+    avoid: ['Purely subjective scoring'],
+  }
+
+  const mustCheck = questionType === ChallengeType.Coding
+    ? [...levelConfig.focus, 'Code correctness', 'Edge-case handling']
+    : [...levelConfig.focus, 'Reasoning depth', 'Tradeoff discussion']
+
+  return {
+    mustCheck,
+    commonMisses: levelConfig.avoid,
+  }
+}
+
 export const sessionQuestionHistoryTool = createTool({
   id: 'session-question-history-tool',
   description: 'Fetches previously asked interview questions for a session to avoid repetitions.',
@@ -105,19 +122,6 @@ export const rubricGuidanceTool = createTool({
     commonMisses: z.array(z.string()),
   }),
   execute: async ({ level, questionType }) => {
-    const normalizedLevel = normalizeLevel(level)
-    const levelConfig = levelGuide[normalizedLevel] ?? {
-      focus: ['Correctness', 'Communication', 'Tradeoffs'],
-      avoid: ['Purely subjective scoring'],
-    }
-
-    const mustCheck = questionType === ChallengeType.Coding
-      ? [...levelConfig.focus, 'Code correctness', 'Edge-case handling']
-      : [...levelConfig.focus, 'Reasoning depth', 'Tradeoff discussion']
-
-    return {
-      mustCheck,
-      commonMisses: levelConfig.avoid,
-    }
+    return getRubricGuidance(level, questionType)
   },
 })

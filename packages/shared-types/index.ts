@@ -35,7 +35,7 @@ export const HintQuestionSchema = QuestionSchema.pick({
 })
 
 export const HintResponseSchema = z.object({
-  text: z.string().optional()
+  text: z.string().trim().min(1)
 })
 
 export const FeedbackSchema = z.object({

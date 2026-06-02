@@ -5,29 +5,38 @@ import {
   Level,
   LevelType,
   RANDOM,
+  ChallengeType,
 } from '@repo/shared-types'
 
 import { interviewAgent } from './interview-agent'
+import { getRubricGuidance } from '../tools/interview.tools'
 
-const generateHint = async (
+const resolveQuestionType = (
+  question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>,
+) =>
+  question.type === ChallengeType.Coding || question.initialCode
+    ? ChallengeType.Coding
+    : ChallengeType.Theoretical
+
+const buildHintPrompt = (
   level: LevelType | undefined,
   question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>,
   userAnswer: string | undefined,
 ) => {
-  console.log('Generate hint')
+  const effectiveLevel = level ?? Level.Mid
+  const rubricGuidance = getRubricGuidance(effectiveLevel, resolveQuestionType(question))
 
-  try {
-    const generationResponse = await interviewAgent.generate(
-      `Level: ${level}
+  return `Level: ${effectiveLevel}
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer?.trim() || '(no answer yet)'}
+     Rubric guidance: ${JSON.stringify(rubricGuidance)}
 
      Generate exactly one useful hint for the candidate. This is help before submission, not evaluation.
 
-     Use rubric-guidance-tool to identify the most important expectation for this level and question type.
-     If the question type is mixed, treat it as coding when initialCode is present otherwise treat it as theoretical.
+     Use the provided rubric guidance to identify the most important expectation for this level and question type.
 
-     Return only the 'text' field.
+     Return only a JSON object with exactly one field:
+     {"text":"your hint here"}
 
      The hint should:
      - focus on the highest-impact next step the candidate can take,
@@ -50,23 +59,57 @@ const generateHint = async (
      - use generic advice like 'consider edge cases' unless you name the relevant edge case for this question.
 
      Before returning, reject and rewrite the hint if it could apply to many unrelated interview questions.
-     Keep it to 1-3 sentences and under 80 words.`,
-      {
-        structuredOutput: {
-          schema: HintResponseSchema,
-          jsonPromptInjection: true,
-        },
-      },
-    )
+     Keep it to 1-3 sentences and under 80 words.`
+}
 
-    const parsedHint = HintResponseSchema.safeParse(generationResponse.object)
-    if (!parsedHint.success) {
-      throw new Error('Failed to generate hint')
-    }
-    return parsedHint.data
+const generateStructuredHint = async (prompt: string) => {
+  const generationResponse = await interviewAgent.generate(
+    prompt,
+    {
+      structuredOutput: {
+        schema: HintResponseSchema,
+        jsonPromptInjection: true,
+      },
+    },
+  )
+
+  const parsedHint = HintResponseSchema.safeParse(generationResponse.object)
+  if (!parsedHint.success) {
+    console.error('Hint structured output parse error', {
+      issues: parsedHint.error.issues,
+      // textPreview: generationResponse.text?.slice(0, 1000),
+      // object: generationResponse.object,
+    })
+    throw new Error('Failed to generate hint')
+  }
+
+  return parsedHint.data
+}
+
+const generateHint = async (
+  level: LevelType | undefined,
+  question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>,
+  userAnswer: string | undefined,
+) => {
+  console.log('Generate hint')
+
+  const prompt = buildHintPrompt(level, question, userAnswer)
+
+  try {
+    return await generateStructuredHint(prompt)
   } catch (error) {
-    console.error('Error in hint generation step', JSON.stringify(error))
-    throw error
+    console.warn('Retrying hint generation after structured output failure', JSON.stringify(error))
+    try {
+      return await generateStructuredHint(
+        `${prompt}
+
+        Your previous response did not match the required JSON shape.
+        Return valid JSON only, with no markdown, no prose outside JSON, and a non-empty "text" string.`,
+      )
+    } catch (retryError) {
+      console.error('Error in hint generation step', JSON.stringify(retryError))
+      throw retryError
+    }
   }
 }
 

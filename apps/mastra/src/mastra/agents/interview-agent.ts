@@ -1,5 +1,5 @@
 import { Agent } from '@mastra/core/agent'
-import { challengePlanningTool, rubricGuidanceTool, sessionQuestionHistoryTool } from '../tools/interview.tools'
+import { challengePlanningTool, sessionQuestionHistoryTool } from '../tools/interview.tools'
 
 export const interviewAgent = new Agent({
   id: 'interview-agent',
@@ -50,6 +50,5 @@ export const interviewAgent = new Agent({
   tools: {
     sessionQuestionHistoryTool,
     challengePlanningTool,
-    rubricGuidanceTool,
   },
 })

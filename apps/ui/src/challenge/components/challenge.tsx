@@ -201,29 +201,30 @@ export const Challenge = () => {
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}
       />
-      <div className="flex min-h-0 min-w-0 flex-1 align-self-center gap-4 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 align-self-center gap-4">
         <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col">
           <Card
-            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
+            className="flex flex-col flex-1"
             styles={{
               body: {
                 display: 'flex',
                 flexDirection: 'column',
                 flexGrow: 1,
-                maxHeight: '100%',
+                maxHeight: '99%',
                 minHeight: 0,
                 minWidth: 0,
-                overflow: 'auto',
+                overflow: 'hidden'
               },
             }}
           >
-            {challenge && !challengeData?.data?.completed && 
-              <ChallengeHint 
-                data={data as Question || extractQuestionFromLocalData()}
+            {challenge && !challengeData?.data?.completed && (
+              <ChallengeHint
+                data={(data as Question) || extractQuestionFromLocalData()}
                 level={level}
-                reply={reply} 
-            />}
-          
+                reply={reply}
+              />
+            )}
+
             {!requestErrorMessage && (!challenge || isFetching) && (
               <GenerationState
                 isFetching={isFetching}
@@ -242,18 +243,27 @@ export const Challenge = () => {
               </div>
             ) : null}
             {challenge?.type === ChallengeType.Theoretical && (
-              <MarkdownText content={challenge?.question} />
+              <>
+                <MarkdownText content={challenge?.question} />
+                <ChallengeReply
+                  onInputChange={handleInputChange}
+                  disabled={!shouldShowForm}
+                  onSubmit={handleSubmit}
+                  type={ChallengeType.Theoretical}
+                />
+              </>
             )}
             {challenge?.type === ChallengeType.Coding && (
               <>
-                <MarkdownText content={challenge?.question} />
-                <div className="grow min-h-0 relative mt-4">
-                  <CodeArea
-                    value={challenge?.initialCode ?? ''}
-                    readOnly={true}
-                    id="initial-code"
+                <>
+                  <MarkdownText content={challenge?.question} />
+                  <ChallengeReply
+                    defaultValue={challenge?.initialCode ?? ''}
+                    onInputChange={handleInputChange}
+                    onSubmit={handleSubmit}
+                    type={ChallengeType.Coding}
                   />
-                </div>
+                </>
               </>
             )}
             {!topic && !level && !idParam && (
@@ -261,40 +271,32 @@ export const Challenge = () => {
             )}
           </Card>
         </div>
-        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
-          <Card
-            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
-            styles={{
-              body: {
-                display: 'flex',
-                flexDirection: 'column',
-                flexGrow: 1,
-                minHeight: 0,
-                minWidth: 0,
-                overflow: 'auto',
-              },
-            }}
-          >
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              {loadingEvaluation && (
-                <div>
-                  <p>Loading evaluation...</p>
-                </div>
-              )}
-              {feedback && <ChallengeFeedback feedback={feedback} />}
-              {shouldShowForm && (
-                <ChallengeReply
-                  onInputChange={handleInputChange}
-                  onSubmit={handleSubmit}
-                  type={challenge?.type}
-                />
-              )}
-              {!topic && !level && !idParam && (
-                <ChallengeEmpty isQuestion={false} />
-              )}
-            </div>
-          </Card>
-        </div>
+        {!shouldShowForm && (
+          <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+            <Card
+              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4"
+              styles={{
+                body: {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                  minHeight: 0,
+                  minWidth: 0,
+                  overflow: 'auto',
+                },
+              }}
+            >
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                {loadingEvaluation && (
+                  <div>
+                    <p>Loading evaluation...</p>
+                  </div>
+                )}
+                {feedback && <ChallengeFeedback feedback={feedback} />}
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )

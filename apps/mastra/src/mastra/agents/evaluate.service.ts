@@ -1,4 +1,4 @@
-import { type Question, FeedbackSchema, MINIMUM_SCORE, Feedback, Level, LevelType } from '@repo/shared-types'
+import { type Question, FeedbackSchema, MINIMUM_SCORE, Feedback, Level, LevelType, ChallengeType } from '@repo/shared-types'
 import {
   createFeedback,
   getSession,
@@ -8,17 +8,24 @@ import {
 
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
+import { getRubricGuidance } from '../tools/interview.tools'
 
 
 const generateReply = async (level: LevelType, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
   try {
+    const rubricGuidance = getRubricGuidance(
+      level,
+      question.type === ChallengeType.Coding ? ChallengeType.Coding : ChallengeType.Theoretical
+    )
+
     const generationResponse = await interviewAgent.generate(
       `Level: ${level}
      Question: ${JSON.stringify(question)}
      User Answer: ${userAnswer}
+     Rubric guidance: ${JSON.stringify(rubricGuidance)}
 
      Evaluate based on the rubric.
-     Use rubric-guidance-tool to build deterministic must-check criteria before scoring.
+     Use the provided rubric guidance as deterministic must-check criteria before scoring.
      Write critique in direct, helpful prose that explains the main reason the answer passed or failed.
      Do not give vague feedback like "missing a11y" or "did not handle edge cases" unless you immediately explain what accessible implementation or edge-case handling was expected here.
      For critique:

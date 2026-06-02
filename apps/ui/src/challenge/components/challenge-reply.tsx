@@ -7,17 +7,18 @@ interface ChallengeReplyProps {
   onSubmit: () => void
   onInputChange: (reply: string) => void
   type: Question['type']
+  disabled?: boolean
+  defaultValue?: string
 }
 
 const { TextArea } = Input
 
-export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReplyProps) => {
+export const ChallengeReply = ({ onSubmit, onInputChange, type, disabled, defaultValue }: ChallengeReplyProps) => {
   const [input, setInput] = useState<string>('')
   
   const submit = (e: React.SubmitEvent) => {
     e.preventDefault()
     onSubmit()
-    setInput('')
   }
 
   const handleChange = (reply?: string) => {
@@ -29,12 +30,13 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
     <form
       id="reply-form"
       onSubmit={submit}
-      className="flex flex-col flex-1"
+      className="flex flex-1 min-h-0 flex-col gap-2 overflow-hidden mt-4"
     >
-      <div className="flex flex-col gap-2 flex-1">
-        {type && <span id="reply-label">Type your reply here:</span>}
+      <>
+        {type && <h2 id="reply-label" className="font-semibold">Type your reply here:</h2>}
         {type === ChallengeType.Theoretical && (<TextArea
           name='reply'
+          disabled={disabled}
           onChange={(e) => handleChange(e.target.value)}
           className="min-h-25 mb-2 mt-4 flex-1"
           aria-labelledby="reply-label"
@@ -43,10 +45,10 @@ export const ChallengeReply = ({ onSubmit, onInputChange, type }: ChallengeReply
         />)}
         {type === ChallengeType.Coding && (
           <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
-            <CodeArea onChange={handleChange} readOnly={false} id="user-code"/>
+            <CodeArea value={defaultValue} onChange={handleChange} readOnly={false} id="user-code"/>
           </div>
         )}
-      </div>
+      </>
     </form>
   )
 }

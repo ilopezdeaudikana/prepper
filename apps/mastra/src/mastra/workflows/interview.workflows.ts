@@ -80,7 +80,7 @@ export const evaluateAnswerWorkflow = createWorkflow({
 export const hintWorkflow = createWorkflow({
   id: 'hint-workflow',
   inputSchema: HintRequestSchema,
-  outputSchema: EvaluationResponseSchema,
+  outputSchema: HintResponseSchema,
 })
   .then(hintStep)
   .commit()
