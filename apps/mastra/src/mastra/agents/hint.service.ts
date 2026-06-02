@@ -4,6 +4,7 @@ import {
   Hint,
   Level,
   LevelType,
+  RANDOM,
 } from '@repo/shared-types'
 
 import { interviewAgent } from './interview-agent'
@@ -80,7 +81,12 @@ export const submitHint = async (
     const effectiveLevel = level ?? challenge.level ?? Level.Mid
     const hint = await generateHint(
       effectiveLevel,
-      { question, topic, initialCode, type },
+      { 
+        question, 
+        topic: topic ?? RANDOM, 
+        initialCode: initialCode ?? '', 
+        type 
+      },
       userAnswer,
     )
 

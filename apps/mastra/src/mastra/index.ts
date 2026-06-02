@@ -6,7 +6,7 @@ import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSc
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
 import { listAllQuestions, findUser, getQuestion } from './storage/interview-session.repository'
-import * as z from 'zod/v4/core'
+import { $ZodType, output, safeParse } from 'zod/v4/core'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
   const err = new Error(message) as Error & { status: number }
@@ -14,7 +14,7 @@ function createRequestError(message: string, status = 400): Error & { status: nu
   return err
 }
 
-function parseAndValidateBody<T extends z.$ZodType>(rawBody: string, schema: T): z.output<T> {
+function parseAndValidateBody<T extends $ZodType>(rawBody: string, schema: T): output<T> {
 
   if (!rawBody || !rawBody.trim()) {
     throw createRequestError('Empty request body. Expected JSON.', 400)
@@ -27,12 +27,12 @@ function parseAndValidateBody<T extends z.$ZodType>(rawBody: string, schema: T):
     throw createRequestError('Invalid JSON in request body.', 400)
   }
 
-  const { success, data, error } = z.safeParse(schema, parsedBody)
+  const { success, data, error } = safeParse(schema, parsedBody)
 
 
   if (success) return data
   else {
-    console.error(JSON.stringify(error))
+    console.error('IN PARSER', JSON.stringify(error))
     throw ('Zod parsing error')
   }
 }
@@ -137,11 +137,12 @@ export const mastra = new Mastra({
       registerApiRoute('/interview/hint', {
         method: 'POST',
         handler: async (c) => {
-
           try {
             const rawBody = await c.req.text()
 
-            const payload = parseAndValidateBody(rawBody, HintRequestSchema)
+            const payload = parseAndValidateBody(rawBody, 
+              HintRequestSchema
+            )
             const mastra = c.get('mastra')
 
             const workflow = mastra.getWorkflow('hintWorkflow')
@@ -151,6 +152,7 @@ export const mastra = new Mastra({
             })
 
             if (result.status !== 'success') {
+              console.error(`Hint generation not succesful ${JSON.stringify(result)}`)
               return c.json(
                 {
                   error: 'Hint generation status other than success.',

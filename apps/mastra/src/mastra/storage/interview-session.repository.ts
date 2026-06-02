@@ -1,4 +1,4 @@
-import { ChallengeType, Filters, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
+import { ChallengeType, Filters, Level, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 
@@ -29,7 +29,7 @@ type QuestionGet = {
   level: LevelType
   completed: boolean
   critique: string
-  score: number 
+  score: number
   missed_points: string[]
   improved_code?: string
 }
@@ -310,15 +310,17 @@ export const getQuestion = async (id: string)
 
   if (error) throw new Error(`Failed to get challenge: ${error.message}`)
 
+  const sessionId = !data.session_id ? (await createSession(data.topic ?? RANDOM, data.level ?? RANDOM)).id : data.session_id
 
-  const sessionId = !data.session_id ? (await createSession(data.topic, data.level ?? RANDOM)).id : data.session_id
-  
+  const { question, initial_code: initialCode, type, completed, level, topic, missed_points: missedPoints, improved_code: improvedCode } = data
+
   return {
     data: {
-      ...data,
-      initialCode: data.initial_code,
-      missedPoints: data.missed_points,
-      improvedCode: data.improved_code,
+      question, type, completed, id, topic,
+      level: level ?? Level.Mid,
+      initialCode: initialCode ?? '',
+      missedPoints,
+      improvedCode,
       sessionId
     }
   }
