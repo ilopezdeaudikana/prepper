@@ -21,7 +21,7 @@ export const useChallenges = ({ page, filters }: UseChallengeProps) => {
       return {
         data: data.map(q => ({ ...q, key: q.id ?? '' })),
         count,
-        topics: new Set(data.map(q => q.topic))
+        topics: new Set(data.map(q => q.topic).filter(Boolean))
       }
     },
     staleTime: 2 * 1000 * 60,

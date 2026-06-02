@@ -25,7 +25,6 @@ export const HistoryFilters = ({
 
   const handleFiltersChange = (key: keyof Filters, value: string) => {
     onFiltersChanged(key, value)
-    console.log(value)
     filters.current = {...filters.current, [key]: value }
   }
 
@@ -49,8 +48,7 @@ export const HistoryFilters = ({
           placeholder="Select type"
           options={[
             { value: ChallengeType.Theoretical, label: 'Theoretical' },
-            { value: ChallengeType.Coding, label: 'Coding' },
-            { value: ChallengeType.Mixed, label: 'Mixed' },
+            { value: ChallengeType.Coding, label: 'Coding' }
           ]}
         />
         <Select
