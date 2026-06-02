@@ -8,7 +8,13 @@ import { HistoryFilters } from '../components/history-filters.component'
 import type { Filters } from '@repo/shared-types'
 
 export default function HistoryView() {
-  const [filters, setFilters] = useState<Filters | undefined>()
+  const [filters, setFilters] = useState<Filters | undefined>({
+    type: undefined,
+    level: undefined,
+    completed: 'false',
+    topic: undefined,
+  })
+
   const [page, setPage] = useState<number>(0)
 
   const navigate = useNavigate()
@@ -42,7 +48,7 @@ export default function HistoryView() {
           <HistoryFilters
             onNextPage={handleNextPage}
             onFiltersChanged={handleFiltersChange}
-            page={page + 1}
+            page={page}
             total={apiData?.count ?? 0}
             topics={Array.from(apiData?.topics ?? [])}
           />
