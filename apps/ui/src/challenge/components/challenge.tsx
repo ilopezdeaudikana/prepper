@@ -21,6 +21,7 @@ import { useChallenges } from '@/common/hooks/useChallenges'
 import { useSearchParams } from 'react-router-dom'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
+import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
 
 export const Challenge = () => {
   const [feedback, setFeedback] = useState<
@@ -46,7 +47,7 @@ export const Challenge = () => {
 
   const queryClient = useQueryClient()
 
-  const { challengeFromHistory } = useChallenges({})
+  const { apiData: challengeData } = useChallengeWithId()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -55,7 +56,7 @@ export const Challenge = () => {
   const { data, isFetching, error } = useQuery({
     queryKey: ['question', requestId, topic, level],
     queryFn: () =>
-      ChallengeService.getChallenge(
+      ChallengeService.createChallenge(
         { topic, level, type },
         previousQuestions,
         sessionToken ?? undefined,
@@ -139,7 +140,6 @@ export const Challenge = () => {
 
   const reset = () => {
     setSearchParams({})
-    challengeFromHistory.current = null
     setChallenge(null)
     setFeedback(null)
     setReply('')
@@ -169,12 +169,11 @@ export const Challenge = () => {
 
   useEffect(() => {
     let active = true
-
-    if (challengeFromHistory.current && active) {
-      const { topic, level, completed } = challengeFromHistory.current
-      setChallenge(challengeFromHistory.current)
+    if (challengeData?.data && active) {
+      const { topic, level, completed } = challengeData?.data
+      setChallenge(challengeData?.data)
       if (completed) {
-        setFeedback(challengeFromHistory.current)
+        setFeedback(challengeData?.data)
         setCanContinue(false)
       }
       setConfiguration({
@@ -183,14 +182,14 @@ export const Challenge = () => {
         type,
         randomMode: !topic && !level,
       })
-    } else if (!challengeFromHistory.current && active) {
+    } else if (!challengeData?.data && active) {
       setChallenge(null)
       setFeedback(null)
     }
     return () => {
       active = false
     }
-  }, [challengeFromHistory.current])
+  }, [challengeData])
 
   return (
     <div className="flex h-screen min-h-0 flex-col gap-4 overflow-hidden p-4 align-self-center">
@@ -219,7 +218,7 @@ export const Challenge = () => {
               },
             }}
           >
-            {challenge && !challengeFromHistory.current?.completed && 
+            {challenge && !challengeData?.data?.completed && 
               <ChallengeHint 
                 data={data as Question || extractQuestionFromLocalData()}
                 level={level}

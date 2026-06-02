@@ -72,7 +72,10 @@ export const ChallengeRequestSchema = z.object({
 
 export const AllChallengesRequestSchema = z.object({
   user: z.string().min(1),
-  completed: z.string(),
+  completed: z.string().optional(),
+  topic: z.string().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional(),
+  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical, ChallengeType.Mixed]).optional(),
   start: z.string()
 })
 
@@ -136,3 +139,10 @@ export type TopicKey = (typeof Topic)[keyof typeof Topic]
 export const MINIMUM_SCORE = 7
 
 export const RANDOM = 'random'
+
+export interface Filters {
+  type?: ChallengeType
+  level?: LevelType
+  completed?: string
+  topic?: string
+}

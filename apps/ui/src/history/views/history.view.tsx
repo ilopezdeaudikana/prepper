@@ -4,22 +4,32 @@ import { Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useChallenges } from '@/common/hooks/useChallenges'
 import { Card } from 'antd'
+import { HistoryFilters } from '../components/history-filters.component'
+import type { Filters } from '@repo/shared-types'
 
 export default function HistoryView() {
-
-  const [completed, setCompleted] = useState(true)
+  const [filters, setFilters] = useState<Filters | undefined>()
   const [page, setPage] = useState<number>(0)
 
   const navigate = useNavigate()
 
-  const { apiData, isPending, error } = useChallenges({ page: page.toString(), completed: completed.toString() })
+  const { apiData, isPending, error } = useChallenges({
+    page: page.toString(),
+    filters,
+  })
 
   const handleNextPage = (n: number) => {
     setPage(n - 1)
   }
 
-  const handleCompleted = (completed: boolean) => {
-    setCompleted(completed)
+  const handleFiltersChange = (key: keyof Filters, value: string) => {
+    setFilters(
+      (filters) =>
+        ({
+          ...(filters ?? {}),
+          [key]: value,
+        }) as Filters,
+    )
   }
 
   return (
@@ -29,15 +39,14 @@ export default function HistoryView() {
           <Button type="primary" className="w-48" onClick={() => navigate('/')}>
             Back to challenges view
           </Button>
-          {apiData &&
-            <HistoryTable
-              data={apiData.data}
-              total={apiData.count}
-              onNextPage={handleNextPage}
-              page={page}
-              onChangeCompleted={handleCompleted}
-              completed={completed}
-            />}
+          <HistoryFilters
+            onNextPage={handleNextPage}
+            onFiltersChanged={handleFiltersChange}
+            page={page + 1}
+            total={apiData?.count ?? 0}
+            topics={Array.from(apiData?.topics ?? [])}
+          />
+          {apiData && <HistoryTable data={apiData.data} />}
           {isPending && <p>Loading challenges...</p>}
           {error && <p>Error loading challenges, please try again later.</p>}
         </div>

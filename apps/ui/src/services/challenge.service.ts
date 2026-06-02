@@ -1,4 +1,4 @@
-import type { ChallengeType, EvaluationResponse, Feedback, HintResponse, LevelType, Question } from "@repo/shared-types"
+import type { ChallengeType, EvaluationResponse, Feedback, Filters, HintResponse, LevelType, Question } from "@repo/shared-types"
 import { useConfiguration } from "@/store/configuration.store"
 import { parseResponse } from "@/common/utils/parse-api-response"
 import { useUser } from "@/store/user.store"
@@ -11,7 +11,7 @@ export type ChallengeResponse = Question & { sessionToken?: string, notice?: str
 
 
 export const ChallengeService = {
-  async getChallenge(options: { topic: string, level?: LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
+  async createChallenge(options: { topic: string, level?: LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
 
     const { storageMode } = useConfiguration.getState().configuration
 
@@ -29,12 +29,17 @@ export const ChallengeService = {
     return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
   },
 
-  async getChallenges(start: string, completed: string) {
+  async getChallenges(start: string, filters?: Filters) {
+
+    const { type, topic, completed, level } = filters ?? {}
 
     const { user } = useUser.getState()
     const url = new URL(getApiUrl('interview/all-challenges'))
-    url.searchParams.append('start', start)
-    url.searchParams.append('completed', completed)
+    url.searchParams.append('start', start ?? '0')
+    if (completed) url.searchParams.append('completed', completed)
+    if (topic) url.searchParams.append('topic', topic)
+    if (type) url.searchParams.append('type', type)
+    if (level) url.searchParams.append('level', level)
     url.searchParams.append('user', user)
 
     const response = await fetch(url, {
@@ -45,6 +50,21 @@ export const ChallengeService = {
     })
 
     return parseResponse<{ data: (Question & Feedback)[], count: number }>(response, 'Challenge retrieval failed.')
+
+  },
+
+    async getChallengeWithId(id: string) {
+
+    const url = new URL(getApiUrl(`interview/challenge/${id}`))
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    return parseResponse<{ data: Question & Feedback }>(response, 'Challenge retrieval failed.')
 
   },
 

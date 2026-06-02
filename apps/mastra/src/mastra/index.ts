@@ -5,7 +5,7 @@ import { VercelDeployer } from '@mastra/deployer-vercel'
 import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
-import { listAllQuestions, findUser } from './storage/interview-session.repository'
+import { listAllQuestions, findUser, getQuestion } from './storage/interview-session.repository'
 import * as z from 'zod/v4/core'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
@@ -89,6 +89,20 @@ export const mastra = new Mastra({
           }
         },
       }),
+      registerApiRoute('/interview/challenge/:id', {
+        method: 'GET',
+        handler: async (c) => {
+          try {
+            const query = c.req.param()
+            const result = await getQuestion(query.id)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected challenge retrieval error', error)
+            return handleRequestError(c, error, 'Unexpected challenge retrieval error')
+
+          }
+        },
+      }),
       registerApiRoute('/interview/evaluate', {
         method: 'POST',
         handler: async (c) => {
@@ -132,7 +146,8 @@ export const mastra = new Mastra({
 
             const workflow = mastra.getWorkflow('hintWorkflow')
             const run = await workflow.createRun()
-            const result = await run.start({ inputData: payload 
+            const result = await run.start({
+              inputData: payload
             })
 
             if (result.status !== 'success') {
@@ -155,11 +170,9 @@ export const mastra = new Mastra({
         method: 'GET',
         handler: async (c) => {
           const query = JSON.stringify(c.req.query())
-
           try {
-            const { start, completed, user } = parseAndValidateBody(query, AllChallengesRequestSchema)
-
-            const result = await listAllQuestions(start, completed, user)
+            const { start, completed, topic, level, type, user } = parseAndValidateBody(query, AllChallengesRequestSchema)
+            const result = await listAllQuestions(start ?? 0, { completed, topic, level, type }, user)
             return c.json(result)
           } catch (error) {
             console.error('Unexpected challenge retrieval error', error)

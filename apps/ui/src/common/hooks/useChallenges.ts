@@ -1,65 +1,33 @@
-import { ChallengeService } from "@/services/challenge.service"
-import type { Feedback, Question } from "@repo/shared-types"
-import { useQuery } from "@tanstack/react-query"
-import { useEffect, useRef, useState } from "react"
+import { ChallengeService } from '@/services/challenge.service'
+import type { Filters } from '@repo/shared-types'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-interface UseChallengeProps { page?: string, completed?: string }
+interface UseChallengeProps { page?: string, filters?: Filters }
 
-export const useChallenges = ({ page, completed }: UseChallengeProps) => {
+export const useChallenges = ({ page, filters }: UseChallengeProps) => {
 
   const [searchParams, cleanParams] = useSearchParams()
 
   const navigate = useNavigate()
 
-  const challengeFromHistory = useRef<Question & Feedback>(null)
-  
-  const [__, setTriggerRender] = useState(false)
-
-  const [completedValue, setCompleted] = useState<string>()
-
-  const [pageValue, setPage] = useState<string>()
+  const id = searchParams.get('id')
 
   const { data: apiData, isPending, error } = useQuery({
-    queryKey: ['all-challenges', pageValue, completedValue],
-    queryFn: () => ChallengeService.getChallenges(pageValue!, completedValue!),
-    select: ({ data, count }) => ({
-      data: data.map(q => ({ ...q, key: q.id ?? '' })),
-      count
-    }),
+    queryKey: ['all-challenges', page, ...Object.values(filters ?? {}),id],
+    queryFn: () => ChallengeService.getChallenges(page!, filters),
+    select: ({ data, count }) => {
+      return {
+        data: data.map(q => ({ ...q, key: q.id ?? '' })),
+        count,
+        topics: new Set(data.map(q => q.topic))
+      }
+    },
     staleTime: 2 * 1000 * 60,
-    enabled: !!pageValue && !!completedValue,
     retry: false
   })
 
-  useEffect(() => {
-    const id = searchParams.get('id')
-
-    if (completedValue && pageValue && id) {
-      const challenge = apiData?.data.find(item => item.id === id)
-      if (challenge && challengeFromHistory) {
-        challengeFromHistory.current = challenge
-        setTriggerRender(true)
-      }
-    }
-  }, [apiData])
-
-  useEffect(() => {
-    const completed = searchParams.get('completed')
-    const page = searchParams.get('page')
-    if (completed && page) {
-      setCompleted(completed)
-      setPage(page)
-    }
-  }, [searchParams])
-
-  // pagination
-  useEffect(() => {
-    if (completed && page) {
-      setCompleted(completed)
-      setPage(page)
-    }
-  }, [completed, page])
 
   useEffect(() => {
     if (error) {
@@ -69,6 +37,7 @@ export const useChallenges = ({ page, completed }: UseChallengeProps) => {
   }, [error])
 
   return {
-    apiData, isPending, error, challengeFromHistory
+    apiData, isPending, error
   }
 }
+

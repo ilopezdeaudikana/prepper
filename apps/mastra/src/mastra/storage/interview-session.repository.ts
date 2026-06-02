@@ -1,4 +1,4 @@
-import { ChallengeType, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
+import { ChallengeType, Filters, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { IMastraLogger } from '@mastra/core/logger'
@@ -18,6 +18,20 @@ type QuestionInsert = {
   topic: string
   level: string
   user_id: string
+}
+
+type QuestionGet = {
+  id: string
+  question: string
+  initial_code?: string
+  type: Question['type']
+  topic: string
+  level: LevelType
+  completed: boolean
+  critique: string
+  score: number 
+  missed_points: string[]
+  improved_code?: string
 }
 
 type QuestionRow = Question & {
@@ -221,12 +235,14 @@ export const createFeedback = async (params: {
   if (error) throw new Error(`Failed to persist feedback: ${error.message}`)
 }
 
-export const listAllQuestions = async (start: string, completed: string, user: string)
+export const listAllQuestions = async (start: string, filters: Filters, user: string)
   : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt'>[], count: number }> => {
 
   const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
   const supabase = getSupabaseClient()
+
+  const { type, topic, level, completed } = filters
 
   const pageSize = 10
 
@@ -237,12 +253,15 @@ export const listAllQuestions = async (start: string, completed: string, user: s
     .select(`id, question, initial_code, type, completed, topic, level, session_id, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
       count: "exact"
     })
-    .eq('completed', completed === 'true')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .range(offset, offset + pageSize)
 
+  if (type) query.eq('type', type)
+  if (topic) query.eq('topic', topic)
+  if (level) query.eq('level', level)
+  if (completed) query.eq('completed', completed === 'true')
 
   const { data, error, count } = await query
 
@@ -271,6 +290,32 @@ export const listAllQuestions = async (start: string, completed: string, user: s
       }
     }),
     count: count ?? 0
+  }
+}
+
+export const getQuestion = async (id: string)
+  : Promise<{ data: Omit<QuestionRow, 'sessionToken' | 'createdAt' | 'sessionId' | 'user'> }> => {
+
+  const supabase = getSupabaseClient()
+
+  const query = supabase
+    .from(Tables.Questions)
+    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
+      count: "exact"
+    })
+    .eq('id', id)
+    .single<QuestionGet>()
+  const { data, error } = await query
+
+  if (error) throw new Error(`Failed to get challenge: ${error.message}`)
+
+  return {
+    data: {
+      ...data,
+      initialCode: data.initial_code,
+      missedPoints: data.missed_points,
+      improvedCode: data.improved_code
+    }
   }
 }
 
