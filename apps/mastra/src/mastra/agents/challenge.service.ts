@@ -13,7 +13,6 @@ import {
 } from './interview-agent.helpers'
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
-import { IMastraLogger } from '@mastra/core/logger'
 
 type ChallengeOptions = { skipReuse?: boolean, forceReuse?: boolean }
 
@@ -45,7 +44,6 @@ const formatReusableQuestion = async (
 }
 
 const resolveChallengeSession = async (
-  logger: IMastraLogger,
   topic: string,
   level: LevelType | undefined,
   previousQuestions: string[] = [],
@@ -53,7 +51,7 @@ const resolveChallengeSession = async (
 ): Promise<ChallengeSessionContext> => {
   const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
   const existingSession = sessionId
-    ? await getSession(logger, sessionId)
+    ? await getSession(sessionId)
     : null
 
   if (sessionId && !existingSession) {
@@ -314,7 +312,6 @@ const generateFreshChallenge = async (params: {
 // END GET CHALLENGE HELPERS
 
 export const getChallenge = async (
-  logger: IMastraLogger,
   topic: string,
   level: LevelType | undefined,
   type: ChallengeType | undefined,
@@ -331,7 +328,6 @@ export const getChallenge = async (
   const effectiveType = type ?? ChallengeType.Mixed
 
   const { session, persistedQuestions, allPreviousQuestions } = await resolveChallengeSession(
-    logger,
     topic,
     effectiveLevel,
     previousQuestions,

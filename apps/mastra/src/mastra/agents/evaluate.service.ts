@@ -8,7 +8,6 @@ import {
 
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"
-import { IMastraLogger } from '@mastra/core/logger'
 
 
 const generateReply = async (level: LevelType, question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>, userAnswer: string) => {
@@ -62,43 +61,42 @@ const generateReply = async (level: LevelType, question: Pick<Question, 'questio
   }
 }
 
-const findSession = async (logger: IMastraLogger, sessionToken: string) => {
+const findSession = async (sessionToken: string) => {
   try {
     const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
-    logger.info(`Found sessionId from token, ${sessionId}`)
+    console.info(`Found sessionId from token, ${sessionId}`)
     if (!sessionId) {
       return
     }
-    return await getSession(logger, sessionId)
+    return await getSession(sessionId)
   } catch (error) {
     console.error('Error dealing with sessions')
     throw error
   }
 }
 
-const storeFeedback = async (logger: IMastraLogger, sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
-  logger.info(`storeFeedback:sessionId:${sessionId}`)
+const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
+  console.log(`storeFeedback:sessionId:${sessionId}`)
   try {
     const questionId = await upsertQuestion(sessionId, question, user)
     await createFeedback({
       sessionId, questionId, answer, level, feedback
     })
 
-    logger.info(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
+    console.info(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
 
     if (feedback.score && feedback.score > MINIMUM_SCORE) {
 
       await completeQuestion(questionId)
     }
   } catch (error) {
-    logger.error(`Error upserting question, feedback or score`)
+    console.error(`Error upserting question, feedback or score`)
     throw error
   }
 }
 
 
 export const submitAnswer = async (
-  logger: IMastraLogger,
   challenge: Question,
   userAnswer: string,
   level: LevelType | undefined,
@@ -106,7 +104,7 @@ export const submitAnswer = async (
   sessionId?: string,
   sessionToken?: string
 ) => {
-  logger.info(`Session Token ${sessionToken}`)
+  console.info(`Session Token ${sessionToken}`)
   try {
     const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
@@ -115,18 +113,18 @@ export const submitAnswer = async (
     const effectiveLevel = level ?? challenge.level ?? Level.Mid
     const feedback = await generateReply(effectiveLevel, { question, topic, initialCode, type }, userAnswer)
 
-    const session = await findSession(logger, sessionToken ?? '')
+    const session = await findSession(sessionToken ?? '')
 
-    logger.info(`Session ID ${JSON.stringify(session)} or ${sessionId}`)
+    console.info(`Session ID ${JSON.stringify(session)} or ${sessionId}`)
     
-    await storeFeedback(logger, session?.id || sessionId || '', challenge, userAnswer, effectiveLevel, feedback, userId)
+    await storeFeedback(session?.id || sessionId || '', challenge, userAnswer, effectiveLevel, feedback, userId)
     
     return {
       ...feedback,
       sessionToken: session?.sessionToken,
     }
   } catch (error) {
-    logger.error(JSON.stringify(error))
+    console.error(JSON.stringify(error))
     throw error
   }
 

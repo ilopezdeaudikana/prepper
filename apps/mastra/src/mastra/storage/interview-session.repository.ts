@@ -1,7 +1,6 @@
 import { ChallengeType, Filters, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
-import { IMastraLogger } from '@mastra/core/logger'
 
 type InterviewSession = {
   id: string
@@ -60,7 +59,7 @@ export const createSession = async (topic: string, level: string) => {
   return { ...data, sessionToken }
 }
 
-export const getSession = async (logger: IMastraLogger, sessionId: string) => {
+export const getSession = async (sessionId: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from(Tables.Sessions)
@@ -68,7 +67,7 @@ export const getSession = async (logger: IMastraLogger, sessionId: string) => {
     .eq('id', sessionId)
     .maybeSingle<InterviewSession>()
 
-  logger.info(`Session data ${data?.id}`)
+  console.info(`Session data ${data?.id}`)
   if (error) throw new Error(`Failed to fetch session: ${error.message}`)
   if (!data) return null
   const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
