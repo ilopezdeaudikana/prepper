@@ -24,22 +24,23 @@ type ChallengeSessionContext = {
 
 // GET CHALLENGE HELPERS
 const formatReusableQuestion = async (
-  sessionId: string,
   sessionToken: string,
   reusableQuestion: Question,
-  user: string,
   notice?: string,
 ) => {
-  const questionId = await upsertQuestion(sessionId, reusableQuestion, user)
+  if (!reusableQuestion.id) {
+    throw new Error('Reusable challenge is missing a persisted question id')
+  }
+
   return {
-    id: reusableQuestion.id ?? questionId,
+    id: reusableQuestion.id,
     question: reusableQuestion.question,
     initialCode: reusableQuestion.initialCode,
     type: reusableQuestion.type,
     sessionToken,
     topic: reusableQuestion.topic, level: reusableQuestion.level,
     notice,
-    user,
+    user: reusableQuestion.user,
   }
 }
 
@@ -73,7 +74,6 @@ const tryReuseChallenge = async (params: {
   topic: string
   level: LevelType | undefined,
   type: ChallengeType | undefined,
-  sessionId: string
   sessionToken: string
   existingSessionToken?: string
   previousQuestions: string[]
@@ -84,7 +84,6 @@ const tryReuseChallenge = async (params: {
     topic,
     level,
     type,
-    sessionId,
     sessionToken,
     existingSessionToken,
     previousQuestions,
@@ -109,20 +108,19 @@ const tryReuseChallenge = async (params: {
     return null
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, reusableQuestion, user)
+  return formatReusableQuestion(sessionToken, reusableQuestion)
 }
 
 const forceReuseChallenge = async (params: {
   topic: string
   level: LevelType,
   type: ChallengeType,
-  sessionId: string
   sessionToken: string
   previousQuestions: string[]
   persistedQuestions: string[]
   user: string
 }) => {
-  const { topic, level, type, sessionId, sessionToken, previousQuestions, persistedQuestions, user } = params
+  const { topic, level, type, sessionToken, previousQuestions, persistedQuestions, user } = params
   // Force reuse path: ignore session boundaries and only avoid repeating the immediately previous challenge.
   const latestQuestion = previousQuestions.at(-1) ?? persistedQuestions.at(-1)
   const fallbackReusable = await findReusableQuestion({
@@ -137,18 +135,17 @@ const forceReuseChallenge = async (params: {
     throw new Error(`No reusable challenge found for topic '${topic}' at level '${level}'`)
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, fallbackReusable, user)
+  return formatReusableQuestion(sessionToken, fallbackReusable)
 }
 
 const getRandomStoredChallenge = async (params: {
-  sessionId: string
   sessionToken: string
   type: ChallengeType | undefined
   previousQuestions: string[]
   notice: string
   user: string
 }) => {
-  const { sessionId, sessionToken, type, previousQuestions, notice, user } = params
+  const { sessionToken, type, previousQuestions, notice, user } = params
   const reusableQuestions = await listReusableQuestions({
     user,
     type,
@@ -166,7 +163,7 @@ const getRandomStoredChallenge = async (params: {
     throw new Error('Skipped generated challenge, but no stored fallback exists')
   }
 
-  return formatReusableQuestion(sessionId, sessionToken, randomQuestion, user, notice)
+  return formatReusableQuestion(sessionToken, randomQuestion, notice)
 }
 
 const formatQuestionExclusions = (questions: string[]) =>
@@ -291,13 +288,12 @@ const generateFreshChallenge = async (params: {
       const questionId = await upsertQuestion(sessionId, lastGenerated, user)
       return {
         ...lastGenerated,
-        id: lastGenerated.id ?? questionId,
+        id: questionId,
         sessionToken,
       }
     }
 
     return getRandomStoredChallenge({
-      sessionId,
       sessionToken,
       type,
       previousQuestions: allPreviousQuestions,
@@ -338,7 +334,6 @@ export const getChallenge = async (
     topic,
     level: effectiveLevel,
     type: effectiveType,
-    sessionId: session.id,
     sessionToken: session.sessionToken,
     existingSessionToken: sessionToken,
     previousQuestions: allPreviousQuestions,
@@ -355,7 +350,6 @@ export const getChallenge = async (
       topic,
       level: effectiveLevel,
       type: effectiveType,
-      sessionId: session.id,
       sessionToken: session.sessionToken,
       previousQuestions,
       persistedQuestions,

@@ -81,8 +81,10 @@ export const Challenge = () => {
 
   const extractQuestionFromLocalData = () => {
     if (challenge) {
-      const { question, initialCode, type, level, topic } = challenge
+      const { id, sessionId, question, initialCode, type, level, topic } = challenge
       return {
+        id,
+        sessionId,
         question,
         initialCode,
         type,
@@ -100,10 +102,9 @@ export const Challenge = () => {
 
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
-        (data as Question) || extractQuestionFromLocalData(),
+        (challenge as Question) || (data as Question) || extractQuestionFromLocalData(),
         reply,
         level,
-        challenge?.sessionId,
         sessionToken ?? undefined,
       )
 

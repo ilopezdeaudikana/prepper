@@ -1,8 +1,7 @@
 import { type Question, FeedbackSchema, MINIMUM_SCORE, Feedback, Level, LevelType, ChallengeType } from '@repo/shared-types'
 import {
   createFeedback,
-  getSession,
-  upsertQuestion,
+  findQuestionReference,
   completeQuestion
 } from '../storage/interview-session.repository'
 
@@ -68,33 +67,38 @@ const generateReply = async (level: LevelType, question: Pick<Question, 'questio
   }
 }
 
-const findSession = async (sessionToken: string) => {
-  try {
-    const sessionId = resolveSessionIdFromToken(process.env.HASH_SECRET!, sessionToken)
-    console.info(`Found sessionId from token, ${sessionId}`)
-    if (!sessionId) {
-      return
-    }
-    return await getSession(sessionId)
-  } catch (error) {
-    console.error('Error dealing with sessions')
-    throw error
+const resolveQuestionForFeedback = async (question: Question, user: string) => {
+  if (!question.id) {
+    throw new Error('Cannot evaluate a question without a persisted question id')
+  }
+
+  const reference = await findQuestionReference(question.id, user)
+  if (!reference) {
+    throw new Error(`Question not found: ${question.id}`)
+  }
+
+  return {
+    questionId: reference.id,
+    sessionId: reference.session_id,
   }
 }
 
-const storeFeedback = async (sessionId: string, question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
-  console.log(`storeFeedback:sessionId:${sessionId}`)
+const storeFeedback = async (question: Question, answer: string, level: string, feedback: Feedback, user: string) => {
   try {
-    const questionId = await upsertQuestion(sessionId, question, user)
+    const questionReference = await resolveQuestionForFeedback(question, user)
     await createFeedback({
-      sessionId, questionId, answer, level, feedback
+      sessionId: questionReference.sessionId,
+      questionId: questionReference.questionId,
+      answer,
+      level,
+      feedback
     })
 
-    console.info(`Score ${feedback.score} for questionId ${questionId}, ${MINIMUM_SCORE}`)
+    console.info(`Score ${feedback.score} for questionId ${questionReference.questionId}, ${MINIMUM_SCORE}`)
 
     if (feedback.score && feedback.score > MINIMUM_SCORE) {
 
-      await completeQuestion(questionId)
+      await completeQuestion(questionReference.questionId)
     }
   } catch (error) {
     console.error(`Error upserting question, feedback or score`)
@@ -108,10 +112,8 @@ export const submitAnswer = async (
   userAnswer: string,
   level: LevelType | undefined,
   user: string,
-  sessionId?: string,
   sessionToken?: string
 ) => {
-  console.info(`Session Token ${sessionToken}`)
   try {
     const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
@@ -120,15 +122,11 @@ export const submitAnswer = async (
     const effectiveLevel = level ?? challenge.level ?? Level.Mid
     const feedback = await generateReply(effectiveLevel, { question, topic, initialCode, type }, userAnswer)
 
-    const session = await findSession(sessionToken ?? '')
-
-    console.info(`Session ID ${JSON.stringify(session)} or ${sessionId}`)
-    
-    await storeFeedback(session?.id || sessionId || '', challenge, userAnswer, effectiveLevel, feedback, userId)
+    await storeFeedback(challenge, userAnswer, effectiveLevel, feedback, userId)
     
     return {
       ...feedback,
-      sessionToken: session?.sessionToken,
+      sessionToken,
     }
   } catch (error) {
     console.error(JSON.stringify(error))

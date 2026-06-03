@@ -34,6 +34,11 @@ type QuestionGet = {
   improved_code?: string
 }
 
+type QuestionReference = {
+  id: string
+  session_id: string
+}
+
 type QuestionRow = Question & {
   sessionId: string
   sessionToken: string
@@ -189,6 +194,20 @@ export const upsertQuestion = async (sessionId: string, question: Question, user
   return data.id
 }
 
+export const findQuestionReference = async (questionId: string, user: string) => {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase
+    .from(Tables.Questions)
+    .select('id, session_id')
+    .eq('id', questionId)
+    .eq('user_id', user)
+    .maybeSingle<QuestionReference>()
+
+  if (error) throw new Error(`Failed to find question: ${error.message}`)
+  return data
+}
+
 export const completeQuestion = async (questionId: string) => {
   const supabase = getSupabaseClient()
 
@@ -301,7 +320,7 @@ export const getQuestion = async (id: string)
 
   const query = supabase
     .from(Tables.Questions)
-    .select(`id, question, initial_code, type, completed, topic, level, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
+    .select(`id, session_id, question, initial_code, type, completed, topic, level, ${Tables.Feedback} (critique, score, missed_points, improved_code)`, {
       count: "exact"
     })
     .eq('id', id)

@@ -68,7 +68,7 @@ export const ChallengeService = {
 
   },
 
-  async submitAnswer(question: Question, answer: string, level?: LevelType, sessionId?: string, sessionToken?: string) {
+  async submitAnswer(question: Question, answer: string, level?: LevelType, sessionToken?: string) {
     const { user } = useUser.getState()
 
     const response = await fetch(getApiUrl('interview/evaluate'), {
@@ -76,7 +76,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken, sessionId }),
+      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken }),
     })
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   },

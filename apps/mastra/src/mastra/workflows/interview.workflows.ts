@@ -35,13 +35,12 @@ const evaluateAnswerStep = createStep({
   inputSchema: EvaluationRequestSchema,
   outputSchema: EvaluationResponseSchema,
   execute: async ({ inputData }) => {
-    console.info(`submitAnswer starts ${inputData?.sessionId}`)
+    console.info(`submitAnswer starts ${inputData?.question.id}`)
     return submitAnswer(
       inputData?.question,
       inputData?.answer,
       inputData?.level,
       inputData?.question.user,
-      inputData?.sessionId,
       inputData?.sessionToken
     )
   },

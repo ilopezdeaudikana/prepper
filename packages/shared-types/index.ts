@@ -102,7 +102,6 @@ export const EvaluationRequestSchema = z.object({
   answer: z.string().min(1),
   level: z.enum([Level.Junior, Level.Mid, Level.Senior]).optional(),
   sessionToken: z.string().min(1).optional(),
-  sessionId: z.uuid().optional(),
 })
 
 export const HintRequestSchema = z.object({

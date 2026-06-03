@@ -43,7 +43,7 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
         </Button>
       )}
       {hint && (
-        <div className="flex flex-1 min-h-0 min-w-0 flex-col gap-2 overflow-y-auto pb-2 pr-2">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2 overflow-y-auto pb-2 pr-2">
           <Badge.Ribbon text="Hint">
             <Card
               title="Missing bits"
