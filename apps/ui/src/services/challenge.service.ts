@@ -81,6 +81,18 @@ export const ChallengeService = {
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   },
 
+  async deleteQuestion(id: string) {
+
+    const response = await fetch(getApiUrl('interview/challenge'), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id }),
+    })
+    return parseResponse<{ message: string }>(response, 'Evaluation failed.')
+  },
+
   async getHint(question: Question, answer: string, level?: LevelType) {
 
     const response = await fetch(getApiUrl('interview/hint'), {

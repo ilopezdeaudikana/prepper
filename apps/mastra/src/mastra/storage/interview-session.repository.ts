@@ -345,6 +345,25 @@ export const getQuestion = async (id: string)
   }
 }
 
+export const deleteQuestion = async (id: string)
+  : Promise<{ message: string}> => {
+
+  const supabase = getSupabaseClient()
+
+  const query = supabase
+    .from(Tables.Questions)
+    .delete()
+    .eq('id', id)
+
+  const { error } = await query
+
+  if (error) throw new Error(`Failed to delete challenge: ${error.message}`)
+
+  return {
+    message: `Challenge deleted: ${id}`
+  }
+}
+
 export const findUser = async (user: string, isNewUser: boolean)
   : Promise<{ id: string | null }> => {
 

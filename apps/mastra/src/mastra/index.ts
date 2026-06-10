@@ -2,10 +2,10 @@ import { Mastra } from '@mastra/core/mastra'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema, ChallengeDeleteSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
-import { listAllQuestions, findUser, getQuestion } from './storage/interview-session.repository'
+import { listAllQuestions, findUser, getQuestion, deleteQuestion } from './storage/interview-session.repository'
 import { $ZodType, output, safeParse } from 'zod/v4/core'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
@@ -99,6 +99,22 @@ export const mastra = new Mastra({
           } catch (error) {
             console.error('Unexpected challenge retrieval error', error)
             return handleRequestError(c, error, 'Unexpected challenge retrieval error')
+
+          }
+        },
+      }),
+      registerApiRoute('/interview/challenge', {
+        method: 'DELETE',
+        handler: async (c) => {
+          try {
+            const rawBody = await c.req.text()
+            const payload = parseAndValidateBody(rawBody, ChallengeDeleteSchema)
+            console.log(payload)
+            const result = await deleteQuestion(payload.id)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected error deleting question', error)
+            return handleRequestError(c, error, 'Unexpected challenge delete error')
 
           }
         },

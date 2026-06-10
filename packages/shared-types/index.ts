@@ -70,6 +70,10 @@ export const ChallengeRequestSchema = z.object({
   }).optional(),
 })
 
+export const ChallengeDeleteSchema = z.object({
+  id: z.string()
+})
+
 export const AllChallengesRequestSchema = z.object({
   user: z.string().min(1),
   completed: z.string().optional(),
