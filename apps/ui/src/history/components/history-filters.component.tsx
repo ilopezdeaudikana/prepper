@@ -69,7 +69,7 @@ export const HistoryFilters = ({
           value={filters.current.topic}
           options={topics.map((item) => ({ value: item, label: item }))}
         />
-        <div className='w-108'>
+        <div className='max-w-108'>
           {total > 0 && <Pagination
             onChange={handlePageChange}
             total={total}

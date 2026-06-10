@@ -3,7 +3,7 @@ import type { Feedback, Question } from '@repo/shared-types'
 import { App, Table, Typography, type TableProps } from 'antd'
 import { Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 type Row = Question & Feedback & { key: string }
 
@@ -11,7 +11,7 @@ interface HistoryTableProps {
   data: Row[]
 }
 export const HistoryTable = ({ data }: HistoryTableProps) => {
-  const client = useQueryClient()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { message } = App.useApp()
 
@@ -19,15 +19,41 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
     navigate(`/?id=${id}`)
   }
 
+  const deleteMutation = useMutation({
+    mutationFn: ChallengeService.deleteQuestion,
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches to avoid overwriting the optimistic update
+      await queryClient.cancelQueries({ queryKey: ['all-challenges'] })
+
+      const cached: {
+        data: (Question & { sessionId: string } & Feedback)[]
+        count: number
+      } | undefined = queryClient.getQueryData(['all-challenges'])
+
+      queryClient.setQueryData(['all-challenges'], () => {
+        return {
+          data: cached?.data?.filter((q) => q.id !== id),
+          count: (cached?.count ?? 0) - 1,
+        }
+      })
+
+      // Return a context object with the snapshotted value
+      return { cached }
+    },
+    onSuccess: () => {
+      message.success('Challenge deleted')
+    },
+    onError: (_) => {
+      console.log(_)
+      message.error('Error deleting the challenge')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
+    },
+  })
   const deleteRecord = (id: string) => {
     if (!id) return
-    try {
-      ChallengeService.deleteQuestion(id)
-        message.success('Challenge deleted')
-      client.invalidateQueries({ queryKey: ['all-challenges'] })
-    } catch (_) {
-      message.error('Error deleting the challenge')
-    }
+    deleteMutation.mutate(id)
   }
 
   const columns: TableProps<Row>['columns'] = [
