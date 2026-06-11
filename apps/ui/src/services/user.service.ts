@@ -7,14 +7,14 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 
 
 export const UserService = {
-  async validateUser(user: string, isNewUser: boolean) {
+  async validateUser(user: string) {
   
     const response = await fetch(getApiUrl('interview/users'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ user, isNewUser }),
+      body: JSON.stringify({ user })
     })
     return parseResponse<UserResponse>(response, 'User generation / retrieval failed.')
   },

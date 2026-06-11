@@ -346,7 +346,7 @@ export const getQuestion = async (id: string)
 }
 
 export const deleteQuestion = async (id: string)
-  : Promise<{ message: string}> => {
+  : Promise<{ message: string }> => {
 
   const supabase = getSupabaseClient()
 
@@ -364,35 +364,20 @@ export const deleteQuestion = async (id: string)
   }
 }
 
-export const findUser = async (user: string, isNewUser: boolean)
+export const findUser = async (user: string)
   : Promise<{ id: string | null }> => {
 
   const supabase = getSupabaseClient()
 
-  if (isNewUser) {
-    const { data, error } = await supabase
-      .from(Tables.Users)
-      .upsert({ username: user })
-      .select('id')
-      .single<{ id: string }>()
+  const { data, error } = await supabase
+    .from(Tables.Users)
+    .upsert({ username: user })
+    .select('id')
+    .single<{ id: string }>()
 
-    if (error) throw new Error(`Failed to persist user: ${error.message}`)
+  if (error) throw new Error(`Failed to persist user: ${error.message}`)
 
-    return {
-      id: createSessionToken(process.env.HASH_SECRET!, data.id)
-    }
-  } else {
-    const query = supabase
-      .from(Tables.Users)
-      .select('id')
-      .eq('username', user)
-
-    const { data, error } = await query
-
-    if (error) throw new Error(`Failed to load user: ${error.message}`)
-
-    return {
-      id: createSessionToken(process.env.HASH_SECRET!, data[0]?.id ?? null)
-    }
+  return {
+    id: createSessionToken(process.env.HASH_SECRET!, data.id)
   }
 }

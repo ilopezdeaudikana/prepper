@@ -204,9 +204,9 @@ export const mastra = new Mastra({
           const rawBody = await c.req.text()
 
           try {
-            const { user, isNewUser } = parseAndValidateBody(rawBody, UserRequestSchema)
+            const { user } = parseAndValidateBody(rawBody, UserRequestSchema)
 
-            const result = await findUser(user, isNewUser)
+            const result = await findUser(user)
             return c.json(result)
           } catch (error) {
             console.error('Unexpected user retrieval error', error)

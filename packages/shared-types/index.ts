@@ -87,8 +87,7 @@ export const UserRequestSchema = z.object({
   user: z.string()
     .trim()
     .max(50)
-    .regex(/^[a-zA-Z0-9_-]+$/),
-  isNewUser: z.boolean(),
+    .regex(/^[a-zA-Z0-9_-]+$/)
 })
 
 export const UserResponseSchema = z.object({
