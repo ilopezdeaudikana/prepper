@@ -51,6 +51,7 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
     },
   })
+  
   const deleteRecord = (id: string) => {
     if (!id) return
     deleteMutation.mutate(id)
