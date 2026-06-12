@@ -28,7 +28,7 @@ export const Finale = ({ topic, level, randomMode } : Omit<ConfigurationState, '
 
   return (
     <div className="w-8/10 flex flex-col mx-auto my-8">
-      <Card className="justify-center">
+      <Card styles={{ body: { padding: '1.25rem' } }} className="justify-center">
         <div className="flex flex-col gap-8 items-center mt-4">
           <h1 className="text-2xl font-bold text-center">
             Congratulations!

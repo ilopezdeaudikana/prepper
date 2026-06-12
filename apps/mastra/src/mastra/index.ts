@@ -2,10 +2,12 @@ import { Mastra } from '@mastra/core/mastra'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema, ChallengeDeleteSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema, ChallengeDeleteSchema, UserRecoveryRequestSchema } from '@repo/shared-types'
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
-import { listAllQuestions, findUser, getQuestion, deleteQuestion } from './storage/interview-session.repository'
+import { listAllQuestions, getQuestion, deleteQuestion } from './storage/challenge.repository'
+import { findByPhrase, findUser, generateRecoveryPhrase } from './storage/user.repository'
+
 import { $ZodType, output, safeParse } from 'zod/v4/core'
 
 function createRequestError(message: string, status = 400): Error & { status: number } {
@@ -61,7 +63,7 @@ export const mastra = new Mastra({
     // Needs one set or logging can break
     port: 4111,
     apiRoutes: [
-      registerApiRoute('/interview/challenge', {
+      registerApiRoute('/challenge', {
         method: 'POST',
         handler: async (c) => {
 
@@ -89,7 +91,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/challenge/:id', {
+      registerApiRoute('/challenge/:id', {
         method: 'GET',
         handler: async (c) => {
           try {
@@ -103,7 +105,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/challenge', {
+      registerApiRoute('/challenge', {
         method: 'DELETE',
         handler: async (c) => {
           try {
@@ -119,7 +121,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/evaluate', {
+      registerApiRoute('/challenge/evaluate', {
         method: 'POST',
         handler: async (c) => {
 
@@ -150,7 +152,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/hint', {
+      registerApiRoute('/challenge/hint', {
         method: 'POST',
         handler: async (c) => {
           try {
@@ -184,7 +186,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/all-challenges', {
+      registerApiRoute('/challenge', {
         method: 'GET',
         handler: async (c) => {
           const query = JSON.stringify(c.req.query())
@@ -198,7 +200,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/interview/users', {
+      registerApiRoute('/users', {
         method: 'POST',
         handler: async (c) => {
           const rawBody = await c.req.text()
@@ -211,6 +213,38 @@ export const mastra = new Mastra({
           } catch (error) {
             console.error('Unexpected user retrieval error', error)
             return handleRequestError(c, error, 'Unexpected user retrieval error')
+          }
+        },
+      }),
+      registerApiRoute('/users/recovery', {
+        method: 'POST',
+        handler: async (c) => {
+          const rawBody = await c.req.text()
+
+          try {
+            const { user } = parseAndValidateBody(rawBody, UserRequestSchema)
+
+            const result = await generateRecoveryPhrase(user)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected user retrieval error', error)
+            return handleRequestError(c, error, 'Unexpected user retrieval error')
+          }
+        },
+      }),
+      registerApiRoute('/users/:id/backup', {
+        method: 'POST',
+        handler: async (c) => {
+          const rawBody = await c.req.text()
+          const query = c.req.param()
+          try {
+            const { recoveryPhrase } = parseAndValidateBody(rawBody, UserRecoveryRequestSchema)
+
+            const result = await findByPhrase(query.id, recoveryPhrase)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected recovery phrase generation error', error)
+            return handleRequestError(c, error, 'Unexpected recovery phrase generation error')
           }
         },
       }),

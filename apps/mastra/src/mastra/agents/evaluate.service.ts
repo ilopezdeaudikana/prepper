@@ -3,7 +3,7 @@ import {
   createFeedback,
   findQuestionReference,
   completeQuestion
-} from '../storage/interview-session.repository'
+} from '../storage/challenge.repository'
 
 import { resolveSessionIdFromToken } from '../storage/utils'
 import { interviewAgent } from "./interview-agent"

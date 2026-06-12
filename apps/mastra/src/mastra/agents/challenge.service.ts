@@ -1,11 +1,13 @@
 import { type Question, QuestionSchema, ChallengeType, Level, LevelType, RANDOM } from '@repo/shared-types'
 import {
   createSession,
-  getSession,
+  getSession
+} from '../storage/session.repository'
+import {
   listReusableQuestions,
   listQuestionTexts,
   upsertQuestion
-} from '../storage/interview-session.repository'
+} from '../storage/challenge.repository'
 import {
   dedupeQuestions,
   findReusableQuestion,

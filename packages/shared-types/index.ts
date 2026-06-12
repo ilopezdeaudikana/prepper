@@ -86,12 +86,15 @@ export const AllChallengesRequestSchema = z.object({
 export const UserRequestSchema = z.object({
   user: z.string()
     .trim()
-    .max(50)
-    .regex(/^[a-zA-Z0-9_-]+$/)
+})
+
+export const UserRecoveryRequestSchema = z.object({
+  recoveryPhrase: z.string()
 })
 
 export const UserResponseSchema = z.object({
-  id: z.string()
+  id: z.string(),
+  recoveryPhrase: z.string().optional()
 })
 
 export const ChallengeResponseSchema = QuestionSchema.extend({

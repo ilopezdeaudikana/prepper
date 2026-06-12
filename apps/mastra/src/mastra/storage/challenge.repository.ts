@@ -1,13 +1,7 @@
 import { ChallengeType, Filters, Level, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
-
-type InterviewSession = {
-  id: string
-  topic: string
-  level: string
-  created_at: string
-}
+import { Tables } from './types'
 
 type QuestionInsert = {
   session_id: string
@@ -44,41 +38,6 @@ type QuestionRow = Question & {
   sessionToken: string
   createdAt: string
 } & Feedback
-
-const Tables = {
-  Sessions: 'interview_sessions',
-  Questions: 'interview_questions',
-  Feedback: 'interview_feedback',
-  Users: 'users'
-} as const
-
-export const createSession = async (topic: string, level: string) => {
-  const supabase = getSupabaseClient()
-  const { data, error } = await supabase
-    .from(Tables.Sessions)
-    .insert({ topic, level })
-    .select('id, topic, level, created_at')
-    .single<InterviewSession>()
-
-  if (error) throw new Error(`Failed to create session: ${error.message}`)
-  const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
-  return { ...data, sessionToken }
-}
-
-export const getSession = async (sessionId: string) => {
-  const supabase = getSupabaseClient()
-  const { data, error } = await supabase
-    .from(Tables.Sessions)
-    .select('id, topic, level, created_at')
-    .eq('id', sessionId)
-    .maybeSingle<InterviewSession>()
-
-  console.info(`Session data ${data?.id}`)
-  if (error) throw new Error(`Failed to fetch session: ${error.message}`)
-  if (!data) return null
-  const sessionToken = createSessionToken(process.env.HASH_SECRET!, data.id)
-  return { ...data, sessionToken }
-}
 
 export const listQuestionTexts = async (sessionId: string) => {
   const supabase = getSupabaseClient()
@@ -364,20 +323,3 @@ export const deleteQuestion = async (id: string)
   }
 }
 
-export const findUser = async (user: string)
-  : Promise<{ id: string | null }> => {
-
-  const supabase = getSupabaseClient()
-
-  const { data, error } = await supabase
-    .from(Tables.Users)
-    .upsert({ username: user })
-    .select('id')
-    .single<{ id: string }>()
-
-  if (error) throw new Error(`Failed to persist user: ${error.message}`)
-
-  return {
-    id: createSessionToken(process.env.HASH_SECRET!, data.id)
-  }
-}

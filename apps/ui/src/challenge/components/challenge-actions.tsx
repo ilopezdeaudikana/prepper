@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChallengeType } from '@repo/shared-types'
 
-interface ChallengeTopbarProps {
+interface ChallengeActionsProps {
   canContinue: boolean
   isFetching: boolean
   disabled: boolean
@@ -16,7 +16,7 @@ interface ChallengeTopbarProps {
   onNavigate: () => void
 }
 
-export const ChallengeTopbar = ({ canContinue, isFetching, disabled, idParam, onLoadNextQuestion, onNavigate, showFinish }: ChallengeTopbarProps) => {
+export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, onLoadNextQuestion, onNavigate, showFinish }: ChallengeActionsProps) => {
 
   const [isConfigurationOpen, openConfiguration] = useState(false)
   const { topic, level } = useConfiguration(state => state.configuration)
@@ -59,7 +59,7 @@ const goToHistory = () => {
 
   return (
     <Card
-      className="p-4"
+      styles={{ body: { padding: '1.25rem' } }}
     >
       <div className="flex justify-between items-center">
         <Button type="primary" className="mr-2" onClick={goToHistory}>

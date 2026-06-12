@@ -15,16 +15,16 @@ export const ChallengeService = {
 
     const { storageMode } = useConfiguration.getState().configuration
 
-    const { user } = useUser.getState()
+    const { session } = useUser.getState()
 
     const { topic, level, type } = options
 
-    const response = await fetch(getApiUrl('interview/challenge'), {
+    const response = await fetch(getApiUrl('challenge'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic, level, type, previousQuestions, sessionToken, user, options: { forceReuse: storageMode } }),
+      body: JSON.stringify({ topic, level, type, previousQuestions, sessionToken, user: session, options: { forceReuse: storageMode } }),
     })
     return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
   },
@@ -33,14 +33,14 @@ export const ChallengeService = {
 
     const { type, topic, completed, level } = filters ?? {}
 
-    const { user } = useUser.getState()
-    const url = new URL(getApiUrl('interview/all-challenges'))
+    const { session } = useUser.getState()
+    const url = new URL(getApiUrl('challenge'))
     url.searchParams.append('start', start ?? '0')
     if (completed) url.searchParams.append('completed', completed)
     if (topic) url.searchParams.append('topic', topic)
     if (type) url.searchParams.append('type', type)
     if (level) url.searchParams.append('level', level)
-    url.searchParams.append('user', user)
+    url.searchParams.append('user', session)
 
     const response = await fetch(url, {
       method: 'GET',
@@ -55,7 +55,7 @@ export const ChallengeService = {
 
     async getChallengeWithId(id: string) {
 
-    const url = new URL(getApiUrl(`interview/challenge/${id}`))
+    const url = new URL(getApiUrl(`challenge/${id}`))
 
     const response = await fetch(url, {
       method: 'GET',
@@ -69,21 +69,21 @@ export const ChallengeService = {
   },
 
   async submitAnswer(question: Question, answer: string, level?: LevelType, sessionToken?: string) {
-    const { user } = useUser.getState()
+    const { session } = useUser.getState()
 
-    const response = await fetch(getApiUrl('interview/evaluate'), {
+    const response = await fetch(getApiUrl('challenge/evaluate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question: { ...question, user }, answer, level, sessionToken }),
+      body: JSON.stringify({ question: { ...question, user: session }, answer, level, sessionToken }),
     })
     return parseResponse<EvaluationResponse>(response, 'Evaluation failed.')
   },
 
   async deleteQuestion(id: string) {
 
-    const response = await fetch(getApiUrl('interview/challenge'), {
+    const response = await fetch(getApiUrl('challenge'), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const ChallengeService = {
 
   async getHint(question: Question, answer: string, level?: LevelType) {
 
-    const response = await fetch(getApiUrl('interview/hint'), {
+    const response = await fetch(getApiUrl('challenge/hint'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

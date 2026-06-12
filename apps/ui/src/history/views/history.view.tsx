@@ -40,7 +40,7 @@ export default function HistoryView() {
 
   return (
     <div className="p-4 align-self-center flex flex-col h-screen">
-      <Card className="flex-1">
+      <Card className="flex-1" styles={{ body: { padding: '1.25rem' } }}>
         <div className="flex flex-col gap-4">
           <Button type="primary" className="w-48" onClick={() => navigate('/')}>
             Back to challenges view

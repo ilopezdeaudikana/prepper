@@ -8,8 +8,10 @@ import ErrorBoundary from './common/components/error-boundary'
 import { ToastProvider } from '@repo/toast'
 import { ConfigProvider, Flex, theme, Typography, App } from 'antd'
 import { InfoPanel } from './common/components/info-panel'
+import { Topbar } from './common/components/top-bar'
 
 const queryClient = new QueryClient()
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -36,8 +38,12 @@ createRoot(document.getElementById('root')!).render(
             }}
           >
             <ToastProvider>
-              <RouterProvider router={router} />
+              <div className="flex h-screen min-h-0 flex-col overflow-hidden gap-2 p-4 align-self-center">
+                <Topbar />
+                <RouterProvider router={router} />
+              </div>
             </ToastProvider>
+
             <InfoPanel title="Frontend interview prepper agent">
               <Flex vertical gap="18">
                 <Typography.Paragraph>

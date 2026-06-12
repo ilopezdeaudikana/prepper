@@ -12,7 +12,7 @@ import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { useConfiguration } from '@/store/configuration.store'
 import { Card } from 'antd'
-import { ChallengeTopbar } from './challenge-topbar'
+import { ChallengeActions } from './challenge-actions'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
@@ -20,6 +20,17 @@ import { useSearchParams } from 'react-router-dom'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
 import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
+
+const cardBody: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  flexGrow: 1,
+  maxHeight: '99%',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden',
+  padding: '1.25rem',
+}
 
 export const Challenge = () => {
   const [feedback, setFeedback] = useState<
@@ -81,7 +92,8 @@ export const Challenge = () => {
 
   const extractQuestionFromLocalData = () => {
     if (challenge) {
-      const { id, sessionId, question, initialCode, type, level, topic } = challenge
+      const { id, sessionId, question, initialCode, type, level, topic } =
+        challenge
       return {
         id,
         sessionId,
@@ -102,7 +114,9 @@ export const Challenge = () => {
 
     try {
       const result: Feedback = await ChallengeService.submitAnswer(
-        (challenge as Question) || (data as Question) || extractQuestionFromLocalData(),
+        (challenge as Question) ||
+          (data as Question) ||
+          extractQuestionFromLocalData(),
         reply,
         level,
         sessionToken ?? undefined,
@@ -191,8 +205,8 @@ export const Challenge = () => {
   }, [challengeData])
 
   return (
-    <div className="flex h-screen min-h-0 flex-col gap-4 overflow-hidden p-4 align-self-center">
-      <ChallengeTopbar
+    <div className="flex h-screen min-h-0 flex-col gap-4 overflow-hidden">
+      <ChallengeActions
         isFetching={isFetching}
         canContinue={canContinue}
         disabled={isDisabled}
@@ -206,15 +220,7 @@ export const Challenge = () => {
           <Card
             className="flex flex-col flex-1"
             styles={{
-              body: {
-                display: 'flex',
-                flexDirection: 'column',
-                flexGrow: 1,
-                maxHeight: '99%',
-                minHeight: 0,
-                minWidth: 0,
-                overflow: 'hidden'
-              },
+              body: cardBody,
             }}
           >
             {challenge && !challengeData?.data?.completed && (
@@ -276,14 +282,7 @@ export const Challenge = () => {
             <Card
               className="flex min-h-0 min-w-0 flex-1 flex-col p-4"
               styles={{
-                body: {
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  minHeight: 0,
-                  minWidth: 0,
-                  overflow: 'hidden',
-                },
+                body: cardBody,
               }}
             >
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">

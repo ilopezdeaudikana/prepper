@@ -1,5 +1,5 @@
 import { ChallengeType, LevelType } from '@repo/shared-types'
-import { listReusableQuestions } from "../storage/interview-session.repository"
+import { listReusableQuestions } from "../storage/challenge.repository"
 
 const normalize = (text: string) =>
   text

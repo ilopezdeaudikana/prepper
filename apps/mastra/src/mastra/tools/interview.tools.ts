@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
-import { listQuestionTexts } from '../storage/interview-session.repository'
+import { listQuestionTexts } from '../storage/challenge.repository'
 import { Topic, TopicKey, ChallengeType } from '@repo/shared-types'
 
 const levelGuide: Record<string, { focus: string[]; avoid: string[] }> = {
