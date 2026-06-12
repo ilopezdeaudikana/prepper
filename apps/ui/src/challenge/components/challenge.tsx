@@ -205,7 +205,7 @@ export const Challenge = () => {
   }, [challengeData])
 
   return (
-    <div className="flex h-screen min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden">
       <ChallengeActions
         isFetching={isFetching}
         canContinue={canContinue}

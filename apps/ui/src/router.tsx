@@ -9,7 +9,7 @@ const History = lazy(() => import('./history/views/history.view.tsx'))
 
 function Layout() {
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden gap-2 p-4 align-self-center">
+    <div className="flex flex-col gap-2 p-4 align-self-center">
       <Topbar />
       <Outlet />
     </div>
