@@ -24,7 +24,7 @@ export const checkUserPhrase = (userTypedPhrase: string): boolean => {
   return bip39.validateMnemonic(cleanInput, wordlist)
 }
 
-export const findUser = async (user: string)
+export const upsertUser = async (user: string)
   : Promise<{ id: string | null, recoveryPhrase?: string }> => {
 
   const supabase = getSupabaseClient()
@@ -40,6 +40,27 @@ export const findUser = async (user: string)
 
   return {
     id: createSessionToken(process.env.HASH_SECRET!, data.id),
+    recoveryPhrase: data.recovery_phrase
+  }
+}
+
+export const findUser = async (user: string)
+  : Promise<{ id: string | null, recoveryPhrase?: string }> => {
+
+  const supabase = getSupabaseClient()
+  
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user)
+
+  const { data, error } = await supabase
+    .from(Tables.Users)
+    .select('id, recovery_phrase')
+    .eq('id', userId )
+    .single<{ id: string, recovery_phrase: string }>()
+
+  if (error) throw new Error(`Could not find user: ${error.message}`)
+
+  return {
+    id: createSessionToken(process.env.HASH_SECRET!, data?.id),
     recoveryPhrase: data.recovery_phrase
   }
 }
@@ -68,21 +89,20 @@ export const generateRecoveryPhrase = async (user: string)
   }
 }
 
-export const findByPhrase = async (user: string, recoveryPhrase: string)
+export const findByPhrase = async (recoveryPhrase: string)
   : Promise<{ id: string | null, recoveryPhrase?: string }> => {
 
+  const isValid = checkUserPhrase(recoveryPhrase)
+  if (!isValid) throw new Error('Invalid recovery phrase')
   const supabase = getSupabaseClient()
-
-  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user)
 
   const { data, error } = await supabase
     .from(Tables.Users)
     .select('id')
-    .eq('id', userId)
     .eq('recovery_phrase', recoveryPhrase)
     .single<{ id: string, recovery_phrase: string }>()
 
-  if (error) throw new Error(`Failed to persist user: ${error.message}`)
+  if (error) throw new Error(`Find user by phrase failed: ${error.message}`)
 
   return {
     id: createSessionToken(process.env.HASH_SECRET!, data.id)

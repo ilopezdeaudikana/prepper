@@ -9,7 +9,7 @@ const getApiUrl = (path: string) => new URL(path, `${MASTRA_API_URL}`).toString(
 export const UserService = {
   async validateUser(user: string) {
   
-    const response = await fetch(getApiUrl('users'), {
+    const response = await fetch(getApiUrl('user'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,19 +19,29 @@ export const UserService = {
     return parseResponse<UserResponse>(response, 'User generation / retrieval failed.')
   },
 
+  async getUser(user: string) {
+  
+    const response = await fetch(getApiUrl(`user/${user}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    return parseResponse<UserResponse>(response, 'User not found.')
+  },
+
   async generateRecoveryPhrase(user: string) {
-    const response = await fetch(getApiUrl('users/recovery'), {
+    const response = await fetch(getApiUrl(`user/${user}/backup`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user })
+      }
     })
     return parseResponse<{ recoveryPhrase: string }>(response, 'User recovery phrase generation failed.')
   },
   
-  async sendRecoveryPhrase(userId: string, recoveryPhrase: string) {
-    const response = await fetch(getApiUrl(`users/${userId}/backup`), {
+  async sendRecoveryPhrase(recoveryPhrase: string) {
+    const response = await fetch(getApiUrl(`user/recovery`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

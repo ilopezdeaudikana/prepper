@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@/store/user.store'
 import { UserService } from '@/services/user.service'
 import { App } from 'antd'
+import type { UserResponse } from '@repo/shared-types'
 
 let isCreatingUser = false
 
@@ -13,6 +14,25 @@ export const useIdentification = () => {
 
   const [isPrivate, setIsPrivate] = useState<boolean>()
 
+  const userRequest = (
+    id: string,
+    callback: (is: string) => Promise<UserResponse>,
+    errorMessage: string
+  ) => {
+    isCreatingUser = true
+    callback(id)
+      .then((result) => {
+        setUserSession(result.id)
+        if (result.recoveryPhrase) setRecoveryPhrase(result.recoveryPhrase)
+        localStorage.setItem('prepper-session', result.id)
+      })
+      .catch(() => {
+        message.error(errorMessage)
+        localStorage.removeItem('prepper-session')
+      })
+      .finally(() => (isCreatingUser = false))
+  }
+
   useEffect(() => {
     if (isCreatingUser) return
     if (session) return
@@ -22,21 +42,11 @@ export const useIdentification = () => {
 
     setIsPrivate(!!isPrivateEnv)
 
-    if (storedUserSession && isPrivate) setUserSession(storedUserSession)
-
-    else {
-      isCreatingUser = true
+    if (storedUserSession && isPrivateEnv) {
+      userRequest(storedUserSession,UserService.getUser, 'User not found')
+    } else {
       const id = crypto.randomUUID()
-      UserService.validateUser(id)
-        .then((result) => {
-          setUserSession(result.id)
-          if (result.recoveryPhrase) setRecoveryPhrase(result.recoveryPhrase)
-          localStorage.setItem('prepper-session', result.id)
-        })
-        .catch(() => {
-          message.error('Error creating user')
-        })
-        .finally(() => (isCreatingUser = false))
+      userRequest(id, UserService.validateUser, 'Error creating user')
     }
   }, [session])
 

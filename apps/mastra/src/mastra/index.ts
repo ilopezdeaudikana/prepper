@@ -6,7 +6,7 @@ import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSc
 import { ZodError } from 'zod'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
 import { listAllQuestions, getQuestion, deleteQuestion } from './storage/challenge.repository'
-import { findByPhrase, findUser, generateRecoveryPhrase } from './storage/user.repository'
+import { findByPhrase, findUser, generateRecoveryPhrase, upsertUser } from './storage/user.repository'
 
 import { $ZodType, output, safeParse } from 'zod/v4/core'
 
@@ -200,7 +200,7 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/users', {
+      registerApiRoute('/user', {
         method: 'POST',
         handler: async (c) => {
           const rawBody = await c.req.text()
@@ -208,7 +208,7 @@ export const mastra = new Mastra({
           try {
             const { user } = parseAndValidateBody(rawBody, UserRequestSchema)
 
-            const result = await findUser(user)
+            const result = await upsertUser(user)
             return c.json(result)
           } catch (error) {
             console.error('Unexpected user retrieval error', error)
@@ -216,35 +216,46 @@ export const mastra = new Mastra({
           }
         },
       }),
-      registerApiRoute('/users/recovery', {
+      registerApiRoute('/user/recovery', {
         method: 'POST',
         handler: async (c) => {
           const rawBody = await c.req.text()
 
-          try {
-            const { user } = parseAndValidateBody(rawBody, UserRequestSchema)
-
-            const result = await generateRecoveryPhrase(user)
-            return c.json(result)
-          } catch (error) {
-            console.error('Unexpected user retrieval error', error)
-            return handleRequestError(c, error, 'Unexpected user retrieval error')
-          }
-        },
-      }),
-      registerApiRoute('/users/:id/backup', {
-        method: 'POST',
-        handler: async (c) => {
-          const rawBody = await c.req.text()
-          const query = c.req.param()
           try {
             const { recoveryPhrase } = parseAndValidateBody(rawBody, UserRecoveryRequestSchema)
 
-            const result = await findByPhrase(query.id, recoveryPhrase)
+            const result = await findByPhrase(recoveryPhrase)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected user recovery error', error)
+            return handleRequestError(c, error, 'Unexpected user recovery error')
+          }
+        },
+      }),
+      registerApiRoute('/user/:id/backup', {
+        method: 'POST',
+        handler: async (c) => {
+          const query = c.req.param()
+          try {
+            const result = await generateRecoveryPhrase(query.id)
             return c.json(result)
           } catch (error) {
             console.error('Unexpected recovery phrase generation error', error)
             return handleRequestError(c, error, 'Unexpected recovery phrase generation error')
+          }
+        },
+      }),
+      registerApiRoute('/user/:id', {
+        method: 'GET',
+        handler: async (c) => {
+          const query = c.req.param()
+          try {
+
+            const result = await findUser(query.id)
+            return c.json(result)
+          } catch (error) {
+            console.error('User not found', error)
+            return handleRequestError(c, error, 'User not found')
           }
         },
       }),

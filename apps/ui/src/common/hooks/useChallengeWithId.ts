@@ -9,7 +9,7 @@ export const useChallengeWithId = () => {
   const id = searchParams.get('id')
 
   const { data: apiData, isPending, error } = useQuery({
-    queryKey: ['single-challenge', id],
+    queryKey: ['challenge', 'from-history', id],
     queryFn: id ? () => ChallengeService.getChallengeWithId(id) : skipToken,
     retry: false
   })

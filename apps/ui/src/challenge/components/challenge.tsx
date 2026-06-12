@@ -63,7 +63,7 @@ export const Challenge = () => {
   const idParam = searchParams.get('id')
 
   const { data, isFetching, error } = useQuery({
-    queryKey: ['question', requestId, topic, level],
+    queryKey: ['challenge', requestId, topic, level],
     queryFn: () =>
       ChallengeService.createChallenge(
         { topic, level, type },

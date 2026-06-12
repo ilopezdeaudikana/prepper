@@ -1,5 +1,6 @@
 import { UserService } from '@/services/user.service'
 import { useUser } from '@/store/user.store'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Avatar as AntAvatar,
   App,
@@ -8,20 +9,27 @@ import {
   Flex,
   Input,
   Popover,
+  Switch,
   Typography,
 } from 'antd'
 import { RefreshCcw } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   const [inFlight, setInFlight] = useState(false)
   const [hasCopied, setHasCopied] = useState(false)
-
+  const [menuOpen, setMenuOpen] = useState(false)
   const session = useUser((state) => state.session)
+  const setSession = useUser((state) => state.setUserSession)
   const hasPhrase = useUser((state) => state.recoveryPhrase)
 
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  
   const [phrase, setPhrase] = useState<string>()
   const [alternativePhrase, setAlternativePhrase] = useState<string>()
+  const [alternativeUser, setAlternativeUser] = useState<boolean>()
 
   const { message } = App.useApp()
 
@@ -42,12 +50,16 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
     setInFlight(true)
     try {
       const result = await UserService.sendRecoveryPhrase(
-        session,
-        alternativePhrase,
+        alternativePhrase
       )
       setPhrase(result.recoveryPhrase)
+      setSession(result.id)
+      localStorage.setItem('prepper-session', result.id)
+      queryClient.invalidateQueries({ queryKey: ['challenge'] })
+      navigate('/')
+      setMenuOpen(false)
     } catch (error) {
-      message.error('Error generating recovery phrase')
+      message.error('Error switching user')
     } finally {
       setInFlight(false)
     }
@@ -55,12 +67,24 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
 
   const handleCopy = () => {
     setHasCopied(true)
+    setMenuOpen(false)
   }
 
-  const handleInputChange: React.ChangeEventHandler<HTMLInputElement, HTMLInputElement> = (e) => {
+  const handleInputChange: React.ChangeEventHandler<
+    HTMLInputElement,
+    HTMLInputElement
+  > = (e) => {
     setAlternativePhrase(e.target.value)
   }
-  
+
+  const handleOpenChange = (open: boolean) => {
+    setMenuOpen(open)
+  }
+
+  const handleSwitchUser = (open: boolean) => {
+    setAlternativeUser(open)
+  }
+
   const content = (
     <Flex vertical gap={12} style={{ width: '25rem' }}>
       <Typography>
@@ -81,17 +105,25 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
 
       {(hasPhrase || hasCopied) && (
         <>
-          <Input
-            value={alternativePhrase}
-            placeholder="Insert recovery phrase"
-            onChange={handleInputChange}
-          />
-          <Button disabled={inFlight} onClick={sendPhrase}>
-            Switch user
-          </Button>
+          <Flex gap={8}>
+            <Typography>Do you want to load another user:</Typography>
+            <Switch value={alternativeUser} onChange={handleSwitchUser} />
+          </Flex>
+          {alternativeUser && (
+            <>
+              <Input
+                value={alternativePhrase}
+                placeholder="Insert recovery phrase"
+                onChange={handleInputChange}
+              />
+              <Button disabled={inFlight} onClick={sendPhrase}>
+                Switch user
+              </Button>
+            </>
+          )}
         </>
       )}
-      {phrase && (
+      {phrase && !hasCopied && (
         <Card
           styles={{
             body: {
@@ -119,6 +151,8 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       title="Save progress"
       content={content}
       trigger={['click', 'click']}
+      open={menuOpen}
+      onOpenChange={handleOpenChange}
     >
       <AntAvatar
         style={{ backgroundColor: '#1677ff' }}
