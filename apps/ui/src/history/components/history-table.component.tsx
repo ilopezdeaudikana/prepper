@@ -23,14 +23,14 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
     mutationFn: ChallengeService.deleteQuestion,
     onMutate: async (id) => {
       // Cancel any outgoing refetches to avoid overwriting the optimistic update
-      await queryClient.cancelQueries({ queryKey: ['all-challenges'] })
+      await queryClient.cancelQueries({ queryKey: ['challenge', 'all'] })
 
       const cached: {
         data: (Question & { sessionId: string } & Feedback)[]
         count: number
-      } | undefined = queryClient.getQueryData(['all-challenges'])
+      } | undefined = queryClient.getQueryData(['challenge', 'all'])
 
-      queryClient.setQueryData(['all-challenges'], () => {
+      queryClient.setQueryData(['challenge', 'all'], () => {
         return {
           data: cached?.data?.filter((q) => q.id !== id),
           count: (cached?.count ?? 0) - 1,
@@ -48,7 +48,7 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       message.error('Error deleting the challenge')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] })
     },
   })
   

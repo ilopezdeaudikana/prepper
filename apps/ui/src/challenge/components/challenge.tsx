@@ -134,7 +134,7 @@ export const Challenge = () => {
           evaluation: result,
         })
       }
-      queryClient.invalidateQueries({ queryKey: ['all-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] })
     } catch (error: any) {
       setFeedback({
         error: error?.error ?? error?.message ?? 'Evaluation failed.',
