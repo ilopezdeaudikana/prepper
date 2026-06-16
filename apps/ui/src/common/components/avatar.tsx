@@ -14,7 +14,6 @@ import {
 } from 'antd'
 import { RefreshCcw } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   const [inFlight, setInFlight] = useState(false)
@@ -26,7 +25,6 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   const timeout  = useRef<ReturnType<typeof setTimeout>>(null)
 
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   const [phrase, setPhrase] = useState<string>()
   const [alternativePhrase, setAlternativePhrase] = useState<string>()
@@ -55,7 +53,6 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       setSession(result.id)
       localStorage.setItem('prepper-session', result.id)
       queryClient.invalidateQueries({ queryKey: ['challenge'] })
-      // navigate('/')
       message.success('New user loaded')
       timeout.current = setTimeout(() => {
         setMenuOpen(false)
