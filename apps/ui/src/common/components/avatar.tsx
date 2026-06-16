@@ -13,7 +13,7 @@ import {
   Typography,
 } from 'antd'
 import { RefreshCcw } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
@@ -23,10 +23,11 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   const session = useUser((state) => state.session)
   const setSession = useUser((state) => state.setUserSession)
   const hasPhrase = useUser((state) => state.recoveryPhrase)
+  const timeout  = useRef<ReturnType<typeof setTimeout>>(null)
 
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  
+
   const [phrase, setPhrase] = useState<string>()
   const [alternativePhrase, setAlternativePhrase] = useState<string>()
   const [alternativeUser, setAlternativeUser] = useState<boolean>()
@@ -49,9 +50,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
     if (!alternativePhrase) return
     setInFlight(true)
     try {
-      const result = await UserService.sendRecoveryPhrase(
-        alternativePhrase
-      )
+      const result = await UserService.sendRecoveryPhrase(alternativePhrase)
       setPhrase(result.recoveryPhrase)
       setSession(result.id)
       localStorage.setItem('prepper-session', result.id)
@@ -67,7 +66,9 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
 
   const handleCopy = () => {
     setHasCopied(true)
-    setMenuOpen(false)
+    timeout.current = setTimeout(() => {
+      setMenuOpen(false)
+    }, 1250)
   }
 
   const handleInputChange: React.ChangeEventHandler<
@@ -93,7 +94,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
         or protect it from being cleared, generate or insert a Recovery Phrase.
       </Typography>
 
-      {!hasPhrase && !hasCopied && (
+      {!hasPhrase && !phrase && (
         <Button
           type="primary"
           disabled={inFlight || isPublic}
@@ -103,26 +104,23 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
         </Button>
       )}
 
-      {(hasPhrase || hasCopied) && (
+      <Flex gap={8}>
+        <Typography>Do you want to load another user:</Typography>
+        <Switch value={alternativeUser} onChange={handleSwitchUser} />
+      </Flex>
+      {alternativeUser && (
         <>
-          <Flex gap={8}>
-            <Typography>Do you want to load another user:</Typography>
-            <Switch value={alternativeUser} onChange={handleSwitchUser} />
-          </Flex>
-          {alternativeUser && (
-            <>
-              <Input
-                value={alternativePhrase}
-                placeholder="Insert recovery phrase"
-                onChange={handleInputChange}
-              />
-              <Button disabled={inFlight} onClick={sendPhrase}>
-                Switch user
-              </Button>
-            </>
-          )}
+          <Input
+            value={alternativePhrase}
+            placeholder="Insert recovery phrase"
+            onChange={handleInputChange}
+          />
+          <Button disabled={inFlight} onClick={sendPhrase}>
+            Switch user
+          </Button>
         </>
       )}
+
       {phrase && !hasCopied && (
         <Card
           styles={{
@@ -142,6 +140,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
           </Typography.Paragraph>
         </Card>
       )}
+      {hasCopied && <Typography.Paragraph type="success">Copied</Typography.Paragraph>}
     </Flex>
   )
 
