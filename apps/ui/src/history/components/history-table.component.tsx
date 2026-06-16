@@ -44,7 +44,6 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       message.success('Challenge deleted')
     },
     onError: (_) => {
-      console.log(_)
       message.error('Error deleting the challenge')
     },
     onSettled: () => {

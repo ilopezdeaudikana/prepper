@@ -304,15 +304,19 @@ export const getQuestion = async (id: string)
   }
 }
 
-export const deleteQuestion = async (id: string)
+export const deleteQuestion = async (id: string, user: string)
   : Promise<{ message: string }> => {
 
   const supabase = getSupabaseClient()
 
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
+
+  console.log('Delete', id, 'for', userId, user)
   const query = supabase
     .from(Tables.Questions)
     .delete()
     .eq('id', id)
+    .eq('user_id', userId)
 
   const { error } = await query
 

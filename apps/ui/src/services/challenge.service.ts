@@ -35,6 +35,7 @@ export const ChallengeService = {
 
     const { session } = useUser.getState() || localStorage.getItem('prepper-session')
     
+    console.log('in service', session)
     if (!session) return Promise.resolve({ data:[], count: 0 })
       
     const url = new URL(getApiUrl('challenge'))
@@ -85,13 +86,14 @@ export const ChallengeService = {
   },
 
   async deleteQuestion(id: string) {
+    const { session } = useUser.getState()
 
     const response = await fetch(getApiUrl('challenge'), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, user: session }),
     })
     return parseResponse<{ message: string }>(response, 'Evaluation failed.')
   },

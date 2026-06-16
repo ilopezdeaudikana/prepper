@@ -111,8 +111,7 @@ export const mastra = new Mastra({
           try {
             const rawBody = await c.req.text()
             const payload = parseAndValidateBody(rawBody, ChallengeDeleteSchema)
-            console.log(payload)
-            const result = await deleteQuestion(payload.id)
+            const result = await deleteQuestion(payload.id, payload.user)
             return c.json(result)
           } catch (error) {
             console.error('Unexpected error deleting question', error)

@@ -115,8 +115,8 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
             placeholder="Insert recovery phrase"
             onChange={handleInputChange}
           />
-          <Button disabled={inFlight} onClick={sendPhrase}>
-            Switch user
+          <Button type="primary" disabled={inFlight} onClick={sendPhrase}>
+            Load user
           </Button>
         </>
       )}

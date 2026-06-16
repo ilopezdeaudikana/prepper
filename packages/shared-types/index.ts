@@ -71,7 +71,8 @@ export const ChallengeRequestSchema = z.object({
 })
 
 export const ChallengeDeleteSchema = z.object({
-  id: z.string()
+  id: z.string(),
+  user: z.string().trim()
 })
 
 export const AllChallengesRequestSchema = z.object({
@@ -84,8 +85,7 @@ export const AllChallengesRequestSchema = z.object({
 })
 
 export const UserRequestSchema = z.object({
-  user: z.string()
-    .trim()
+  user: z.string().trim()
 })
 
 export const UserRecoveryRequestSchema = z.object({

@@ -15,7 +15,7 @@ export const useChallenges = ({ page, filters }: UseChallengeProps) => {
   const id = searchParams.get('id')
 
   const { data: apiData, isPending, error } = useQuery({
-    queryKey: ['challenge', 'all', page, ...Object.values(filters ?? {}),id],
+    queryKey: ['challenge', 'all', page, ...Object.values(filters ?? {}), id],
     queryFn: () => ChallengeService.getChallenges(page!, filters),
     select: ({ data, count }) => {
       return {

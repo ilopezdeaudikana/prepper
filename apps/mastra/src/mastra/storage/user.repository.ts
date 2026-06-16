@@ -35,7 +35,6 @@ export const upsertUser = async (user: string)
     .select('id')
     .single<{ id: string, recovery_phrase: string }>()
 
-  console.log(data)
   if (error) throw new Error(`Failed to persist user: ${error.message}`)
 
   return {
