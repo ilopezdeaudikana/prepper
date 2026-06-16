@@ -35,7 +35,6 @@ export const ChallengeService = {
 
     const { session } = useUser.getState() || localStorage.getItem('prepper-session')
     
-    console.log('in service', session)
     if (!session) return Promise.resolve({ data:[], count: 0 })
       
     const url = new URL(getApiUrl('challenge'))
