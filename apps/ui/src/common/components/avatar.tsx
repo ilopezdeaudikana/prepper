@@ -55,8 +55,11 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       setSession(result.id)
       localStorage.setItem('prepper-session', result.id)
       queryClient.invalidateQueries({ queryKey: ['challenge'] })
-      navigate('/')
-      setMenuOpen(false)
+      // navigate('/')
+      message.success('New user loaded')
+      timeout.current = setTimeout(() => {
+        setMenuOpen(false)
+      }, 1250)
     } catch (error) {
       message.error('Error switching user')
     } finally {

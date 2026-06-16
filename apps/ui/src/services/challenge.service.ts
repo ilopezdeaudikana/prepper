@@ -33,7 +33,10 @@ export const ChallengeService = {
 
     const { type, topic, completed, level } = filters ?? {}
 
-    const { session } = useUser.getState()
+    const { session } = useUser.getState() || localStorage.getItem('prepper-session')
+    
+    if (!session) return Promise.resolve({ data:[], count: 0 })
+      
     const url = new URL(getApiUrl('challenge'))
     url.searchParams.append('start', start ?? '0')
     if (completed) url.searchParams.append('completed', completed)
