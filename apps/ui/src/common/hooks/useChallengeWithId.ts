@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 
 export const useChallengeWithId = () => {
 
-  const [searchParams, _] = useSearchParams()
+  const [searchParams] = useSearchParams()
 
   const id = searchParams.get('id')
 

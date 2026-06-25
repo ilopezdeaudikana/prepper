@@ -37,7 +37,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
     try {
       const result = await UserService.generateRecoveryPhrase(session)
       setPhrase(result.recoveryPhrase)
-    } catch (error) {
+    } catch {
       message.error('Error generating recovery phrase')
     } finally {
       setInFlight(false)
@@ -57,7 +57,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       timeout.current = setTimeout(() => {
         setMenuOpen(false)
       }, 1250)
-    } catch (error) {
+    } catch {
       message.error('Error switching user')
     } finally {
       setInFlight(false)

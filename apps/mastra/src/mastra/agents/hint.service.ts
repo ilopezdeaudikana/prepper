@@ -91,7 +91,7 @@ const generateHint = async (
   question: Pick<Question, 'question' | 'topic' | 'initialCode' | 'type'>,
   userAnswer: string | undefined,
 ) => {
-  console.log('Generate hint')
+  console.info('Generate hint')
 
   const prompt = buildHintPrompt(level, question, userAnswer)
 

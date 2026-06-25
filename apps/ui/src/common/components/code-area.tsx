@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type JSX } from 'react'
-import Editor, { DiffEditor } from '@monaco-editor/react'
+import Editor, { DiffEditor, type Monaco, type OnMount } from '@monaco-editor/react'
 import { shikiToMonaco } from '@shikijs/monaco'
 import { getHighlighter, themes } from '../utils/shiki-engine'
 import { stripMarkdownCode } from '@/common/utils/strip-markdown-code'
+
+type IStandaloneCodeEditor = Parameters<OnMount>[0];
 
 export const CodeArea = ({ value, onChange, height, id, isDiff, modified, readOnly }: {
   value?: string,
@@ -17,11 +19,11 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified, readOn
   const [isReady, setIsReady] = useState(false)
   const [canLoad, setCanLoad] = useState(false)
 
-  const highlighterRef = useRef<any>(null)
-  const monacoRef = useRef<any>(null)
+  const highlighterRef = useRef<unknown>(null)
+  const monacoRef = useRef<IStandaloneCodeEditor | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleEditorWillMount = async (monaco: any) => {
+  const handleEditorWillMount = async (monaco: Monaco) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -82,7 +84,7 @@ export const CodeArea = ({ value, onChange, height, id, isDiff, modified, readOn
       highlighterRef.current = null
       monacoRef.current = null
     }
-  }, [monacoRef.current, canLoad])
+  }, [canLoad])
 
   return (
     <div style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.2s', height: '100%' }}>

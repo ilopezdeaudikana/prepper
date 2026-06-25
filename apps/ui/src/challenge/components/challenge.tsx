@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MarkdownText } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
@@ -33,23 +33,17 @@ const cardBody: React.CSSProperties = {
 }
 
 export const Challenge = () => {
-  const [feedback, setFeedback] = useState<
-    (Feedback & { error?: string }) | null
-  >(null)
+
   const [isDisabled, setIsDisabled] = useState(true)
   const [reply, setReply] = useState('')
   const [canContinue, setCanContinue] = useState(false)
-  const [challenge, setChallenge] = useState<
-    (Question & Feedback & { error?: string; notice?: string }) | null
-  >(null)
+
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const { level, topic, type } = useConfiguration(
     (state) => state.configuration,
   )
-  const setConfiguration = useConfiguration((state) => state.setConfiguration)
   const { score, stage } = useProgress((state) => state.progress)
   const setProgress = useProgress((state) => state.setProgress)
   const addToReport = useReport((state) => state.addToReport)
@@ -58,13 +52,20 @@ export const Challenge = () => {
 
   const { apiData: challengeData } = useChallengeWithId()
 
+  const [feedback, setFeedback] = useState<
+    (Feedback & { error?: string }) | null
+  >(challengeData?.data.completed ? challengeData?.data : null)
+
   const [searchParams, setSearchParams] = useSearchParams()
 
   const idParam = searchParams.get('id')
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['challenge', requestId, topic, level],
-    queryFn: () =>
+    queryFn: (): Promise<
+      Question &
+        Feedback & { error?: string; notice?: string; sessionToken?: string }
+    > =>
       ChallengeService.createChallenge(
         { topic, level, type },
         previousQuestions,
@@ -75,7 +76,12 @@ export const Challenge = () => {
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    placeholderData: (previousData) => previousData,
   })
+
+  const sessionToken = data?.sessionToken ?? null
+
+  const challenge = challengeData?.data ? challengeData?.data : data
 
   const requestErrorMessage =
     challenge?.error ??
@@ -135,9 +141,9 @@ export const Challenge = () => {
         })
       }
       queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] })
-    } catch (error: any) {
+    } catch (error: unknown) {
       setFeedback({
-        error: error?.error ?? error?.message ?? 'Evaluation failed.',
+        error: (error as Error).message ?? 'Evaluation failed.',
       } as Feedback)
     } finally {
       setLoadingEvaluation(false)
@@ -153,56 +159,18 @@ export const Challenge = () => {
 
   const reset = () => {
     setSearchParams({})
-    setChallenge(null)
     setFeedback(null)
     setReply('')
   }
 
-  const shouldShowForm = feedback === null && !loadingEvaluation
 
-  useEffect(() => {
-    if (data?.sessionToken) {
-      setSessionToken(data.sessionToken)
-    }
-
-    if (!data?.question) return
-    setPreviousQuestions((current) =>
-      current.includes(data.question) ? current : [...current, data.question],
+  if (data?.question) {
+    setPreviousQuestions((curr) =>
+      curr.includes(data.question) ? curr : [...curr, data.question],
     )
+  }
 
-    setChallenge(data ?? null)
-  }, [data])
-
-  useEffect(() => {
-    setSessionToken(null)
-    setPreviousQuestions([])
-    setFeedback(null)
-    setChallenge(null)
-  }, [])
-
-  useEffect(() => {
-    let active = true
-    if (challengeData?.data && active) {
-      const { topic, level, completed } = challengeData?.data
-      setChallenge(challengeData?.data)
-      if (completed) {
-        setFeedback(challengeData?.data)
-        setCanContinue(false)
-      }
-      setConfiguration({
-        topic: topic ?? RANDOM,
-        level,
-        type,
-        randomMode: !topic && !level,
-      })
-    } else if (!challengeData?.data && active) {
-      setChallenge(null)
-      setFeedback(null)
-    }
-    return () => {
-      active = false
-    }
-  }, [challengeData])
+  const shouldShowForm = feedback === null && !loadingEvaluation
 
   return (
     <div className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden">

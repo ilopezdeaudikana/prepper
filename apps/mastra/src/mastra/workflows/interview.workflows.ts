@@ -51,7 +51,7 @@ const hintStep = createStep({
   inputSchema: HintRequestSchema,
   outputSchema: HintResponseSchema,
   execute: async ({ inputData }) => {
-    console.log('hint submitted')
+    console.info('hint submitted')
     return submitHint(
       inputData?.question,
       inputData?.answer,

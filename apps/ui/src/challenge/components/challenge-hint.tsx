@@ -24,8 +24,8 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
       )
 
       setHint(result.text ?? '')
-    } catch (error: any) {
-      setHintError(error?.error ?? error?.message ?? 'Hint generation failed.')
+    } catch (error: unknown) {
+      setHintError((error as Error)?.message ?? 'Hint generation failed.')
     }
   }
 

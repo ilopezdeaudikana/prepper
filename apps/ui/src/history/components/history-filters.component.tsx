@@ -1,6 +1,6 @@
 import { ChallengeType, Level, type Filters } from '@repo/shared-types'
 import { Pagination, Select } from 'antd'
-import { useRef } from 'react'
+import { useState } from 'react'
 
 interface HistoryFilterProps {
   onNextPage: (n: number) => void
@@ -17,7 +17,7 @@ export const HistoryFilters = ({
   onFiltersChanged,
 }: HistoryFilterProps) => {
 
-  const filters = useRef<Filters>({ completed: 'false', topic: undefined, level: undefined, type: undefined })
+  const [filters, setFilters] = useState<Filters>({ completed: 'false', topic: undefined, level: undefined, type: undefined })
   
   const handlePageChange = (page: number) => {
     onNextPage(page ?? 0)
@@ -25,7 +25,7 @@ export const HistoryFilters = ({
 
   const handleFiltersChange = (key: keyof Filters, value: string) => {
     onFiltersChanged(key, value)
-    filters.current = {...filters.current, [key]: value }
+    setFilters((previous: Filters) => ({...previous, [key]: value }))
   }
 
   return (
@@ -33,7 +33,7 @@ export const HistoryFilters = ({
       <div className="flex flex-row justify-between w-full">
         <Select
           style={{ width: 150 }}
-          value={filters.current.completed}
+          value={filters.completed}
           onChange={(e) => handleFiltersChange('completed', e)}
           placeholder="Select complete/incomplete"
           options={[
@@ -44,7 +44,7 @@ export const HistoryFilters = ({
         <Select
           style={{ width: 150 }}
           onChange={(e) => handleFiltersChange('type', e)}
-          value={filters.current.type}
+          value={filters.type}
           placeholder="Select type"
           options={[
             { value: ChallengeType.Theoretical, label: 'Theoretical' },
@@ -55,7 +55,7 @@ export const HistoryFilters = ({
           style={{ width: 150 }}
           onChange={(e) => handleFiltersChange('level', e)}
           placeholder="Select level"
-          value={filters.current.level}
+          value={filters.level}
           options={[
             { value: Level.Junior, label: 'Junior' },
             { value: Level.Mid, label: 'Mid' },
@@ -66,7 +66,7 @@ export const HistoryFilters = ({
           style={{ width: 150 }}
           onChange={(e) => handleFiltersChange('topic', e)}
           placeholder="Select topic"
-          value={filters.current.topic}
+          value={filters.topic}
           options={topics.map((item) => ({ value: item, label: item }))}
         />
         <div className='max-w-108'>

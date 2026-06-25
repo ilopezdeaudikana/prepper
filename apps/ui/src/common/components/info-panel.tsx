@@ -1,5 +1,5 @@
 import { notification, type NotificationArgsProps } from 'antd'
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef } from 'react'
 
 interface InfoPanelProps {
   children: ReactNode,
@@ -17,7 +17,7 @@ export const InfoPanel = ({ children, title, placement }: InfoPanelProps) => {
     localStorage.setItem('prepper-info', 'true')
   }
 
-  const openNotification = () => {
+  const openNotification = useCallback(() => {
     api.open({
       title,
       description: children,
@@ -25,7 +25,7 @@ export const InfoPanel = ({ children, title, placement }: InfoPanelProps) => {
       duration: 0,
       onClose: closeNotification
     })
-  }
+  },[api, children, placement, title])
 
   useEffect(() => {
     if (ref.current && !localStorage.getItem('prepper-info')) {
@@ -35,7 +35,7 @@ export const InfoPanel = ({ children, title, placement }: InfoPanelProps) => {
     return () => {
       ref.current = false
     }
-  }, [])
+  }, [openNotification])
 
   return (
     <>

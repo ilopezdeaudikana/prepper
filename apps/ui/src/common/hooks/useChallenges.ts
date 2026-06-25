@@ -34,7 +34,7 @@ export const useChallenges = ({ page, filters }: UseChallengeProps) => {
       cleanParams({})
       navigate('/')
     }
-  }, [error])
+  }, [error, cleanParams, navigate])
 
   return {
     apiData, isPending, error

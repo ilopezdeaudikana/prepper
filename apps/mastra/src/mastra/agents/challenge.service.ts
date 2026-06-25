@@ -241,7 +241,7 @@ const generateFreshChallenge = async (params: {
   const { topic, level, type, sessionId, sessionToken, allPreviousQuestions, user } = params
   const variationToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   const exclusions = formatQuestionExclusions(allPreviousQuestions)
-  let lastGenerated: Question | null = null
+  let lastGenerated: Question | null
 
   const generationResponse = await interviewAgent.generate(buildChallengePrompt({
     topic,

@@ -1,24 +1,18 @@
 import { Card, Flex, Switch, Typography } from 'antd'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Avatar } from '@/common/components/avatar'
 import { useIdentification } from '@/common/hooks/useIdentification'
 
 export const Topbar = () => {
   
   const { isPrivate } = useIdentification()
-  const [isPublic, setIsPublic] = useState(true)
+  const [isPublic, setIsPublic] = useState(!isPrivate)
 
   const onChange = (checked: boolean) => {
     setIsPublic(checked)
     if (checked) localStorage.removeItem('prepper-private')
     if (!checked) localStorage.setItem('prepper-private', 'yes')
   }
-
-  useEffect(() => {
-    if(isPrivate) {
-      setIsPublic(false)
-    }
-  }, [isPrivate])
 
   return (
     <Card styles={{ body: { padding: '0.5rem 1.25rem' } }}>

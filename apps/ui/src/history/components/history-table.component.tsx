@@ -1,9 +1,15 @@
 import { ChallengeService } from '@/services/challenge.service'
-import type { Feedback, Question } from '@repo/shared-types'
+import {
+  ChallengeType,
+  RANDOM,
+  type Feedback,
+  type Question,
+} from '@repo/shared-types'
 import { App, Table, Typography, type TableProps } from 'antd'
 import { Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useConfiguration } from '@/store/configuration.store'
 
 type Row = Question & Feedback & { key: string }
 
@@ -14,9 +20,16 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const setConfiguration = useConfiguration((state) => state.setConfiguration)
 
-  const selectChallenge = (id: string) => {
-    navigate(`/?id=${id}`)
+  const selectChallenge = (row: Row) => {
+    setConfiguration({
+      topic: row.topic ?? RANDOM,
+      level: row.level,
+      type: row.type ?? ChallengeType.Mixed,
+      randomMode: !row.topic && !row.level,
+    })
+    navigate(`/?id=${row.id}`)
   }
 
   const deleteMutation = useMutation({
@@ -25,10 +38,12 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       // Cancel any outgoing refetches to avoid overwriting the optimistic update
       await queryClient.cancelQueries({ queryKey: ['challenge', 'all'] })
 
-      const cached: {
-        data: (Question & { sessionId: string } & Feedback)[]
-        count: number
-      } | undefined = queryClient.getQueryData(['challenge', 'all'])
+      const cached:
+        | {
+            data: (Question & { sessionId: string } & Feedback)[]
+            count: number
+          }
+        | undefined = queryClient.getQueryData(['challenge', 'all'])
 
       queryClient.setQueryData(['challenge', 'all'], () => {
         return {
@@ -43,14 +58,14 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
     onSuccess: () => {
       message.success('Challenge deleted')
     },
-    onError: (_) => {
+    onError: () => {
       message.error('Error deleting the challenge')
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] })
     },
   })
-  
+
   const deleteRecord = (id: string) => {
     if (!id) return
     deleteMutation.mutate(id)
@@ -62,7 +77,7 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       dataIndex: 'question',
       key: 'question',
       render: (text, record) => (
-        <Typography.Link onClick={() => selectChallenge(record.id ?? '')}>
+        <Typography.Link onClick={() => selectChallenge(record ?? {})}>
           {text}
         </Typography.Link>
       ),

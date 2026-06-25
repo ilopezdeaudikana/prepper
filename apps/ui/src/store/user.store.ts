@@ -11,7 +11,7 @@ export interface UserStore {
 export const useUser = create<UserStore>((set) => ({
   recoveryPhrase: '',
   session: '',
-  setUserSession: (session: string) => set(_ => ({ session })),
-  setRecoveryPhrase: (recoveryPhrase: string) => set(_ => ({ recoveryPhrase })),
-  resetUser: () => set(_ => ({ recoveryPhrase: '', session: '' }))
+  setUserSession: (session: string) => set(() => ({ session })),
+  setRecoveryPhrase: (recoveryPhrase: string) => set(() => ({ recoveryPhrase })),
+  resetUser: () => set(() => ({ recoveryPhrase: '', session: '' }))
 }))
