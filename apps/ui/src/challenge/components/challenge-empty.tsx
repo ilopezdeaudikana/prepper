@@ -45,7 +45,7 @@ function doubleNumbers(numbers: number[]): number[] {
 export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
   const cardStyles = { body:'bg-orange-200 opacity-80 text-gray-900'}
   return (
-    <div className="flex flex-col gap-2 overflow-auto min-h-full p-2">
+    <div className="flex flex-col gap-2 overflow-auto flex-1 p-2">
       {isQuestion && (
         <Badge.Ribbon text="Start">
           <Card title="Welcome to your personalized coding challenge" size="small" 

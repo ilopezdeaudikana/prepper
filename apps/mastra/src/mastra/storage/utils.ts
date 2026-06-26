@@ -62,7 +62,7 @@ export const resolveSessionIdFromToken = (secret: string, token?: string) => {
 
       return isUuid(decrypted) ? decrypted : undefined
     } catch (e) {
-      console.log(e as unknown)
+      console.info(e as unknown)
       return undefined
     }
   }

@@ -2,6 +2,7 @@ import { ChallengeType, Filters, Level, LevelType, RANDOM, type Feedback, type Q
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { Tables } from './types'
+import { createSession } from './session.repository'
 
 type QuestionInsert = {
   session_id: string
@@ -13,19 +14,23 @@ type QuestionInsert = {
   user_id: string
 }
 
-type QuestionGet = {
-  id: string
-  question: string
-  session_id: string
-  initial_code?: string
-  type: Question['type']
-  topic: string
-  level: LevelType
-  completed: boolean
+interface FeedbackGet {
   critique: string
   score: number
   missed_points: string[]
   improved_code?: string
+}
+
+interface QuestionGet extends FeedbackGet {
+  id: string
+  question: string
+  session_id: string
+  initial_code?: string
+  created_at?: string
+  type: Question['type']
+  topic: string
+  level: LevelType
+  completed: boolean
 }
 
 type QuestionReference = {
@@ -48,7 +53,7 @@ export const listQuestionTexts = async (sessionId: string) => {
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`Failed to load question history: ${error.message}`)
-  return (data ?? []).map((row: any) => row.question as string)
+  return (data ?? []).map((row: { question: QuestionGet['question'] }) => row.question)
 }
 
 export const listReusableQuestions = async (params: {
@@ -100,7 +105,7 @@ export const listReusableQuestions = async (params: {
 
     if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
-    const mapped = (data ?? []).map((row: any) => ({
+    const mapped = ((data ?? []) as unknown as (QuestionGet & { user_id: string })[]).map((row) => ({
       id: row.id as string,
       sessionId: row.session_id as string,
       question: row.question as string,
@@ -147,7 +152,7 @@ export const upsertQuestion = async (sessionId: string, question: Question, user
     .single<{ id: string }>()
 
   if (error) {
-    console.log('upsertQuestion error', error.message)
+    console.info('upsertQuestion error', error.message)
     throw new Error(`Failed to persist question: ${error.message}`)
   }
   return data.id
@@ -248,8 +253,8 @@ export const listAllQuestions = async (start: string, filters: Filters, user: st
   if (error) throw new Error(`Failed to load reusable challenges: ${error.message}`)
 
   return {
-    data: (data ?? []).map((row: any) => {
-      const feedback = row.interview_feedback?.[0] ?? {}
+    data: (data ?? []).map((row) => {
+      const feedback = row.interview_feedback?.[0] ?? {} as FeedbackGet
       const { question, initial_code: initialCode, type, completed, id, level, topic, session_id: sessionId } = row
 
       return {
@@ -311,7 +316,7 @@ export const deleteQuestion = async (id: string, user: string)
 
   const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
 
-  console.log('Delete', id, 'for', userId, user)
+  console.info('Delete', id, 'for', userId, user)
   const query = supabase
     .from(Tables.Questions)
     .delete()

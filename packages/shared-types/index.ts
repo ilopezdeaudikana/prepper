@@ -150,3 +150,9 @@ export interface Filters {
   completed?: string
   topic?: string
 }
+
+export interface ApiError {
+  status?: string | number
+  message?: string
+}
+

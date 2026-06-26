@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MarkdownText } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
@@ -33,12 +33,11 @@ const cardBody: React.CSSProperties = {
 }
 
 export const Challenge = () => {
-
   const [isDisabled, setIsDisabled] = useState(true)
   const [reply, setReply] = useState('')
   const [canContinue, setCanContinue] = useState(false)
 
-  const [previousQuestions, setPreviousQuestions] = useState<string[]>([])
+  const previousQuestions = useRef<string[]>([])
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
   const { level, topic, type } = useConfiguration(
@@ -68,7 +67,7 @@ export const Challenge = () => {
     > =>
       ChallengeService.createChallenge(
         { topic, level, type },
-        previousQuestions,
+        previousQuestions.current,
         sessionToken ?? undefined,
       ),
     enabled: !!topic && !!level && !idParam,
@@ -81,7 +80,8 @@ export const Challenge = () => {
 
   const sessionToken = data?.sessionToken ?? null
 
-  const challenge = challengeData?.data ? challengeData?.data : data
+  const challenge: (Question & Feedback & { notice?: string }) | undefined =
+    challengeData?.data ? challengeData?.data : isFetching ? undefined : data
 
   const requestErrorMessage =
     challenge?.error ??
@@ -163,11 +163,12 @@ export const Challenge = () => {
     setReply('')
   }
 
-
   if (data?.question) {
-    setPreviousQuestions((curr) =>
-      curr.includes(data.question) ? curr : [...curr, data.question],
+    previousQuestions.current = previousQuestions.current.includes(
+      data.question,
     )
+      ? previousQuestions.current
+      : [...previousQuestions.current, data.question]
   }
 
   const shouldShowForm = feedback === null && !loadingEvaluation
@@ -191,57 +192,62 @@ export const Challenge = () => {
               body: cardBody,
             }}
           >
-            {challenge && !challengeData?.data?.completed && (
-              <ChallengeHint
-                data={(data as Question) || extractQuestionFromLocalData()}
-                level={level}
-                reply={reply}
-              />
-            )}
-
-            {!requestErrorMessage && (!challenge || isFetching) && (
-              <GenerationState
-                isFetching={isFetching}
-                isReady={!!topic || !!level}
-              />
-            )}
-            {requestErrorMessage ? (
-              <div>
-                <p>Error loading data</p>
-                <pre className="whitespace-pre-wrap">{requestErrorMessage}</pre>
-              </div>
-            ) : null}
-            {challenge?.notice ? (
-              <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                {challenge.notice}
-              </div>
-            ) : null}
-            {challenge?.type === ChallengeType.Theoretical && (
-              <>
-                <MarkdownText content={challenge?.question} />
-                <ChallengeReply
-                  onInputChange={handleInputChange}
-                  disabled={!shouldShowForm}
-                  onSubmit={handleSubmit}
-                  type={ChallengeType.Theoretical}
-                />
-              </>
-            )}
-            {challenge?.type === ChallengeType.Coding && (
-              <>
-                <>
-                  <MarkdownText content={challenge?.question} />
-                  <ChallengeReply
-                    defaultValue={challenge?.initialCode ?? ''}
-                    onInputChange={handleInputChange}
-                    onSubmit={handleSubmit}
-                    type={ChallengeType.Coding}
-                  />
-                </>
-              </>
-            )}
-            {!topic && !level && !idParam && (
+            {!topic && !level && !idParam ? (
               <ChallengeEmpty isQuestion={true} />
+            ) : (
+              <>
+                {challenge && !challengeData?.data?.completed && (
+                  <ChallengeHint
+                    data={(data as Question) || extractQuestionFromLocalData()}
+                    level={level}
+                    reply={reply}
+                  />
+                )}
+
+                {!requestErrorMessage && (!challenge || isFetching) && (
+                  <GenerationState
+                    isFetching={isFetching}
+                    isReady={!!topic || !!level}
+                  />
+                )}
+                {requestErrorMessage ? (
+                  <div>
+                    <p>Error loading data</p>
+                    <pre className="whitespace-pre-wrap">
+                      {requestErrorMessage}
+                    </pre>
+                  </div>
+                ) : null}
+                {challenge?.notice ? (
+                  <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    {challenge.notice}
+                  </div>
+                ) : null}
+                {challenge?.type === ChallengeType.Theoretical && (
+                  <>
+                    <MarkdownText content={challenge?.question} />
+                    <ChallengeReply
+                      onInputChange={handleInputChange}
+                      disabled={!shouldShowForm}
+                      onSubmit={handleSubmit}
+                      type={ChallengeType.Theoretical}
+                    />
+                  </>
+                )}
+                {challenge?.type === ChallengeType.Coding && (
+                  <>
+                    <>
+                      <MarkdownText content={challenge?.question} />
+                      <ChallengeReply
+                        defaultValue={challenge?.initialCode ?? ''}
+                        onInputChange={handleInputChange}
+                        onSubmit={handleSubmit}
+                        type={ChallengeType.Coding}
+                      />
+                    </>
+                  </>
+                )}
+              </>
             )}
           </Card>
         </div>

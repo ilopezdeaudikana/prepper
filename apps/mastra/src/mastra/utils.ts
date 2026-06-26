@@ -1,5 +1,8 @@
+import { ApiError } from '@repo/shared-types'
 import { safeParse, ZodError } from 'zod'
 import { $ZodType, output } from 'zod/v4/core'
+import type { Context } from 'hono'
+import { ContentfulStatusCode } from 'hono/utils/http-status'
 
 export const createRequestError = (message: string, status = 400): Error & { status: number } => {
   const err = new Error(message) as Error & { status: number }
@@ -30,10 +33,10 @@ export const parseAndValidateBody = <T extends $ZodType>(rawBody: string, schema
   }
 }
 
-export const handleRequestError = (c: any, error: unknown, fallbackMessage: string) => {
+export const handleRequestError = (c: Context, error: unknown, fallbackMessage: string) => {
   const message = error instanceof Error ? error.message : fallbackMessage
   const status =
-    error instanceof ZodError ? 400 : (error && typeof (error as any).status === 'number' ? (error as any).status : 500)
+    (error instanceof ZodError ? 400 : (error && typeof (error as ApiError).status === 'number' ? (error as ApiError).status : 500)) as ContentfulStatusCode
   return c.json(
     {
       error: status === 400 ? message : fallbackMessage,
