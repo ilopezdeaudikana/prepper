@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MarkdownText } from '@/common/components/markdown-text'
 import { ChallengeService } from '@/services/challenge.service'
@@ -163,13 +163,15 @@ export const Challenge = () => {
     setReply('')
   }
 
-  if (data?.question) {
-    previousQuestions.current = previousQuestions.current.includes(
-      data.question,
-    )
-      ? previousQuestions.current
-      : [...previousQuestions.current, data.question]
-  }
+  useEffect(() => {
+    if (data?.question) {
+      previousQuestions.current = previousQuestions.current.includes(
+        data.question,
+      )
+        ? previousQuestions.current
+        : [...previousQuestions.current, data.question]
+    }
+  }, [data?.question])
 
   const shouldShowForm = feedback === null && !loadingEvaluation
 

@@ -3,16 +3,17 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([
-  globalIgnores(['dist']),
+export default tseslint.config(
+  {
+    ignores: ['dist/', 'node_modules/'],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
 
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'eslint.config.js'],
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
@@ -22,10 +23,13 @@ export default defineConfig([
       globals: {
         ...globals.browser,
       },
-    },
-    parserOptions: {
-      tsconfigRootDir: import.meta.dirname,
-      project: './tsconfig.json',
+      parser: tseslint.parser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+        projectService: {
+          allowDefaultProject: ['eslint.config.js', 'vite.config.ts'],
+        },
+      }
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -37,4 +41,4 @@ export default defineConfig([
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
-])
+)
