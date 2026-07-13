@@ -35,7 +35,7 @@ export default function HistoryView() {
   }
 
   return (
-    <div className="py-4 align-self-center flex flex-col h-[calc(100vh-90px)]">
+    <div className="pt-4 align-self-center flex flex-col h-[calc(100vh-90px)]">
       <Card className="flex-1" styles={{ body: { padding: '1.25rem' } }}>
         <div className="flex flex-col gap-4">
           <HistoryFilters

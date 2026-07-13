@@ -138,7 +138,7 @@ export default function ImportView() {
   }
 
   return (
-    <div className="py-4 flex flex-col gap-4 h-[calc(100vh-90px)] min-h-0">
+    <div className="pt-4 flex flex-col gap-4 h-[calc(100vh-90px)] min-h-0">
       <div className="flex flex-col gap-1">
         <Typography.Title level={3} className="!mb-0">
           Import Challenges

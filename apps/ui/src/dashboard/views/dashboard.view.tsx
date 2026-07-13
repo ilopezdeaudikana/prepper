@@ -5,18 +5,21 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Line,
   LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
+  Sector,
   Tooltip,
   XAxis,
   YAxis,
+  type PieSectorShapeProps,
 } from 'recharts'
 
 const CHART_COLORS = ['#2563eb', '#16a34a', '#f97316', '#9333ea', '#0891b2']
+
+const PieSector = (props: PieSectorShapeProps) => <Sector {...props} fill={CHART_COLORS[props.index % CHART_COLORS.length]} />
 
 export default function DashboardView() {
   const { data, isPending, error } = useQuery({
@@ -28,7 +31,7 @@ export default function DashboardView() {
   const hasData = !!data && data.total > 0
 
   return (
-    <div className="py-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-3 h-[calc(100vh-90px)] min-h-0">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card loading={isPending}>
@@ -63,15 +66,15 @@ export default function DashboardView() {
         <Row gutter={[16, 16]}>
           <Col xs={24} xl={14}>
             <Card title="Usage over time">
-              <div className="h-80">
+              <div className="h-70">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.usageOverTime}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="created" name="Created" stroke="#2563eb" strokeWidth={2} />
-                    <Line type="monotone" dataKey="solved" name="Solved" stroke="#16a34a" strokeWidth={2} />
+                    <Line type="monotone" dataKey="created" name="Created" stroke={CHART_COLORS[0]} strokeWidth={2} />
+                    <Line type="monotone" dataKey="solved" name="Solved" stroke={CHART_COLORS[1]} strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -80,7 +83,7 @@ export default function DashboardView() {
 
           <Col xs={24} xl={10}>
             <Card title="Solved by type">
-              <div className="h-80">
+              <div className="h-70">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -90,11 +93,8 @@ export default function DashboardView() {
                       innerRadius={70}
                       outerRadius={110}
                       label
-                    >
-                      {data.solvedByType.map((entry, index) => (
-                        <Cell key={entry.type} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
+                      shape={PieSector}
+                    />
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
@@ -102,17 +102,19 @@ export default function DashboardView() {
             </Card>
           </Col>
 
+          
+
           <Col xs={24}>
             <Card title="Top topics">
-              <div className="h-80">
+              <div className="h-85">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.byTopic}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="topic" />
                     <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Bar dataKey="count" name="Created" fill="#2563eb" />
-                    <Bar dataKey="solved" name="Solved" fill="#16a34a" />
+                    <Bar dataKey="count" name="Created" fill={CHART_COLORS[0]} />
+                    <Bar dataKey="solved" name="Solved" fill={CHART_COLORS[1]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
