@@ -42,7 +42,7 @@ createRoot(document.getElementById('root')!).render(
             <InfoPanel title="Frontend interview prepper agent">
               <Flex vertical gap="18">
                 <Typography.Paragraph>
-                  Stack: Mastra, Supabase, React, TypeScript, Monaco and Antd
+                  Stack: Mastra, Supabase, React, TypeScript, Monaco, Recharts, React Hook Form, Zustand, Zod and Antd
                 </Typography.Paragraph>
                 <Typography.Link
                   href="https://github.com/ilopezdeaudikana/prepper"
