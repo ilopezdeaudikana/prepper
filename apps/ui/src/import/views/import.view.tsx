@@ -2,6 +2,7 @@ import { ChallengeService } from '@/services/challenge.service'
 import {
   ChallengeType,
   Level,
+  QuestionSchema,
   type ChallengeImportItem,
 } from '@repo/shared-types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -20,14 +21,37 @@ import {
 import { FileUp, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { CodeArea } from '../../common/components/code-area'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 
-type ChallengeFormValues = {
-  question: string
-  initialCode?: string
-  type: ChallengeImportItem['type']
-  topic?: string
-  level: ChallengeImportItem['level']
-}
+const challengeSchema = QuestionSchema.pick({
+  question: true,
+  type: true,
+  topic: true,
+  level: true,
+  initialCode: true,
+})
+  .extend({
+    question: z
+      .string()
+      .min(1, { message: 'Please add the challenge question' }),
+    topic: z.string().min(1, { message: 'Please add the challenge topic' }),
+  })
+  .refine(
+    (values) => {
+      if (values.type === ChallengeType.Coding) {
+        return !!values.initialCode && values.initialCode.trim().length > 0
+      }
+      return true
+    },
+    {
+      message: 'Initial code is required for this challenge type',
+      path: ['initialCode'],
+    },
+  )
+
+type ChallengeFormValues = z.infer<typeof challengeSchema>
 
 const parseImportedChallenges = (text: string): ChallengeImportItem[] => {
   const parsed = JSON.parse(text) as unknown
@@ -61,8 +85,16 @@ const parseImportedChallenges = (text: string): ChallengeImportItem[] => {
   })
 }
 
+const typeOptions = [
+  { value: ChallengeType.Coding, label: 'Coding' },
+  {
+    value: ChallengeType.Theoretical,
+    label: 'Theoretical',
+  },
+  { value: ChallengeType.Mixed, label: 'Mixed' },
+]
+
 export default function ImportView() {
-  const [form] = Form.useForm<ChallengeFormValues>()
   const [pendingUpload, setPendingUpload] = useState<ChallengeImportItem[]>([])
   const { message } = App.useApp()
   const queryClient = useQueryClient()
@@ -73,7 +105,7 @@ export default function ImportView() {
       message.success(
         `${result.inserted} challenge${result.inserted === 1 ? '' : 's'} imported`,
       )
-      form.resetFields()
+      reset()
       setPendingUpload([])
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] }),
@@ -82,6 +114,23 @@ export default function ImportView() {
     },
     onError: () => {
       message.error('Could not import challenges')
+    },
+  })
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    trigger,
+    formState: { errors },
+  } = useForm<ChallengeFormValues>({
+    resolver: zodResolver(challengeSchema),
+    defaultValues: {
+      question: '',
+      initialCode: undefined,
+      type: ChallengeType.Coding,
+      topic: '',
+      level: Level.Mid,
     },
   })
 
@@ -121,14 +170,14 @@ export default function ImportView() {
   }[]
 }`
 
-  const handleManualSubmit = (values: ChallengeFormValues) => {
+  const onSubmit = (values: ChallengeFormValues) => {
     importMutation.mutate([
       {
         question: values.question,
         initialCode: values.initialCode,
-        type: values.type,
-        topic: values.topic,
-        level: values.level,
+        type: values.type ?? ChallengeType.Mixed,
+        topic: values.topic ?? '',
+        level: values.level ?? Level.Mid,
       },
     ])
   }
@@ -151,33 +200,50 @@ export default function ImportView() {
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_480px] gap-4 h-[calc(100vh-90px)] min-h-0">
         <Card title="Single entry">
           <Form
-            form={form}
             layout="vertical"
             initialValues={{ type: ChallengeType.Mixed, level: Level.Mid }}
-            onFinish={handleManualSubmit}
+            onFinish={handleSubmit(onSubmit)}
           >
             <Form.Item
               label="Question"
-              name="question"
-              rules={[
-                { required: true, message: 'Add the challenge question' },
-              ]}
+              validateStatus={errors.question ? 'error' : ''}
+              help={errors.question?.message}
+              required
             >
-              <Input.TextArea rows={7} />
+              <Controller
+                name="question"
+                control={control}
+                render={({ field }) => <Input.TextArea {...field} rows={7} />}
+              />
             </Form.Item>
 
-            <Form.Item label="Initial code" name="initialCode">
-              <Input.TextArea rows={7} />
+            <Form.Item
+              label="Initial code"
+              validateStatus={errors.initialCode ? 'error' : ''}
+              help={errors.initialCode?.message}
+            >
+              <Controller
+                name="initialCode"
+                control={control}
+                render={({ field }) => <Input.TextArea {...field} rows={7} />}
+              />
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Form.Item label="Type" name="type">
-                <Select
-                  options={[
-                    { value: ChallengeType.Coding, label: 'Coding' },
-                    { value: ChallengeType.Theoretical, label: 'Theoretical' },
-                    { value: ChallengeType.Mixed, label: 'Mixed' },
-                  ]}
+              <Form.Item label="Type">
+                <Controller
+                  name="type"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      onChange={(value) => {
+                        field.onChange(value)
+                        trigger('initialCode')
+                      }}
+                      options={typeOptions}
+                    />
+                  )}
                 />
               </Form.Item>
 
@@ -191,8 +257,17 @@ export default function ImportView() {
                 />
               </Form.Item>
 
-              <Form.Item label="Topic" name="topic">
-                <Input />
+              <Form.Item
+                label="Topic"
+                validateStatus={errors.topic ? 'error' : ''}
+                help={errors.topic?.message}
+                required
+              >
+                <Controller
+                  name="topic"
+                  control={control}
+                  render={({ field }) => <Input {...field} />}
+                />
               </Form.Item>
             </div>
 
@@ -209,11 +284,11 @@ export default function ImportView() {
 
         <Card title="Batch upload">
           <Space orientation="vertical" size="middle" className="w-full">
-            <CodeArea 
-              value={example} 
-              readOnly={true} 
+            <CodeArea
+              value={example}
+              readOnly={true}
               height={220}
-              id={'example-code'} 
+              id={'example-code'}
             />
             <Upload.Dragger {...uploadProps}>
               <div className="flex flex-col items-center gap-3 py-6">
