@@ -1,7 +1,5 @@
 import { HistoryTable } from '../components/history-table.component'
 import { useState } from 'react'
-import { Button } from 'antd'
-import { useNavigate } from 'react-router-dom'
 import { useChallenges } from '@/common/hooks/useChallenges'
 import { Card } from 'antd'
 import { HistoryFilters } from '../components/history-filters.component'
@@ -16,8 +14,6 @@ export default function HistoryView() {
   })
 
   const [page, setPage] = useState<number>(0)
-
-  const navigate = useNavigate()
 
   const { apiData, isPending, error } = useChallenges({
     page: page.toString(),
@@ -39,12 +35,9 @@ export default function HistoryView() {
   }
 
   return (
-    <div className="py-4 align-self-center flex flex-col h-screen">
+    <div className="py-4 align-self-center flex flex-col h-[calc(100vh-90px)]">
       <Card className="flex-1" styles={{ body: { padding: '1.25rem' } }}>
         <div className="flex flex-col gap-4">
-          <Button type="primary" className="w-48" onClick={() => navigate('/')}>
-            Back to challenges view
-          </Button>
           <HistoryFilters
             onNextPage={handleNextPage}
             onFiltersChanged={handleFiltersChange}

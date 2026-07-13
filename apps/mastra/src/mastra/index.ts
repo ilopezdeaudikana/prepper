@@ -2,9 +2,9 @@ import { Mastra } from '@mastra/core/mastra'
 import { interviewAgent } from './agents/interview-agent'
 import { registerApiRoute } from '@mastra/core/server'
 import { VercelDeployer } from '@mastra/deployer-vercel'
-import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema, ChallengeDeleteSchema, UserRecoveryRequestSchema } from '@repo/shared-types'
+import { ChallengeRequestSchema, EvaluationRequestSchema, AllChallengesRequestSchema, UserRequestSchema, HintRequestSchema, ChallengeDeleteSchema, UserRecoveryRequestSchema, ChallengeDashboardRequestSchema, ChallengeImportRequestSchema } from '@repo/shared-types'
 import { evaluateAnswerWorkflow, generateChallengeWorkflow, hintWorkflow } from './workflows/interview.workflows'
-import { listAllQuestions, getQuestion, deleteQuestion } from './storage/challenge.repository'
+import { listAllQuestions, getQuestion, deleteQuestion, getChallengeDashboard, importChallenges } from './storage/challenge.repository'
 import { findByPhrase, findUser, generateRecoveryPhrase, upsertUser } from './storage/user.repository'
 import { handleRequestError, parseAndValidateBody } from './utils'
 
@@ -44,6 +44,34 @@ export const mastra = new Mastra({
           } catch (error) {
             console.error('Unexpected challenge generation error', String(error).toString())
             return handleRequestError(c, error, 'Challenge generation failed. Unexpected error')
+          }
+        },
+      }),
+      registerApiRoute('/challenge/dashboard', {
+        method: 'GET',
+        handler: async (c) => {
+          const query = JSON.stringify(c.req.query())
+          try {
+            const { user } = parseAndValidateBody(query, ChallengeDashboardRequestSchema)
+            const result = await getChallengeDashboard(user)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected dashboard retrieval error', error)
+            return handleRequestError(c, error, 'Unexpected dashboard retrieval error')
+          }
+        },
+      }),
+      registerApiRoute('/challenge/import', {
+        method: 'POST',
+        handler: async (c) => {
+          try {
+            const rawBody = await c.req.text()
+            const payload = parseAndValidateBody(rawBody, ChallengeImportRequestSchema)
+            const result = await importChallenges(payload.user, payload.challenges)
+            return c.json(result)
+          } catch (error) {
+            console.error('Unexpected challenge import error', error)
+            return handleRequestError(c, error, 'Unexpected challenge import error')
           }
         },
       }),

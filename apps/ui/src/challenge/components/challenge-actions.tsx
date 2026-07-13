@@ -3,7 +3,6 @@ import { useProgress, FINAL_STAGE, INITIAL_STAGE } from '@/store/progress.store'
 import { Configuration } from '@/configuration/configuration.component'
 import { useConfiguration } from '@/store/configuration.store'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { ChallengeType } from '@repo/shared-types'
 
 interface ChallengeActionsProps {
@@ -24,8 +23,6 @@ export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, o
   const { score, stage } = useProgress(state => state.progress)
 
   const setProgress = useProgress(state => state.setProgress)
-
-  const navigate = useNavigate()
   
   const restart = () => {
     setConfiguration({
@@ -52,20 +49,11 @@ export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, o
     onNavigate()
   }
 
-const goToHistory = () => {
-  navigate('/history')
-  onNavigate()
-}
-
   return (
     <Card
-      styles={{ body: { padding: '1.25rem' } }}
+      styles={{ body: { padding: '0.75rem 1.25rem' } }}
     >
       <div className="flex justify-between items-center">
-        <Button type="primary" className="mr-2" onClick={goToHistory}>
-          Review previous challenges
-        </Button>
-
         {topic && level || idParam ? 
         <>
           <p>Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}</p>

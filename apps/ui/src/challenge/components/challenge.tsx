@@ -238,15 +238,13 @@ export const Challenge = () => {
                 )}
                 {challenge?.type === ChallengeType.Coding && (
                   <>
-                    <>
-                      <MarkdownText content={challenge?.question} />
-                      <ChallengeReply
-                        defaultValue={challenge?.initialCode ?? ''}
-                        onInputChange={handleInputChange}
-                        onSubmit={handleSubmit}
-                        type={ChallengeType.Coding}
-                      />
-                    </>
+                    <MarkdownText content={challenge?.question} />
+                    <ChallengeReply
+                      defaultValue={challenge?.initialCode ?? ''}
+                      onInputChange={handleInputChange}
+                      onSubmit={handleSubmit}
+                      type={ChallengeType.Coding}
+                    />
                   </>
                 )}
               </>

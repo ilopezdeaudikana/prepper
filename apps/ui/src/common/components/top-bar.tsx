@@ -1,12 +1,14 @@
-import { Card, Flex, Switch, Typography } from 'antd'
+import { Button, Card, Flex, Switch, Tooltip, Typography } from 'antd'
 import { useState } from 'react'
 import { Avatar } from '@/common/components/avatar'
 import { useIdentification } from '@/common/hooks/useIdentification'
+import { useNavigate } from 'react-router-dom'
+import { BarChart3, History, Home, Upload } from 'lucide-react'
 
 export const Topbar = () => {
-  
   const { isPrivate } = useIdentification()
   const [isPublic, setIsPublic] = useState(!isPrivate)
+  const navigate = useNavigate()
 
   const onChange = (checked: boolean) => {
     setIsPublic(checked)
@@ -17,11 +19,39 @@ export const Topbar = () => {
   return (
     <Card styles={{ body: { padding: '0.5rem 1.25rem' } }}>
       <div className="flex justify-between items-center gap-2">
-        <Flex gap={8}>
-          <Typography>Using a shared/public computer:</Typography>
-          <Switch value={isPublic} onChange={onChange} />
+        <Flex gap={8} align="center" wrap>
+          <Tooltip title="Challenges">
+            <Button
+              icon={<Home className="size-4" />}
+              onClick={() => navigate('/')}
+            />
+          </Tooltip>
+          <Button
+            icon={<History className="size-4" />}
+            onClick={() => navigate('/history')}
+          >
+            History
+          </Button>
+          <Button
+            icon={<BarChart3 className="size-4" />}
+            onClick={() => navigate('/dashboard')}
+          >
+            Dashboard
+          </Button>
+          <Button
+            icon={<Upload className="size-4" />}
+            onClick={() => navigate('/import')}
+          >
+            Import
+          </Button>
         </Flex>
-        <Avatar isPublic={isPublic}/>
+        <Flex gap={32} align="center">
+          <Flex gap={8} align="center">
+            <Typography>Using a shared/public computer:</Typography>
+            <Switch value={isPublic} onChange={onChange} />
+          </Flex>
+          <Avatar isPublic={isPublic} />
+        </Flex>
       </div>
     </Card>
   )

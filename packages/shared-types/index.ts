@@ -84,6 +84,23 @@ export const AllChallengesRequestSchema = z.object({
   start: z.string()
 })
 
+export const ChallengeDashboardRequestSchema = z.object({
+  user: z.string().min(1)
+})
+
+export const ChallengeImportItemSchema = z.object({
+  question: z.string().trim().min(1),
+  initialCode: z.string().optional(),
+  type: z.enum([ChallengeType.Coding, ChallengeType.Theoretical, ChallengeType.Mixed]).default(ChallengeType.Mixed),
+  topic: z.string().trim().optional(),
+  level: z.enum([Level.Junior, Level.Mid, Level.Senior]).default(Level.Mid)
+})
+
+export const ChallengeImportRequestSchema = z.object({
+  user: z.string().min(1),
+  challenges: z.array(ChallengeImportItemSchema).min(1).max(50)
+})
+
 export const UserRequestSchema = z.object({
   user: z.string().trim()
 })
@@ -128,6 +145,17 @@ export type EvaluationRequest = z.infer<typeof EvaluationRequestSchema>
 export type EvaluationResponse = z.infer<typeof EvaluationResponseSchema>
 export type HintResponse = z.infer<typeof HintResponseSchema>
 export type UserResponse = z.infer<typeof UserResponseSchema>
+export type ChallengeImportItem = z.infer<typeof ChallengeImportItemSchema>
+
+export interface ChallengeDashboardStats {
+  total: number
+  solved: number
+  unsolved: number
+  averageScore: number | null
+  solvedByType: { type: ChallengeType | 'unknown', count: number }[]
+  usageOverTime: { date: string, created: number, solved: number }[]
+  byTopic: { topic: string, count: number, solved: number }[]
+}
 
 export const Topic = {
   React: 'react',
@@ -155,4 +183,3 @@ export interface ApiError {
   status?: string | number
   message?: string
 }
-

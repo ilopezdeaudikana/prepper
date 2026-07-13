@@ -1,4 +1,4 @@
-import { ChallengeType, Filters, Level, LevelType, RANDOM, type Feedback, type Question } from '@repo/shared-types'
+import { ChallengeType, Filters, Level, LevelType, RANDOM, type ChallengeDashboardStats, type ChallengeImportItem, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { Tables } from './types'
@@ -332,3 +332,99 @@ export const deleteQuestion = async (id: string, user: string)
   }
 }
 
+type DashboardQuestionGet = {
+  id: string
+  type?: ChallengeType | null
+  topic?: string | null
+  completed: boolean
+  created_at?: string | null
+  interview_feedback?: { score?: number | null }[]
+}
+
+const increment = <T extends string>(map: Map<T, number>, key: T, amount = 1) => {
+  map.set(key, (map.get(key) ?? 0) + amount)
+}
+
+export const getChallengeDashboard = async (user: string): Promise<ChallengeDashboardStats> => {
+  const supabase = getSupabaseClient()
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user) ?? ''
+
+  const { data, error } = await supabase
+    .from(Tables.Questions)
+    .select(`id, type, topic, completed, created_at, ${Tables.Feedback} (score)`)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw new Error(`Failed to load dashboard: ${error.message}`)
+
+  const rows = (data ?? []) as DashboardQuestionGet[]
+  const solvedByType = new Map<ChallengeType | 'unknown', number>()
+  const usageByDate = new Map<string, { date: string, created: number, solved: number }>()
+  const topicMap = new Map<string, { topic: string, count: number, solved: number }>()
+  const scores: number[] = []
+
+  for (const row of rows) {
+    const date = row.created_at ? row.created_at.slice(0, 10) : 'unknown'
+    const usage = usageByDate.get(date) ?? { date, created: 0, solved: 0 }
+    usage.created += 1
+    if (row.completed) usage.solved += 1
+    usageByDate.set(date, usage)
+
+    const topic = row.topic?.trim() || 'Uncategorized'
+    const topicStats = topicMap.get(topic) ?? { topic, count: 0, solved: 0 }
+    topicStats.count += 1
+    if (row.completed) topicStats.solved += 1
+    topicMap.set(topic, topicStats)
+
+    if (row.completed) {
+      increment(solvedByType, row.type ?? 'unknown')
+    }
+
+    const score = row.interview_feedback?.[0]?.score
+    if (typeof score === 'number') scores.push(score)
+  }
+
+  const solved = rows.filter((row) => row.completed).length
+  const averageScore = scores.length
+    ? Number((scores.reduce((total, score) => total + score, 0) / scores.length).toFixed(1))
+    : null
+
+  return {
+    total: rows.length,
+    solved,
+    unsolved: rows.length - solved,
+    averageScore,
+    solvedByType: Array.from(solvedByType, ([type, count]) => ({ type, count })),
+    usageOverTime: Array.from(usageByDate.values()),
+    byTopic: Array.from(topicMap.values()).sort((a, b) => b.count - a.count).slice(0, 8)
+  }
+}
+
+export const importChallenges = async (user: string, challenges: ChallengeImportItem[])
+  : Promise<{ inserted: number, ids: string[] }> => {
+
+  const userId = resolveSessionIdFromToken(process.env.HASH_SECRET!, user)
+  if (!userId) throw new Error('Invalid user session.')
+
+  const ids: string[] = []
+
+  for (const challenge of challenges) {
+    const topic = challenge.topic?.trim() || ''
+    const level = challenge.level ?? Level.Mid
+    const session = await createSession(topic || RANDOM, level)
+    const id = await upsertQuestion(session.id, {
+      question: challenge.question,
+      initialCode: challenge.initialCode,
+      type: challenge.type ?? ChallengeType.Mixed,
+      topic,
+      level,
+      user: userId
+    }, userId)
+    ids.push(id)
+  }
+
+  return {
+    inserted: ids.length,
+    ids
+  }
+}

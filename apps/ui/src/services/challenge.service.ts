@@ -1,4 +1,4 @@
-import type { ChallengeType, EvaluationResponse, Feedback, Filters, HintResponse, LevelType, Question } from "@repo/shared-types"
+import type { ChallengeDashboardStats, ChallengeImportItem, ChallengeType, EvaluationResponse, Feedback, Filters, HintResponse, LevelType, Question } from "@repo/shared-types"
 import { useConfiguration } from "@/store/configuration.store"
 import { parseResponse } from "@/common/utils/parse-api-response"
 import { useUser } from "@/store/user.store"
@@ -56,7 +56,7 @@ export const ChallengeService = {
 
   },
 
-    async getChallengeWithId(id: string) {
+  async getChallengeWithId(id: string) {
 
     const url = new URL(getApiUrl(`challenge/${id}`))
 
@@ -69,6 +69,45 @@ export const ChallengeService = {
 
     return parseResponse<{ data: Question & Feedback }>(response, 'Challenge retrieval failed.')
 
+  },
+
+  async getDashboard() {
+    const { session } = useUser.getState() || localStorage.getItem('prepper-session')
+
+    if (!session) return Promise.resolve({
+      total: 0,
+      solved: 0,
+      unsolved: 0,
+      averageScore: null,
+      solvedByType: [],
+      usageOverTime: [],
+      byTopic: []
+    } satisfies ChallengeDashboardStats)
+
+    const url = new URL(getApiUrl('challenge/dashboard'))
+    url.searchParams.append('user', session)
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    return parseResponse<ChallengeDashboardStats>(response, 'Dashboard retrieval failed.')
+  },
+
+  async importChallenges(challenges: ChallengeImportItem[]) {
+    const { session } = useUser.getState()
+
+    const response = await fetch(getApiUrl('challenge/import'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user: session, challenges }),
+    })
+    return parseResponse<{ inserted: number, ids: string[] }>(response, 'Challenge import failed.')
   },
 
   async submitAnswer(question: Question, answer: string, level?: LevelType, sessionToken?: string) {
