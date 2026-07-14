@@ -1,4 +1,4 @@
-import { type Question, QuestionSchema, ChallengeType, Level, LevelType, RANDOM } from '@repo/shared-types'
+import { type Question, QuestionSchema, ChallengeType, Level, LevelType, RANDOM } from '../../../../../packages/shared-types'
 import {
   createSession,
   getSession

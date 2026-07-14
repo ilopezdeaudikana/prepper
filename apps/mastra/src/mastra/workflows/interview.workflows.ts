@@ -6,7 +6,7 @@ import {
   HintRequestSchema,
   HintResponseSchema,
   RANDOM,
-} from '@repo/shared-types'
+} from '../../../../../packages/shared-types'
 import { createStep, createWorkflow } from '@mastra/core/workflows'
 import { getChallenge } from '../agents/challenge.service'
 import { submitAnswer } from '../agents/evaluate.service'
