@@ -14,9 +14,6 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "engines": {
-    "node": ">=22.13.0"
-  },
   "dependencies": {
     "@mastra/core": "^1.46.0",
     "@supabase/supabase-js": "^2.57.4",
