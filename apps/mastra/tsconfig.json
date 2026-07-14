@@ -17,8 +17,6 @@
     "src/**/*"
   ],
   "paths": {
-    "@repo/shared-types": [
-      "../../packages/shared-types/src/index.ts"
-    ]
-  }
+      "@repo/shared-types": ["../../packages/shared-types/src/index.ts"]
+    }
 }
