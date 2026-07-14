@@ -1,5 +1,6 @@
 {
   "private": true,
+  "preinstall": "npx only-allow pnpm",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -14,12 +15,15 @@
     "zod": "4.3.6"
   },
   "name": "prepper-turborepo",
-  "packageManager": "npm@10.9.3",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "overrides": {
     "hono": "^4.12.23"
-  }
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "9.5.0" 
+    }
+  },
+  "packageManager": "pnpm@9.5.0"
 }
+
