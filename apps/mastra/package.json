@@ -23,6 +23,7 @@
     "@mastra/observability": "^1.15.1",
     "@mastra/deployer-vercel": "^1.2.1",
     "@scure/bip39": "^2.2.0",
+    "hono": "^4.12.23",
     "zod": "^4.4.3"
   },
   "devDependencies": {

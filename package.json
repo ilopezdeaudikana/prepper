@@ -12,9 +12,6 @@
     "turbo": "^2.8.9"
   },
   "name": "prepper-turborepo",
-  "overrides": {
-    "hono": "^4.12.23"
-  },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
