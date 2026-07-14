@@ -244,5 +244,8 @@ export const mastra = new Mastra({
       }),
     ],
   },
-  deployer: new VercelDeployer()
+  deployer: new VercelDeployer(),
+  bundler: {
+    transpilePackages: ['@repo/shared-types'],
+  },
 })
