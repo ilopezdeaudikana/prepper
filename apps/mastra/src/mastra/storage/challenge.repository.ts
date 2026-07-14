@@ -1,4 +1,4 @@
-import { ChallengeType, Filters, Level, LevelType, RANDOM, type ChallengeDashboardStats, type ChallengeImportItem, type Feedback, type Question } from '../../../../../packages/shared-types'
+import { ChallengeType, Filters, Level, LevelType, RANDOM, type ChallengeDashboardStats, type ChallengeImportItem, type Feedback, type Question } from '@repo/shared-types'
 import { getSupabaseClient } from './supabase'
 import { createSessionToken, getYesterdayTimestamp, resolveSessionIdFromToken } from './utils'
 import { Tables } from './types'

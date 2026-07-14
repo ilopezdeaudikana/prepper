@@ -6,7 +6,7 @@ import {
   LevelType,
   RANDOM,
   ChallengeType,
-} from '../../../../../packages/shared-types'
+} from '@repo/shared-types'
 
 import { interviewAgent } from './interview-agent'
 import { getRubricGuidance } from '../tools/interview.tools'
