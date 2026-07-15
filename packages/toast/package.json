@@ -9,5 +9,8 @@
   "exports": {
     ".": "./index.ts"
   },
-  "type": "module"
+  "type": "module",
+  "peerDependencies": {
+    "react": "^19.2.7"
+  }
 }
