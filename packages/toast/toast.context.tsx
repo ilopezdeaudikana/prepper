@@ -55,7 +55,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       height: options.height
     }
 
-    setToasts((currentToasts) => [
+    setToasts((currentToasts: ToastItem[]) => [
       ...currentToasts.filter((currentToast) => currentToast.id !== id),
       toast,
     ])
