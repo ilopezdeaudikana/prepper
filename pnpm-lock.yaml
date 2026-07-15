@@ -90,6 +90,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@repo/toast':
+        specifier: workspace:*
+        version: link:../../packages/toast
       '@shikijs/monaco':
         specifier: ^4.0.2
         version: 4.3.1
