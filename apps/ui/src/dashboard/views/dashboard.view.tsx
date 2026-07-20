@@ -34,22 +34,22 @@ export default function DashboardView() {
     <div className="flex flex-col gap-4 pt-3 h-[calc(100vh-90px)] min-h-0">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card loading={isPending}>
+          <Card loading={isPending} classNames={{body: '!p-3'}}>
             <Statistic title="Total challenges" value={data?.total ?? 0} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card loading={isPending}>
+          <Card loading={isPending} classNames={{body: '!p-3'}}>
             <Statistic title="Solved" value={data?.solved ?? 0} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card loading={isPending}>
+          <Card loading={isPending} classNames={{body: '!p-3'}}>
             <Statistic title="Unsolved" value={data?.unsolved ?? 0} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card loading={isPending}>
+          <Card loading={isPending} classNames={{body: '!p-3'}}>
             <Statistic title="Average score" value={data?.averageScore ?? 0} precision={1} />
           </Card>
         </Col>
@@ -66,7 +66,7 @@ export default function DashboardView() {
         <Row gutter={[16, 16]}>
           <Col xs={24} xl={14}>
             <Card title="Usage over time">
-              <div className="h-70">
+              <div className="h-[calc(50vh-220px)]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.usageOverTime}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -83,7 +83,7 @@ export default function DashboardView() {
 
           <Col xs={24} xl={10}>
             <Card title="Solved by type">
-              <div className="h-70">
+              <div className="h-[calc(50vh-220px)]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -106,7 +106,7 @@ export default function DashboardView() {
 
           <Col xs={24}>
             <Card title="Top topics">
-              <div className="h-85">
+              <div className="h-[calc(50vh-220px)]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.byTopic}>
                     <CartesianGrid strokeDasharray="3 3" />
