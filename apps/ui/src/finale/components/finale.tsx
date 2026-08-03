@@ -1,6 +1,6 @@
 import { Button, Card, Flex } from 'antd'
 import { useConfiguration, type ConfigurationState, type ConfigurationStore } from '@/store/configuration.store'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { useProgress, type ProgressStore } from '@/store/progress.store'
 import { Report } from './report'
 import { useReport, type ReportStore } from '@/store/report.store'

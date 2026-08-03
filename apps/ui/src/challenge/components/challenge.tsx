@@ -16,7 +16,7 @@ import { ChallengeActions } from './challenge-actions'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
-import { useParams, useSearch } from '@tanstack/react-router'
+import { useSearch } from '@tanstack/react-router'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
 import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
@@ -37,7 +37,7 @@ export const Challenge = () => {
   const [reply, setReply] = useState('')
   const [canContinue, setCanContinue] = useState(false)
 
-  const params = useSearch({ strict: false })
+  const params = useSearch({ strict: false }) as { id?: string }
 
   const idParam = params?.id
 
@@ -181,7 +181,7 @@ export const Challenge = () => {
         isFetching={isFetching}
         canContinue={canContinue}
         disabled={isDisabled}
-        idParam={idParam}
+        idParam={idParam  ?? null}
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}

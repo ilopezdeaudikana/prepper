@@ -4,7 +4,7 @@ import { useSearch } from '@tanstack/react-router'
 
 export const useChallengeWithId = () => {
 
-  const params = useSearch({ strict: false })
+  const params = useSearch({ strict: false }) as { id?: string }
 
   const { data: apiData, isPending, error } = useQuery({
     queryKey: ['challenge', 'from-history', params.id],

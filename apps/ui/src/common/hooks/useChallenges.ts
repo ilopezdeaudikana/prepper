@@ -8,7 +8,7 @@ interface UseChallengeProps { page?: string, filters?: Filters }
 
 export const useChallenges = ({ page, filters }: UseChallengeProps) => {
 
-  const params = useSearch({ strict: false })
+  const params = useSearch({ strict: false }) as { id?: string }
 
   const navigate = useNavigate()
 
