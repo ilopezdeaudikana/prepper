@@ -24,7 +24,7 @@ export const Finale = ({ topic, level, randomMode } : Omit<ConfigurationState, '
     resetConfiguration()
     resetProgress()
     resetReport()
-    navigate('/')
+    navigate({ to:'/' })
   }
 
   const topicAndLevel = randomMode ? `random topic and levels` : `${topic} topic and ${level} level`

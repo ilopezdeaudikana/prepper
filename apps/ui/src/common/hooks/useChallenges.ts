@@ -2,17 +2,17 @@ import { ChallengeService } from '@/services/challenge.service'
 import type { Filters } from '@repo/shared-types'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 
 interface UseChallengeProps { page?: string, filters?: Filters }
 
 export const useChallenges = ({ page, filters }: UseChallengeProps) => {
 
-  const [searchParams, cleanParams] = useSearchParams()
+  const params = useSearch({ strict: false })
 
   const navigate = useNavigate()
 
-  const id = searchParams.get('id')
+  const id = params.id
 
   const { data: apiData, isPending, error } = useQuery({
     queryKey: ['challenge', 'all', page, ...Object.values(filters ?? {}), id],
@@ -31,10 +31,9 @@ export const useChallenges = ({ page, filters }: UseChallengeProps) => {
 
   useEffect(() => {
     if (error) {
-      cleanParams({})
-      navigate('/')
+      navigate({ to:'/' })
     }
-  }, [error, cleanParams, navigate])
+  }, [error, navigate])
 
   return {
     apiData, isPending, error

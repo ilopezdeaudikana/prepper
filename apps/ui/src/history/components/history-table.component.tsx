@@ -7,7 +7,7 @@ import {
 } from '@repo/shared-types'
 import { App, Table, Typography, type TableProps } from 'antd'
 import { Trash2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfiguration } from '@/store/configuration.store'
 
@@ -29,7 +29,7 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       type: row.type ?? ChallengeType.Mixed,
       randomMode: !row.topic && !row.level,
     })
-    navigate(`/?id=${row.id}`)
+    navigate({ to:'/', search: { id: row.id } })
   }
 
   const deleteMutation = useMutation({

@@ -2,7 +2,7 @@ import { Button, Card, Flex, Switch, Tooltip, Typography } from 'antd'
 import { useState } from 'react'
 import { Avatar } from '@/common/components/avatar'
 import { useIdentification } from '@/common/hooks/useIdentification'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { BarChart3, History, Home, Upload } from 'lucide-react'
 
 export const Topbar = () => {
@@ -23,24 +23,24 @@ export const Topbar = () => {
           <Tooltip title="Challenges">
             <Button
               icon={<Home className="size-4" />}
-              onClick={() => navigate('/')}
+              onClick={() => navigate({ to: '/' })}
             />
           </Tooltip>
           <Button
             icon={<History className="size-4" />}
-            onClick={() => navigate('/history')}
+            onClick={() => navigate({ to: '/history' })}
           >
             History
           </Button>
           <Button
             icon={<BarChart3 className="size-4" />}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate({ to: '/dashboard' })}
           >
             Dashboard
           </Button>
           <Button
             icon={<Upload className="size-4" />}
-            onClick={() => navigate('/import')}
+            onClick={() => navigate({ to: '/import' })}
           >
             Import
           </Button>

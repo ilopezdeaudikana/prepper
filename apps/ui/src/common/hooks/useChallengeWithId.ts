@@ -1,16 +1,14 @@
 import { ChallengeService } from '@/services/challenge.service'
 import { skipToken, useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { useSearch } from '@tanstack/react-router'
 
 export const useChallengeWithId = () => {
 
-  const [searchParams] = useSearchParams()
-
-  const id = searchParams.get('id')
+  const params = useSearch({ strict: false })
 
   const { data: apiData, isPending, error } = useQuery({
-    queryKey: ['challenge', 'from-history', id],
-    queryFn: id ? () => ChallengeService.getChallengeWithId(id) : skipToken,
+    queryKey: ['challenge', 'from-history', params.id],
+    queryFn: params?.id ? () => ChallengeService.getChallengeWithId(params?.id ?? '') : skipToken,
     retry: false
   })
 

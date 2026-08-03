@@ -16,7 +16,7 @@ import { ChallengeActions } from './challenge-actions'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
-import { useSearchParams } from 'react-router-dom'
+import { useParams, useSearch } from '@tanstack/react-router'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
 import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
@@ -37,6 +37,10 @@ export const Challenge = () => {
   const [reply, setReply] = useState('')
   const [canContinue, setCanContinue] = useState(false)
 
+  const params = useSearch({ strict: false })
+
+  const idParam = params?.id
+
   const previousQuestions = useRef<string[]>([])
   const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
@@ -54,10 +58,6 @@ export const Challenge = () => {
   const [feedback, setFeedback] = useState<
     (Feedback & { error?: string }) | null
   >(challengeData?.data.completed ? challengeData?.data : null)
-
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  const idParam = searchParams.get('id')
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['challenge', requestId, topic, level],
@@ -158,7 +158,7 @@ export const Challenge = () => {
   }
 
   const reset = () => {
-    setSearchParams({})
+    // setSearchParams({})
     setFeedback(null)
     setReply('')
   }
