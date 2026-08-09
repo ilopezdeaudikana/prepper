@@ -58,7 +58,7 @@ export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, o
         <>
           <p>Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}</p>
           <div className='flex gap-4'>
-            {!showFinish && !isFetching && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
+            {!showFinish && !isFetching && !canContinue && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
             {!showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
               {isFetching ? 'Loading...' : 'Next question'}
             </Button>}
