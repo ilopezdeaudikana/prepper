@@ -1,8 +1,18 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router'
 
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 import { Topbar } from '@/common/components/top-bar'
+
+import React, { Suspense } from 'react'
+
+const TanStackDevtools = import.meta.env.DEV
+  ? React.lazy(() =>
+      import('@tanstack/react-devtools').then((res) => ({
+        default: res.TanStackDevtools,
+      })),
+    )
+  : () => null
+
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -15,17 +25,19 @@ function RootComponent() {
         <Topbar />
 
         <Outlet />
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'TanStack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        <Suspense>
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'TanStack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        </Suspense>
       </div>
     </>
   )
