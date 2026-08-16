@@ -33,7 +33,9 @@ export const parseAndValidateBody = <T extends $ZodType>(rawBody: string, schema
   }
 }
 
-export const handleRequestError = (c: Context, error: unknown, fallbackMessage: string) => {
+type JsonContext = Pick<Context, 'json'>
+
+export const handleRequestError = (c: JsonContext, error: unknown, fallbackMessage: string) => {
   const message = error instanceof Error ? error.message : fallbackMessage
   const status =
     (error instanceof ZodError ? 400 : (error && typeof (error as ApiError).status === 'number' ? (error as ApiError).status : 500)) as ContentfulStatusCode
@@ -44,4 +46,3 @@ export const handleRequestError = (c: Context, error: unknown, fallbackMessage: 
     status
   )
 }
-
