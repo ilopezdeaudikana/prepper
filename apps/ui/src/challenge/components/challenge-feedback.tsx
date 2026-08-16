@@ -15,7 +15,7 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
         </div>
       ) : null}
       {feedback.score && (
-        <p className='flex gap-2'>
+        <p className='flex gap-2 max-h-1/3'>
           <span>{feedback.score > MINIMUM_SCORE ? (<Smile className="text-green-700" />) : (<Frown className="text-orange-600" />)}</span>
           <span className={feedback.score > MINIMUM_SCORE ? 'font-semibold text-green-700' : 'font-semibold text-orange-600'}>{feedback.score}</span>
         </p>
@@ -24,11 +24,11 @@ export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
         <MarkdownText content={feedback.critique} />
       )}
       {feedback.missedPoints && feedback.missedPoints.length > 0 && (
-        <>
+        <div className="max-h-1/3 overflow-y-auto">
           <p className='font-semibold'>Missed points:</p>
           {feedback.missedPoints.map((point, i) => (
             <p key={`missed-point-${i}`}>{point}</p>))}
-        </>
+        </div>
       )}
       {feedback.improvedCode && (
         <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>

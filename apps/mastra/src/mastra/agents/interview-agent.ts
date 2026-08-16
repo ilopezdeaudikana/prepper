@@ -45,8 +45,7 @@ export const interviewAgent = new Agent({
     If type is "theoretical", omit "initialCode".
 
     `,
-  // google/gemini-2.5-flash
-  model: 'groq/llama-3.3-70b-versatile',
+  model: 'openrouter/dots-studio/dots-3-note-preview:free',
   tools: {
     sessionQuestionHistoryTool,
     challengePlanningTool,
