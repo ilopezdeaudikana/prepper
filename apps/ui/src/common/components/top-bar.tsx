@@ -18,7 +18,7 @@ export const Topbar = () => {
 
   return (
     <Card styles={{ body: { padding: '0.5rem 1.25rem' } }}>
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center ">
         <Flex gap={8} align="center" wrap>
           <Tooltip title="Challenges">
             <Button
@@ -47,7 +47,7 @@ export const Topbar = () => {
         </Flex>
         <Flex gap={32} align="center">
           <Flex gap={8} align="center">
-            <Typography>Using a shared/public computer:</Typography>
+            <Typography>Using a public computer:</Typography>
             <Switch value={isPublic} onChange={onChange} />
           </Flex>
           <Avatar isPublic={isPublic} />

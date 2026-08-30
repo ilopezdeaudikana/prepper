@@ -53,7 +53,7 @@ export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, o
     <Card
       styles={{ body: { padding: '0.75rem 1.25rem' } }}
     >
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col justify-between items-start gap-2 md:items-center md:flex-row">
         {topic && level || idParam ? 
         <>
           <p>Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}</p>

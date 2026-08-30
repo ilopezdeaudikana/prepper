@@ -30,7 +30,7 @@ export const HistoryFilters = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-row justify-between w-full">
+      <div className="flex flex-col justify-between w-full gap-2 md:flex-row">
         <Select
           style={{ width: 150 }}
           value={filters.completed}

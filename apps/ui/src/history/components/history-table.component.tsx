@@ -29,7 +29,7 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       type: row.type ?? ChallengeType.Mixed,
       randomMode: !row.topic && !row.level,
     })
-    navigate({ to:'/', search: { id: row.id } })
+    navigate({ to: '/', search: { id: row.id } })
   }
 
   const deleteMutation = useMutation({
@@ -90,22 +90,26 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
       key: 'initialCode',
       ellipsis: true,
       width: '35%',
+      responsive: ['md'],
     },
     {
       title: 'Topic',
       dataIndex: 'topic',
       key: 'topic',
+      ellipsis: true,
     },
     {
       title: 'Level',
       dataIndex: 'level',
       key: 'level',
+      ellipsis: true,
     },
     {
       title: 'Score',
       dataIndex: 'score',
       key: 'score',
       align: 'center',
+      ellipsis: true,
     },
     {
       key: 'delete',

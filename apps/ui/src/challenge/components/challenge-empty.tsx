@@ -43,21 +43,46 @@ function doubleNumbers(numbers: number[]): number[] {
 // console.log(result); // [20, 40, 60]
 `
 export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
-  const cardStyles = { body:'bg-orange-200 opacity-80 text-gray-900'}
+  const cardStyles = { body: 'bg-orange-200 opacity-80 text-gray-900' }
   return (
     <div className="flex flex-col gap-2 overflow-auto flex-1">
       {isQuestion && (
         <div className="pr-2">
-        <Badge.Ribbon text="Start">
-          <Card title="Welcome to your personalized coding challenge" size="small" 
-            classNames={cardStyles} 
-            styles={{header:{background: 'var(--color-orange-200)', fontWeight: 200, fontSize: 'var(--text-base)', color: 'var(--color-gray-700)'}}}
-          >
-            To begin, select <strong>Configure new challenge</strong> or <strong>Review previous challenges</strong>. 
-            Once the environment loads, use the editor on the right-hand panel to write your solution. 
-            You can submit your work using the <strong>Submit</strong> button located in the top navigation bar.
-          </Card>
-        </Badge.Ribbon>
+          <Badge.Ribbon text="Start">
+            <Card
+              title={
+                <p
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    width: '85%'
+                  }}
+                >
+                  Welcome to your personalized coding challenge
+                </p>
+              }
+              size="small"
+              classNames={cardStyles}
+              styles={{
+                header: {
+                  background: 'var(--color-orange-200)',
+                  fontWeight: 200,
+                  fontSize: 'var(--text-base)',
+                  color: 'var(--color-gray-700)',
+                },
+              }}
+            >
+              <p className="line-clamp-3">
+                To begin, select <strong>Configure new challenge</strong> or{' '}
+                <strong>Review previous challenges</strong>. Once the
+                environment loads, use the editor on the right-hand panel to
+                write your solution. You can submit your work using the{' '}
+                <strong>Submit</strong> button located in the top navigation
+                bar.
+              </p>
+            </Card>
+          </Badge.Ribbon>
         </div>
       )}
       <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>

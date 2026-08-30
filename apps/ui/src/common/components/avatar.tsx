@@ -87,7 +87,7 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   }
 
   const content = (
-    <Flex vertical gap={12} style={{ width: '25rem' }}>
+    <Flex vertical gap={10} style={{ width: '32rem' }}>
       <Typography>
         We don't collect emails or personal data, which means your progress is
         stored entirely in this browser. To access your data from another device

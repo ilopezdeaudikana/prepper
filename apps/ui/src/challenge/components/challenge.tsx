@@ -186,7 +186,7 @@ export const Challenge = () => {
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}
       />
-      <div className="flex min-h-0 min-w-0 flex-1 align-self-center gap-4">
+      <div className="flex flex-col min-h-0 min-w-0 flex-1 align-self-center gap-4 md:flex-row">
         <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col transition-all duration-500 ease-in-out">
           <Card
             className="flex flex-col flex-1"
