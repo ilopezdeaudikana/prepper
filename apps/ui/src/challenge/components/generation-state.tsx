@@ -33,8 +33,8 @@ export const GenerationState = ({
   }, [isFetching, stages])
 
   return (
-    <div>
-      <p>{generationStage ?? (isReady ? 'Loading challenge...' : '')}</p>
+    <div className='bg-chart-3 mb-4 p-4 rounded-sm'>
+      <p className='text-background'>{generationStage ?? (isReady ? 'Loading challenge...' : '')}</p>
     </div>
   )
 }

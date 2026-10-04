@@ -16,7 +16,7 @@ import { ChallengeActions } from './challenge-actions'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
 import { useReport } from '@/store/report.store'
-import { useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
 import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
@@ -38,6 +38,7 @@ export const Challenge = () => {
   const [canContinue, setCanContinue] = useState(false)
 
   const params = useSearch({ strict: false }) as { id?: string }
+  const navigate = useNavigate()
 
   const idParam = params?.id
 
@@ -60,8 +61,8 @@ export const Challenge = () => {
   >(challengeData?.data.completed ? challengeData?.data : null)
 
   const { data, isFetching, error } = useQuery({
-    queryKey: ['challenge', requestId, topic, level],
-    queryFn: (): Promise<
+    queryKey: ['challenge', requestId, topic, level, type, idParam],
+    queryFn: ({ signal }): Promise<
       Question &
         Feedback & { error?: string; notice?: string; sessionToken?: string }
     > =>
@@ -69,10 +70,10 @@ export const Challenge = () => {
         { topic, level, type },
         previousQuestions.current,
         sessionToken ?? undefined,
-      ),
+        signal,
+    ),
     enabled: !!topic && !!level && !idParam,
     staleTime: Infinity,
-    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     placeholderData: (previousData) => previousData,
@@ -151,7 +152,10 @@ export const Challenge = () => {
     }
   }
 
-  const loadNextQuestion = async () => {
+  const loadNextQuestion = () => {
+    if (idParam) {
+      void navigate({ to: '/', search: {} })
+    }
     setRequestId((current) => current + 1)
     setCanContinue(false)
     reset()
@@ -176,7 +180,7 @@ export const Challenge = () => {
   const shouldShowForm = feedback === null && !loadingEvaluation
 
   return (
-    <div className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden">
+    <div key={stage} className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden">
       <ChallengeActions
         isFetching={isFetching}
         canContinue={canContinue}
@@ -198,8 +202,9 @@ export const Challenge = () => {
               <ChallengeEmpty isQuestion={true} />
             ) : (
               <>
-                {challenge && !challengeData?.data?.completed && (
+                {challenge && !challengeData?.data?.completed && !isFetching && (
                   <ChallengeHint
+                    key={requestId}
                     data={(data as Question) || extractQuestionFromLocalData()}
                     level={level}
                     reply={reply}

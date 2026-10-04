@@ -11,7 +11,12 @@ export type ChallengeResponse = Question & { sessionToken?: string, notice?: str
 
 
 export const ChallengeService = {
-  async createChallenge(options: { topic: string, level?: LevelType, type: ChallengeType }, previousQuestions: string[] = [], sessionToken?: string) {
+  async createChallenge(
+    options: { topic: string, level?: LevelType, type: ChallengeType },
+    previousQuestions: string[] = [],
+    sessionToken?: string,
+    signal?: AbortSignal,
+  ) {
 
     const { storageMode } = useConfiguration.getState().configuration
 
@@ -24,6 +29,7 @@ export const ChallengeService = {
       headers: {
         'Content-Type': 'application/json',
       },
+      signal,
       body: JSON.stringify({ topic, level, type, previousQuestions, sessionToken, user: session, options: { forceReuse: storageMode } }),
     })
     return parseResponse<ChallengeResponse>(response, 'Challenge generation failed.')
@@ -136,7 +142,7 @@ export const ChallengeService = {
     return parseResponse<{ message: string }>(response, 'Evaluation failed.')
   },
 
-  async getHint(question: Question, answer: string, level?: LevelType) {
+  async getHint( signal: AbortSignal, question: Question, answer: string, level?: LevelType) {
 
     const response = await fetch(getApiUrl('challenge/hint'), {
       method: 'POST',
@@ -144,6 +150,7 @@ export const ChallengeService = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ question: { ...question }, answer, level }),
+      signal
     })
     return parseResponse<HintResponse>(response, 'Hint generation failed.')
   }

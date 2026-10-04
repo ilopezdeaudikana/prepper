@@ -15,33 +15,43 @@ interface ChallengeActionsProps {
   onNavigate: () => void
 }
 
-export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, onLoadNextQuestion, onNavigate, showFinish }: ChallengeActionsProps) => {
-
+export const ChallengeActions = ({
+  canContinue,
+  isFetching,
+  disabled,
+  idParam,
+  onLoadNextQuestion,
+  onNavigate,
+  showFinish,
+}: ChallengeActionsProps) => {
   const [isConfigurationOpen, openConfiguration] = useState(false)
-  const { topic, level } = useConfiguration(state => state.configuration)
-  const setConfiguration = useConfiguration(state => state.setConfiguration)
-  const { score, stage } = useProgress(state => state.progress)
+  const { topic, level } = useConfiguration((state) => state.configuration)
+  const setConfiguration = useConfiguration((state) => state.setConfiguration)
+  const { score, stage } = useProgress((state) => state.progress)
 
-  const setProgress = useProgress(state => state.setProgress)
-  
+  const setProgress = useProgress((state) => state.setProgress)
+
   const restart = () => {
     setConfiguration({
-      topic: '', level: undefined, type: ChallengeType.Mixed, randomMode: false
+      topic: '',
+      level: undefined,
+      type: ChallengeType.Mixed,
+      randomMode: false,
     })
     setProgress({ score: 0, stage: INITIAL_STAGE })
     onNavigate()
   }
 
-  const loadNextQuestion = async (args?: ({ skip: boolean } | undefined)) => {
-
-    if (args?.skip) setProgress({ score, stage: stage + 1 })
+  const loadNextQuestion = async (args?: { skip: boolean } | undefined) => {
+    if (args?.skip) {
+      setProgress({ score, stage: stage + 1 })
+    }
     if (stage === FINAL_STAGE) {
       // trigger redirection
       setProgress({ score, stage: FINAL_STAGE })
       return
-    } else {
-      onLoadNextQuestion()
     }
+    onLoadNextQuestion()
   }
 
   const goToReport = () => {
@@ -50,31 +60,65 @@ export const ChallengeActions = ({ canContinue, isFetching, disabled, idParam, o
   }
 
   return (
-    <Card
-      styles={{ body: { padding: '0.75rem 1.25rem' } }}
-    >
+    <Card styles={{ body: { padding: '0.75rem 1.25rem' } }}>
       <div className="flex flex-col justify-between items-start gap-2 md:items-center md:flex-row">
-        {topic && level || idParam ? 
-        <>
-          <p>Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}</p>
-          <div className='flex gap-4'>
-            {!showFinish && !isFetching && !canContinue && <Button type="primary" onClick={() => loadNextQuestion({ skip: true })}>Skip evaluation</Button>}
-            {!showFinish && <Button type="primary" onClick={() => loadNextQuestion()} disabled={isFetching || !canContinue}>
-              {isFetching ? 'Loading...' : 'Next question'}
-            </Button>}
-            {(!showFinish) && <Button form="reply-form" htmlType="submit" type="primary" disabled={disabled}>Submit</Button>}
-            <Button type="dashed" onClick={restart}>
-              Restart
-            </Button>
-            {showFinish && <Button type="primary" onClick={goToReport}>
-              See evaluation report
-            </Button>}
-          </div>
-        </>
-        :
-        <Button type="primary" className="ml-auto" onClick={() => openConfiguration(true)}>Configure new challenge</Button>}
+        {(topic && level) || idParam ? (
+          <>
+            <p>
+              Topic: {topic ?? 'n/a'}, Level {level ?? 'n/a'}
+            </p>
+            <div className="flex gap-4">
+              {!showFinish && !isFetching && !canContinue && (
+                <Button
+                  type="primary"
+                  onClick={() => loadNextQuestion({ skip: true })}
+                >
+                  Skip evaluation
+                </Button>
+              )}
+              {!showFinish && (
+                <Button
+                  type="primary"
+                  onClick={() => loadNextQuestion()}
+                  disabled={isFetching || !canContinue}
+                >
+                  {isFetching ? 'Loading...' : 'Next question'}
+                </Button>
+              )}
+              {!showFinish && (
+                <Button
+                  form="reply-form"
+                  htmlType="submit"
+                  type="primary"
+                  disabled={disabled}
+                >
+                  Submit
+                </Button>
+              )}
+              <Button type="dashed" onClick={restart}>
+                Restart
+              </Button>
+              {showFinish && (
+                <Button type="primary" onClick={goToReport}>
+                  See evaluation report
+                </Button>
+              )}
+            </div>
+          </>
+        ) : (
+          <Button
+            type="primary"
+            className="ml-auto"
+            onClick={() => openConfiguration(true)}
+          >
+            Configure new challenge
+          </Button>
+        )}
       </div>
-      <Configuration open={isConfigurationOpen} onClose={() => openConfiguration(false)}/>
+      <Configuration
+        open={isConfigurationOpen}
+        onClose={() => openConfiguration(false)}
+      />
     </Card>
   )
 }
