@@ -25,6 +25,7 @@ export default function HistoryView() {
   }
 
   const handleFiltersChange = (key: keyof Filters, value: string) => {
+    if (page !== 0) setPage(0)
     setFilters(
       (filters) =>
         ({
