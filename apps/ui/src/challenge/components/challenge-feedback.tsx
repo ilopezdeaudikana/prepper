@@ -7,13 +7,6 @@ import { CodeArea } from '../../common/components/code-area'
 export const ChallengeFeedback = ({ feedback }: { feedback: Feedback }) => {
   return (
     <div className="flex flex-col gap-2 overflow-auto min-h-full">
-      {feedback?.error ? (
-        <div><p>Error loading data</p>
-          <pre className="whitespace-pre-wrap">
-            {JSON.stringify(feedback, null, 2)}
-          </pre>
-        </div>
-      ) : null}
       {feedback.score && (
         <p className='flex gap-2 max-h-1/3'>
           <span>{feedback.score > MINIMUM_SCORE ? (<Smile className="text-green-700" />) : (<Frown className="text-orange-600" />)}</span>

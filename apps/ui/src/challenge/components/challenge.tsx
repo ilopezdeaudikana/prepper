@@ -1,13 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { MarkdownText } from '@/common/components/markdown-text'
-import { ChallengeService } from '@/services/challenge.service'
-import {
-  type Feedback,
-  type Question,
-  ChallengeType,
-  RANDOM,
-} from '@repo/shared-types'
+import { type Feedback, type Question, ChallengeType } from '@repo/shared-types'
 import { FINAL_STAGE, useProgress } from '@/store/progress.store'
 import { GenerationState } from './generation-state'
 import { useConfiguration } from '@/store/configuration.store'
@@ -15,11 +8,14 @@ import { Card } from 'antd'
 import { ChallengeActions } from './challenge-actions'
 import { ChallengeFeedback } from './challenge-feedback'
 import { ChallengeReply } from './challenge-reply'
-import { useReport } from '@/store/report.store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ChallengeEmpty } from './challenge-empty'
 import { ChallengeHint } from './challenge-hint'
 import { useChallengeWithId } from '@/common/hooks/useChallengeWithId'
+import {
+  useChallenge,
+  extractQuestionFromLocalData,
+} from '@/common/hooks/useChallenge'
 
 const cardBody: React.CSSProperties = {
   display: 'flex',
@@ -42,44 +38,24 @@ export const Challenge = () => {
 
   const idParam = params?.id
 
-  const previousQuestions = useRef<string[]>([])
-  const [loadingEvaluation, setLoadingEvaluation] = useState(false)
   const [requestId, setRequestId] = useState(0)
-  const { level, topic, type } = useConfiguration(
-    (state) => state.configuration,
-  )
-  const { score, stage } = useProgress((state) => state.progress)
-  const setProgress = useProgress((state) => state.setProgress)
-  const addToReport = useReport((state) => state.addToReport)
-
-  const queryClient = useQueryClient()
+  const { level, topic } = useConfiguration((state) => state.configuration)
+  const { stage } = useProgress((state) => state.progress)
 
   const { apiData: challengeData } = useChallengeWithId()
 
-  const [feedback, setFeedback] = useState<
-    (Feedback & { error?: string }) | null
-  >(challengeData?.data.completed ? challengeData?.data : null)
+  const {
+    data,
+    isFetching,
+    error,
+    submitMutation,
+    loadingEvaluation,
+    submitError,
+    result,
+    resetResult,
+  } = useChallenge(requestId)
 
-  const { data, isFetching, error } = useQuery({
-    queryKey: ['challenge', requestId, topic, level, type, idParam],
-    queryFn: ({ signal }): Promise<
-      Question &
-        Feedback & { error?: string; notice?: string; sessionToken?: string }
-    > =>
-      ChallengeService.createChallenge(
-        { topic, level, type },
-        previousQuestions.current,
-        sessionToken ?? undefined,
-        signal,
-    ),
-    enabled: !!topic && !!level && !idParam,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const sessionToken = data?.sessionToken ?? null
+  const feedback = challengeData?.data.completed ? challengeData?.data : result
 
   const challenge: (Question & Feedback & { notice?: string }) | undefined =
     challengeData?.data ? challengeData?.data : isFetching ? undefined : data
@@ -97,59 +73,17 @@ export const Challenge = () => {
     setReply(reply ?? '')
   }
 
-  const extractQuestionFromLocalData = () => {
-    if (challenge) {
-      const { id, sessionId, question, initialCode, type, level, topic } =
-        challenge
-      return {
-        id,
-        sessionId,
-        question,
-        initialCode,
-        type,
-        level,
-        topic: topic ?? RANDOM,
-      }
-    }
-  }
-
   const handleSubmit = async () => {
     if (!reply) return
 
-    setLoadingEvaluation(true)
     setIsDisabled(true)
+    const question =
+      (challenge as Question) ||
+      (data as Question) ||
+      extractQuestionFromLocalData()
 
-    try {
-      const result: Feedback = await ChallengeService.submitAnswer(
-        (challenge as Question) ||
-          (data as Question) ||
-          extractQuestionFromLocalData(),
-        reply,
-        level,
-        sessionToken ?? undefined,
-      )
-
-      setFeedback(result)
-
-      setProgress({ score: score + (result.score ?? 0), stage: stage + 1 })
-
-      if (challenge) {
-        const { question, initialCode, type } = challenge
-        addToReport({
-          challenge: { question, initialCode, type },
-          reply,
-          evaluation: result,
-        })
-      }
-      queryClient.invalidateQueries({ queryKey: ['challenge', 'all'] })
-    } catch (error: unknown) {
-      setFeedback({
-        error: (error as Error).message ?? 'Evaluation failed.',
-      } as Feedback)
-    } finally {
-      setLoadingEvaluation(false)
-      setCanContinue(true)
-    }
+    await submitMutation({ question, reply })
+    setCanContinue(true)
   }
 
   const loadNextQuestion = () => {
@@ -162,30 +96,22 @@ export const Challenge = () => {
   }
 
   const reset = () => {
-    // setSearchParams({})
-    setFeedback(null)
+    resetResult()
     setReply('')
   }
 
-  useEffect(() => {
-    if (data?.question) {
-      previousQuestions.current = previousQuestions.current.includes(
-        data.question,
-      )
-        ? previousQuestions.current
-        : [...previousQuestions.current, data.question]
-    }
-  }, [data?.question])
-
-  const shouldShowForm = feedback === null && !loadingEvaluation
+  const shouldShowResult = !!feedback || loadingEvaluation || submitError
 
   return (
-    <div key={stage} className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden">
+    <div
+      key={stage}
+      className="flex h-[calc(100vh-90px)] min-h-0 flex-col gap-4 overflow-hidden"
+    >
       <ChallengeActions
         isFetching={isFetching}
         canContinue={canContinue}
         disabled={isDisabled}
-        idParam={idParam  ?? null}
+        idParam={idParam ?? null}
         showFinish={stage === FINAL_STAGE}
         onLoadNextQuestion={loadNextQuestion}
         onNavigate={reset}
@@ -202,14 +128,18 @@ export const Challenge = () => {
               <ChallengeEmpty isQuestion={true} />
             ) : (
               <>
-                {challenge && !challengeData?.data?.completed && !isFetching && (
-                  <ChallengeHint
-                    key={requestId}
-                    data={(data as Question) || extractQuestionFromLocalData()}
-                    level={level}
-                    reply={reply}
-                  />
-                )}
+                {challenge &&
+                  !challengeData?.data?.completed &&
+                  !isFetching && (
+                    <ChallengeHint
+                      key={requestId}
+                      data={
+                        (data as Question) || extractQuestionFromLocalData()
+                      }
+                      level={level}
+                      reply={reply}
+                    />
+                  )}
 
                 {!requestErrorMessage && (!challenge || isFetching) && (
                   <GenerationState
@@ -235,7 +165,7 @@ export const Challenge = () => {
                     <MarkdownText content={challenge?.question} />
                     <ChallengeReply
                       onInputChange={handleInputChange}
-                      disabled={!shouldShowForm}
+                      disabled={challenge.completed}
                       onSubmit={handleSubmit}
                       type={ChallengeType.Theoretical}
                     />
@@ -256,7 +186,7 @@ export const Challenge = () => {
             )}
           </Card>
         </div>
-        {!shouldShowForm && (
+        {shouldShowResult && (
           <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col transition-all duration-500 ease-in-out">
             <Card
               className="flex min-h-0 min-w-0 flex-1 flex-col p-4"
@@ -271,6 +201,14 @@ export const Challenge = () => {
                   </div>
                 )}
                 {feedback && <ChallengeFeedback feedback={feedback} />}
+                {submitError ? (
+                  <div>
+                    <p>Error loading data</p>
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(submitError, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
               </div>
             </Card>
           </div>
