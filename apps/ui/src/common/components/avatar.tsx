@@ -7,13 +7,12 @@ import {
   Button,
   Card,
   Flex,
-  Input,
   Popover,
   Switch,
   Typography,
 } from 'antd'
 import { RefreshCcw } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
   const [inFlight, setInFlight] = useState(false)
@@ -110,7 +109,9 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       </Flex>
       {alternativeUser && (
         <>
-          <Input
+          <input
+            id="recovery-phrase"
+            className='p-2'
             value={alternativePhrase}
             placeholder="Insert recovery phrase"
             onChange={handleInputChange}
@@ -143,6 +144,13 @@ export const Avatar = ({ isPublic }: { isPublic: boolean }) => {
       {hasCopied && <Typography.Paragraph type="success">Copied</Typography.Paragraph>}
     </Flex>
   )
+
+  useEffect(() => {
+    
+    return () => {
+      timeout.current= null
+    }
+  })
 
   return (
     <Popover
