@@ -21,7 +21,7 @@ interface FeedbackGet {
   improved_code?: string
 }
 
-interface QuestionGet extends FeedbackGet {
+interface QuestionGet {
   id: string
   question: string
   session_id: string
@@ -31,6 +31,7 @@ interface QuestionGet extends FeedbackGet {
   topic: string
   level: LevelType
   completed: boolean
+  interview_feedback: FeedbackGet[]
 }
 
 type QuestionReference = {
@@ -295,15 +296,18 @@ export const getQuestion = async (id: string)
 
   const sessionId = !data.session_id ? (await createSession(data.topic ?? RANDOM, data.level ?? RANDOM)).id : data.session_id
 
-  const { question, initial_code: initialCode, type, completed, level, topic, missed_points: missedPoints, improved_code: improvedCode } = data
+  const { question, initial_code: initialCode, type, completed, level, topic, interview_feedback } = data
+
+  const { missed_points, improved_code } = interview_feedback[0]
+
 
   return {
     data: {
       question, type, completed, id, topic,
       level: level ?? Level.Mid,
       initialCode: initialCode ?? '',
-      missedPoints,
-      improvedCode,
+      missedPoints: missed_points,
+      improvedCode: improved_code,
       sessionId
     }
   }
