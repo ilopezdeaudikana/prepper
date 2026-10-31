@@ -18,7 +18,7 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
     isFetching,
     error: hintError,
   } = useQuery({
-    queryKey: ['challenge-hint', data.id],
+    queryKey: ['challenge-hint', data?.id],
     queryFn: ({ signal }) => ChallengeService.getHint(signal, data, reply, level),
     enabled: false,
   })
