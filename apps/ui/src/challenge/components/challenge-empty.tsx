@@ -43,7 +43,7 @@ function doubleNumbers(numbers: number[]): number[] {
 // console.log(result); // [20, 40, 60]
 `
 export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
-  const cardStyles = { body: 'bg-orange-200 opacity-80 text-gray-900' }
+  const cardStyles = { body: 'bg-warning-subtle text-warning-foreground' }
   return (
     <div className="flex flex-col gap-2 overflow-auto flex-1">
       {isQuestion && (
@@ -66,10 +66,10 @@ export const ChallengeEmpty = ({ isQuestion }: { isQuestion?: boolean }) => {
               classNames={cardStyles}
               styles={{
                 header: {
-                  background: 'var(--color-orange-200)',
+                  background: 'var(--color-warning-subtle)',
                   fontWeight: 200,
                   fontSize: 'var(--text-base)',
-                  color: 'var(--color-gray-700)',
+                  color: 'var(--color-warning-foreground)',
                 },
               }}
             >

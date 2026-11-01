@@ -10,7 +10,7 @@ export interface HintProps {
   reply: string
 }
 export const ChallengeHint = ({ data, reply, level }: HintProps) => {
-  const cardStyles = { body: 'bg-orange-200 opacity-80 text-gray-900' }
+  const cardStyles = { body: 'bg-warning-subtle text-warning-foreground' }
 
   const {
     data: hint,
@@ -32,8 +32,8 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
     <>
       <div className="flex flex-row justify-between w-full align-center">
         <div className='flex flex-1'>
-          {isFetching && <p className='bg-chart-3 pt-1 pl-2 mr-2 mb-2 rounded-sm text-background flex-1'>Loading hint...</p>}
-          {hintError && <p className="pt-1 text-destructive">{hintError.message}</p>}
+          {isFetching && <p className='bg-info pt-1 pl-2 mr-2 mb-2 rounded-sm text-info-foreground flex-1'>Loading hint...</p>}
+          {hintError && <p className="pt-1 text-danger">{hintError.message}</p>}
         </div>
         {!hint && (
           <Button
@@ -61,10 +61,10 @@ export const ChallengeHint = ({ data, reply, level }: HintProps) => {
                   wordBreak: 'break-word',
                 },
                 header: {
-                  background: 'var(--color-orange-200)',
+                  background: 'var(--color-warning-subtle)',
                   fontWeight: 200,
                   fontSize: 'var(--text-base)',
-                  color: 'var(--color-gray-700)',
+                  color: 'var(--color-warning-foreground)',
                 },
               }}
             >
